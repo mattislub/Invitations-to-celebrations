@@ -36,8 +36,10 @@ export default function Admin({
 }: AdminProps) {
   const t = getTranslation(language)
   const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
-  const apiBaseUrl = configuredApiBaseUrl && configuredApiBaseUrl !== '/' ? configuredApiBaseUrl.replace(/\/$/, '') : '/api'
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
+  const apiBaseUrl = configuredApiBaseUrl ? configuredApiBaseUrl.replace(/\/$/, '') : ''
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(() =>
+    configuredApiBaseUrl ? 'idle' : 'disabled'
+  )
   const [designStyles, setDesignStyles] = useState<DesignStyle[]>([
     { id: 'modern-elegant', name: 'Modern Elegant', description: 'Minimal lines with warm gradients' },
     { id: 'heritage-gold', name: 'Heritage Gold', description: 'Traditional framing with golden ornaments' }
@@ -69,11 +71,7 @@ export default function Admin({
   })
   const [statusMessage, setStatusMessage] = useState('')
   const [, setUploading] = useState(false)
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>(() =>
-    (import.meta.env.VITE_API_BASE_URL as string | undefined) ? 'idle' : 'disabled'
-  )
   const [activeTab, setActiveTab] = useState<'overview' | 'gallery' | 'types' | 'styles' | 'backgrounds' | 'videos' | 'fonts' | 'dimensions'>('overview')
-  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
   const getCategoryLabel = (category: Invitation['category']) => {
     const categoryMap: Record<Invitation['category'], string> = {
