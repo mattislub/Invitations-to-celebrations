@@ -20,8 +20,8 @@ interface GalleryProps {
 const templates: InvitationTemplate[] = [
   {
     id: 1,
-    titleHe: 'רומנטי קלאסי',
-    titleEn: 'Classic Romantic',
+    titleHe: 'אלגנטי קלאסי',
+    titleEn: 'Classic Elegance',
     category: 'wedding',
     layers: [
       { image: 'https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg?auto=compress&cs=tinysrgb&w=800', opacity: 0.3 },
