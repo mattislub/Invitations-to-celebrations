@@ -176,6 +176,10 @@ export interface Translations {
         title: string
         description: string
       }
+      videoBackgrounds: {
+        title: string
+        description: string
+      }
       dimensions: {
         title: string
         description: string
@@ -195,6 +199,7 @@ export interface Translations {
       imageUrl: string
       hosts: string
       eventDate: string
+      videoUrl: string
     }
     buttons: {
       add: string
@@ -385,6 +390,7 @@ export const translations: Record<Language, Translations> = {
         styles: 'סגנונות רשומים',
         fonts: 'פונטים זמינים',
         backgrounds: 'רקעים פעילים',
+        videoBackgrounds: 'רקעי וידאו',
         dimensions: 'תצורת מידה'
       },
       sections: {
@@ -408,6 +414,10 @@ export const translations: Record<Language, Translations> = {
           title: 'ניהול רקעים',
           description: 'צרפו תמונות רקע חדשות או החליפו קישורי רקע קיימים.'
         },
+        videoBackgrounds: {
+          title: 'וידאו כרקע',
+          description: 'הוסיפו סרטוני וידאו כרקע לעיצובים הדיגיטליים.'
+        },
         dimensions: {
           title: 'הגדרות גודל',
           description: 'קבעו רוחב ואורך ברירת מחדל להזמנות שלכם.'
@@ -426,7 +436,8 @@ export const translations: Record<Language, Translations> = {
         englishName: 'שם באנגלית',
         imageUrl: 'קישור לתמונה',
         hosts: 'מארחים',
-        eventDate: 'תאריך אירוע'
+        eventDate: 'תאריך אירוע',
+        videoUrl: 'קישור וידאו'
       },
       buttons: {
         add: 'הוספה',
@@ -615,6 +626,7 @@ export const translations: Record<Language, Translations> = {
         styles: 'Design Styles',
         fonts: 'Available Fonts',
         backgrounds: 'Active Backgrounds',
+        videoBackgrounds: 'Video Backgrounds',
         dimensions: 'Dimension Preset'
       },
       sections: {
@@ -638,6 +650,10 @@ export const translations: Record<Language, Translations> = {
           title: 'Manage Backgrounds',
           description: 'Attach new background images or replace existing ones.'
         },
+        videoBackgrounds: {
+          title: 'Video Backgrounds',
+          description: 'Add looping videos that can be used behind invitation designs.'
+        },
         dimensions: {
           title: 'Size Settings',
           description: 'Define default invitation width and height for downloads.'
@@ -656,7 +672,8 @@ export const translations: Record<Language, Translations> = {
         englishName: 'English Name',
         imageUrl: 'Image URL',
         hosts: 'Hosts',
-        eventDate: 'Event Date'
+        eventDate: 'Event Date',
+        videoUrl: 'Video URL'
       },
       buttons: {
         add: 'Add',

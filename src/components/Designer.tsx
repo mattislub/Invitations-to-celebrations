@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
-import { Heart, Users, Gift, Cake, PartyPopper, User, ChevronRight, Wand2, Layers, Sparkles, BookOpen } from 'lucide-react'
+import { Heart, Users, Gift, Cake, PartyPopper, User, ChevronRight, Wand2, Layers, Sparkles, BookOpen, Video } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
-import { CustomInvitationType } from '../types'
+import { CustomInvitationType, VideoBackground } from '../types'
 
 type EventType = 'wedding' | 'bar-mitzvah' | 'bat-mitzvah' | 'birthday' | 'engagement' | 'thank-you' | `custom-${string}`
 type DesignStyle = 'modern' | 'religious'
@@ -15,6 +15,7 @@ interface LocalizedName {
 interface DesignerProps {
   language: Language
   customTypes: CustomInvitationType[]
+  videoBackgrounds: VideoBackground[]
 }
 
 interface EventTemplate {
@@ -38,6 +39,9 @@ interface BackgroundOption {
   id: string
   name: string
   images: string[]
+  type?: 'image' | 'video'
+  videoUrl?: string
+  previewImage?: string
   style?: DesignStyle[]
 }
 
@@ -57,7 +61,7 @@ interface Animation {
   class: string
 }
 
-export default function Designer({ language, customTypes }: DesignerProps) {
+export default function Designer({ language, customTypes, videoBackgrounds }: DesignerProps) {
   const t = getTranslation(language)
   const [step, setStep] = useState<'type' | 'details' | 'style' | 'design'>('type')
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(null)
@@ -243,7 +247,7 @@ export default function Designer({ language, customTypes }: DesignerProps) {
     [eventTemplates, customTemplates]
   )
 
-  const backgrounds: BackgroundOption[] = [
+  const baseBackgrounds: BackgroundOption[] = [
     {
       id: 'elegant',
       name: 'אלגנטי',
@@ -251,7 +255,8 @@ export default function Designer({ language, customTypes }: DesignerProps) {
         'https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg?auto=compress&cs=tinysrgb&w=800',
         'https://images.pexels.com/photos/1670723/pexels-photo-1670723.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
-      style: ['modern']
+      style: ['modern'],
+      type: 'image'
     },
     {
       id: 'sleek',
@@ -260,7 +265,8 @@ export default function Designer({ language, customTypes }: DesignerProps) {
         'https://images.pexels.com/photos/1702238/pexels-photo-1702238.jpeg?auto=compress&cs=tinysrgb&w=800',
         'https://images.pexels.com/photos/1444416/pexels-photo-1444416.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
-      style: ['modern']
+      style: ['modern'],
+      type: 'image'
     },
     {
       id: 'modern',
@@ -269,7 +275,8 @@ export default function Designer({ language, customTypes }: DesignerProps) {
         'https://images.pexels.com/photos/1279813/pexels-photo-1279813.jpeg?auto=compress&cs=tinysrgb&w=800',
         'https://images.pexels.com/photos/1762851/pexels-photo-1762851.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
-      style: ['modern']
+      style: ['modern'],
+      type: 'image'
     },
     {
       id: 'festive',
@@ -278,7 +285,8 @@ export default function Designer({ language, customTypes }: DesignerProps) {
         'https://images.pexels.com/photos/1387037/pexels-photo-1387037.jpeg?auto=compress&cs=tinysrgb&w=800',
         'https://images.pexels.com/photos/1729797/pexels-photo-1729797.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
-      style: ['modern']
+      style: ['modern'],
+      type: 'image'
     },
     {
       id: 'traditional-gold',
@@ -286,7 +294,8 @@ export default function Designer({ language, customTypes }: DesignerProps) {
       images: [
         'https://images.pexels.com/photos/1939485/pexels-photo-1939485.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
-      style: ['religious']
+      style: ['religious'],
+      type: 'image'
     },
     {
       id: 'traditional-simple',
@@ -294,7 +303,8 @@ export default function Designer({ language, customTypes }: DesignerProps) {
       images: [
         'https://images.pexels.com/photos/1939487/pexels-photo-1939487.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
-      style: ['religious']
+      style: ['religious'],
+      type: 'image'
     },
     {
       id: 'traditional-classic',
@@ -302,9 +312,24 @@ export default function Designer({ language, customTypes }: DesignerProps) {
       images: [
         'https://images.pexels.com/photos/1939477/pexels-photo-1939477.jpeg?auto=compress&cs=tinysrgb&w=800'
       ],
-      style: ['religious']
+      style: ['religious'],
+      type: 'image'
     }
   ]
+
+  const videoBackgroundOptions = useMemo<BackgroundOption[]>(() => videoBackgrounds.map((bg) => ({
+    id: `video-${bg.id}`,
+    name: bg.name,
+    images: bg.previewImage ? [bg.previewImage] : [],
+    videoUrl: bg.url,
+    previewImage: bg.previewImage,
+    type: 'video'
+  })), [videoBackgrounds])
+
+  const backgrounds = useMemo(
+    () => [...baseBackgrounds, ...videoBackgroundOptions],
+    [videoBackgroundOptions]
+  )
 
   const colorSchemes: ColorScheme[] = [
     {
@@ -388,7 +413,7 @@ export default function Designer({ language, customTypes }: DesignerProps) {
 
   const filteredBackgrounds = backgrounds.filter(bg => !bg.style || bg.style.includes(designStyle))
   const filteredColorSchemes = colorSchemes.filter(cs => !cs.style || cs.style.includes(designStyle))
-  const selectedBackgroundImages = backgrounds.find(b => b.id === selectedBackground)?.images || []
+  const selectedBackgroundOption = backgrounds.find(b => b.id === selectedBackground)
   const currentColorScheme = colorSchemes.find(cs => cs.id === selectedColorScheme)
 
   const religiousBlessings: { [key in EventType]?: string } = {
@@ -426,6 +451,36 @@ export default function Designer({ language, customTypes }: DesignerProps) {
   const handleAnimationChange = (animationId: string) => {
     setSelectedAnimation(animationId)
     setAnimationKey(prev => prev + 1)
+  }
+
+  const renderBackgroundLayer = (background?: BackgroundOption, baseOpacity = 0.3) => {
+    if (!background) return null
+
+    if (background.type === 'video' && background.videoUrl) {
+      return (
+        <video
+          key={background.id}
+          className="absolute inset-0 w-full h-full object-cover"
+          src={background.videoUrl}
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={{ opacity: baseOpacity }}
+        />
+      )
+    }
+
+    return background.images.map((image, index) => (
+      <div
+        key={index}
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: `url(${image})`,
+          opacity: Math.max(baseOpacity - (index * 0.05), 0.1),
+        }}
+      />
+    ))
   }
 
   const renderInvitationContent = () => {
@@ -828,19 +883,10 @@ export default function Designer({ language, customTypes }: DesignerProps) {
           </div>
 
           <div className="lg:sticky lg:top-24 self-start">
-            <div className="bg-gradient-to-br from-gray-100 to-amber-50 rounded-2xl p-8">
+              <div className="bg-gradient-to-br from-gray-100 to-amber-50 rounded-2xl p-8">
               <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">תצוגה מקדימה</h3>
               <div className="relative min-h-[500px] flex items-center justify-center rounded-xl overflow-hidden">
-                {selectedBackgroundImages.map((image, index) => (
-                  <div
-                    key={index}
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{
-                      backgroundImage: `url(${image})`,
-                      opacity: 0.2,
-                    }}
-                  />
-                ))}
+                {renderBackgroundLayer(selectedBackgroundOption, 0.2)}
                 <div className="bg-white rounded-2xl p-8 shadow-2xl text-center relative z-10 max-w-md">
                   {renderInvitationContent()}
                 </div>
@@ -933,18 +979,39 @@ export default function Designer({ language, customTypes }: DesignerProps) {
                         : 'ring-2 ring-gray-200 hover:ring-amber-300'
                     }`}
                   >
-                    {bg.images.map((image, index) => (
-                      <div
-                        key={index}
-                        className="absolute inset-0 bg-cover bg-center"
-                        style={{
-                          backgroundImage: `url(${image})`,
-                          opacity: index === 0 ? 0.6 : 0.4,
-                        }}
-                      />
-                    ))}
+                    <div className="absolute inset-0">
+                      {bg.type === 'video' && bg.videoUrl ? (
+                        <video
+                          className="w-full h-full object-cover"
+                          src={bg.videoUrl}
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          poster={bg.previewImage}
+                          style={{ opacity: 0.6 }}
+                        />
+                      ) : (
+                        bg.images.map((image, index) => (
+                          <div
+                            key={index}
+                            className="absolute inset-0 bg-cover bg-center"
+                            style={{
+                              backgroundImage: `url(${image})`,
+                              opacity: index === 0 ? 0.6 : 0.4,
+                            }}
+                          />
+                        ))
+                      )}
+                    </div>
                     {selectedBackground === bg.id && (
                       <div className="absolute inset-0 bg-black/10" />
+                    )}
+                    {bg.type === 'video' && (
+                      <div className="absolute bottom-2 right-2 bg-black/50 text-white px-3 py-1 rounded-full flex items-center gap-1 text-xs font-semibold">
+                        <Video className="w-3 h-3" />
+                        <span>{language === 'he' ? 'וידאו' : 'Video'}</span>
+                      </div>
                     )}
                   </button>
                 ))}
@@ -1012,16 +1079,7 @@ export default function Designer({ language, customTypes }: DesignerProps) {
             <div className="bg-gradient-to-br from-gray-100 to-amber-50 rounded-2xl p-8">
               <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">תצוגה מקדימה סופית</h3>
               <div className="relative min-h-[600px] flex items-center justify-center rounded-xl overflow-hidden">
-                {selectedBackgroundImages.map((image, index) => (
-                  <div
-                    key={index}
-                    className="absolute inset-0 bg-cover bg-center"
-                    style={{
-                      backgroundImage: `url(${image})`,
-                      opacity: index === 0 ? 0.3 : 0.2,
-                    }}
-                  />
-                ))}
+                {renderBackgroundLayer(selectedBackgroundOption, 0.28)}
                 <div
                   key={animationKey}
                   className={`bg-white rounded-2xl p-8 shadow-2xl text-center relative z-10 max-w-md ${animations.find(a => a.id === selectedAnimation)?.class}`}

@@ -5,7 +5,7 @@ import Gallery from './components/Gallery'
 import Designer from './components/Designer'
 import Admin from './components/Admin'
 import { Language, getTranslation } from './translations'
-import { CustomInvitationType, Invitation } from './types'
+import { CustomInvitationType, Invitation, VideoBackground } from './types'
 
 type Page = 'home' | 'gallery' | 'designer' | 'admin'
 
@@ -45,6 +45,14 @@ function App() {
       imageUrl: 'https://images.pexels.com/photos/1729797/pexels-photo-1729797.jpeg?auto=compress&cs=tinysrgb&w=1200',
       hosts: 'אירוע אינטימי עם החברים • Intimate gathering with friends',
       eventDate: '01.07.2025',
+    }
+  ])
+  const [videoBackgrounds, setVideoBackgrounds] = useState<VideoBackground[]>([
+    {
+      id: 'golden-lights',
+      name: language === 'he' ? 'ניצוצות מוזהבים' : 'Golden Sparks',
+      url: 'https://videos.pexels.com/video-files/3129671/3129671-uhd_2560_1440_25fps.mp4',
+      previewImage: 'https://images.pexels.com/photos/196652/pexels-photo-196652.jpeg?auto=compress&cs=tinysrgb&w=600'
     }
   ])
 
@@ -129,7 +137,13 @@ function App() {
       <main>
         {currentPage === 'home' && <Home onStartDesigning={() => setCurrentPage('designer')} language={language} />}
         {currentPage === 'gallery' && <Gallery language={language} invitations={invitations} />}
-        {currentPage === 'designer' && <Designer language={language} customTypes={customInvitationTypes} />}
+        {currentPage === 'designer' && (
+          <Designer
+            language={language}
+            customTypes={customInvitationTypes}
+            videoBackgrounds={videoBackgrounds}
+          />
+        )}
         {currentPage === 'admin' && (
           <Admin
             language={language}
@@ -137,6 +151,8 @@ function App() {
             onCustomTypesChange={setCustomInvitationTypes}
             invitations={invitations}
             onInvitationsChange={setInvitations}
+            videoBackgrounds={videoBackgrounds}
+            onVideoBackgroundsChange={setVideoBackgrounds}
           />
         )}
       </main>

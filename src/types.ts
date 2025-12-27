@@ -14,3 +14,10 @@ export interface Invitation {
   hosts?: string
   eventDate?: string
 }
+
+export interface VideoBackground {
+  id: string
+  name: string
+  url: string
+  previewImage?: string
+}
