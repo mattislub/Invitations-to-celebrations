@@ -35,6 +35,9 @@ export default function Admin({
   onVideoBackgroundsChange
 }: AdminProps) {
   const t = getTranslation(language)
+  const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
+  const apiBaseUrl = configuredApiBaseUrl && configuredApiBaseUrl !== '/' ? configuredApiBaseUrl.replace(/\/$/, '') : '/api'
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
   const [designStyles, setDesignStyles] = useState<DesignStyle[]>([
     { id: 'modern-elegant', name: 'Modern Elegant', description: 'Minimal lines with warm gradients' },
     { id: 'heritage-gold', name: 'Heritage Gold', description: 'Traditional framing with golden ornaments' }
@@ -199,7 +202,7 @@ export default function Admin({
         reader.readAsDataURL(file)
       })
 
-      const response = await fetch(`${apiBaseUrl}/api/upload`, {
+      const response = await fetch(`${apiBaseUrl}/upload`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -240,7 +243,7 @@ export default function Admin({
     setSyncStatus('syncing')
 
     try {
-      const response = await fetch(`${apiBaseUrl}/api/admin/state`, {
+      const response = await fetch(`${apiBaseUrl}/admin/state`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -266,7 +269,7 @@ export default function Admin({
 
       setSyncStatus('syncing')
       try {
-        const response = await fetch(`${apiBaseUrl}/api/admin/state`)
+        const response = await fetch(`${apiBaseUrl}/admin/state`)
         if (!response.ok) {
           throw new Error('Failed to fetch admin state')
         }

@@ -91,7 +91,7 @@ const saveUpload = async (name, type, dataUrl, hostInfo) => {
 
   const protocol = hostInfo.protocol ?? 'http'
   const host = hostInfo.host ?? 'localhost'
-  return `${protocol}://${host}/uploads/${type}/${filename}`
+  return `${protocol}://${host}/api/uploads/${type}/${filename}`
 }
 
 const server = createServer(async (req, res) => {
@@ -108,8 +108,8 @@ const server = createServer(async (req, res) => {
     return
   }
 
-  if (pathname.startsWith('/uploads/')) {
-    const filePath = path.join(UPLOADS_DIR, pathname.replace('/uploads/', ''))
+  if (pathname.startsWith('/api/uploads/') || pathname.startsWith('/uploads/')) {
+    const filePath = path.join(UPLOADS_DIR, pathname.replace(/^\/(?:api\/)?uploads\//, ''))
     await serveFile(res, filePath)
     return
   }
