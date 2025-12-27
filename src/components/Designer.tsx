@@ -54,7 +54,7 @@ export default function Designer({ language }: DesignerProps) {
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(null)
   const [designStyle, setDesignStyle] = useState<DesignStyle>('modern')
   const [formData, setFormData] = useState<{ [key: string]: string }>({})
-  const [selectedBackground, setSelectedBackground] = useState<string>('romantic')
+  const [selectedBackground, setSelectedBackground] = useState<string>('elegant')
   const [selectedColorScheme, setSelectedColorScheme] = useState<string>('amber')
   const [selectedAnimation, setSelectedAnimation] = useState<string>('fadeIn')
   const [animationKey, setAnimationKey] = useState<number>(0)
@@ -182,8 +182,8 @@ export default function Designer({ language }: DesignerProps) {
 
   const backgrounds: BackgroundOption[] = [
     {
-      id: 'romantic',
-      name: 'רומנטי',
+      id: 'elegant',
+      name: 'אלגנטי',
       images: [
         'https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg?auto=compress&cs=tinysrgb&w=800',
         'https://images.pexels.com/photos/1670723/pexels-photo-1670723.jpeg?auto=compress&cs=tinysrgb&w=800'
@@ -191,8 +191,8 @@ export default function Designer({ language }: DesignerProps) {
       style: ['modern']
     },
     {
-      id: 'elegant',
-      name: 'אלגנטי',
+      id: 'sleek',
+      name: 'מודרני אלגנטי',
       images: [
         'https://images.pexels.com/photos/1702238/pexels-photo-1702238.jpeg?auto=compress&cs=tinysrgb&w=800',
         'https://images.pexels.com/photos/1444416/pexels-photo-1444416.jpeg?auto=compress&cs=tinysrgb&w=800'
@@ -343,7 +343,7 @@ export default function Designer({ language }: DesignerProps) {
       setSelectedBackground('traditional-gold')
       setSelectedColorScheme('navy-gold')
     } else {
-      setSelectedBackground('romantic')
+      setSelectedBackground('elegant')
       setSelectedColorScheme('amber')
     }
     setStep('design')

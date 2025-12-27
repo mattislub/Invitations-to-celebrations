@@ -25,7 +25,7 @@ export default function Home({ onStartDesigning, language }: HomeProps) {
   const t = getTranslation(language)
 
   const [layers, setLayers] = useState<BackgroundLayer[]>([
-    { id: 1, image: 'https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg?auto=compress&cs=tinysrgb&w=800', opacity: 0.3, name: language === 'he' ? 'פרחים רומנטיים' : 'Romantic Flowers' },
+    { id: 1, image: 'https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg?auto=compress&cs=tinysrgb&w=800', opacity: 0.3, name: language === 'he' ? 'פרחים אלגנטיים' : 'Elegant Flowers' },
     { id: 2, image: 'https://images.pexels.com/photos/1670723/pexels-photo-1670723.jpeg?auto=compress&cs=tinysrgb&w=800', opacity: 0.2, name: language === 'he' ? 'רקע זהוב' : 'Golden Background' },
   ])
 
