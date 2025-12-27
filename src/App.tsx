@@ -5,7 +5,7 @@ import Gallery from './components/Gallery'
 import Designer from './components/Designer'
 import Admin from './components/Admin'
 import { Language, getTranslation } from './translations'
-import { CustomInvitationType } from './types'
+import { CustomInvitationType, Invitation } from './types'
 
 type Page = 'home' | 'gallery' | 'designer' | 'admin'
 
@@ -18,6 +18,35 @@ function App() {
     nameYi: 'משפוחה שמחה',
     nameEn: 'Family Celebration',
   }])
+  const [invitations, setInvitations] = useState<Invitation[]>([
+    {
+      id: 'wedding-1',
+      titleHe: 'שרה ודוד',
+      titleEn: 'Sarah & David',
+      category: 'wedding',
+      imageUrl: 'https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      hosts: 'משפחות לוי וקורן • Levi & Koren Families',
+      eventDate: '15.08.2025',
+    },
+    {
+      id: 'bar-mitzvah-1',
+      titleHe: 'יואל חוגג בר מצווה',
+      titleEn: 'Yoel Bar Mitzvah',
+      category: 'barMitzvah',
+      imageUrl: 'https://images.pexels.com/photos/1111318/pexels-photo-1111318.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      hosts: 'בהזמנת משפחת כהן • Hosted by the Cohen Family',
+      eventDate: '10.03.2025',
+    },
+    {
+      id: 'birthday-1',
+      titleHe: 'חגיגת יום הולדת 30',
+      titleEn: '30th Birthday Bash',
+      category: 'birthday',
+      imageUrl: 'https://images.pexels.com/photos/1729797/pexels-photo-1729797.jpeg?auto=compress&cs=tinysrgb&w=1200',
+      hosts: 'אירוע אינטימי עם החברים • Intimate gathering with friends',
+      eventDate: '01.07.2025',
+    }
+  ])
 
   const t = getTranslation(language)
   const isRTL = language === 'he'
@@ -99,13 +128,15 @@ function App() {
 
       <main>
         {currentPage === 'home' && <Home onStartDesigning={() => setCurrentPage('designer')} language={language} />}
-        {currentPage === 'gallery' && <Gallery language={language} />}
+        {currentPage === 'gallery' && <Gallery language={language} invitations={invitations} />}
         {currentPage === 'designer' && <Designer language={language} customTypes={customInvitationTypes} />}
         {currentPage === 'admin' && (
           <Admin
             language={language}
             customTypes={customInvitationTypes}
             onCustomTypesChange={setCustomInvitationTypes}
+            invitations={invitations}
+            onInvitationsChange={setInvitations}
           />
         )}
       </main>

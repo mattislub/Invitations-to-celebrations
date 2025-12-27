@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
 import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw, Upload, Trash } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
-import { CustomInvitationType } from '../types'
+import { CustomInvitationType, Invitation } from '../types'
 
 interface AdminProps {
   language: Language
   customTypes: CustomInvitationType[]
   onCustomTypesChange: (types: CustomInvitationType[]) => void
+  invitations: Invitation[]
+  onInvitationsChange: (invitations: Invitation[]) => void
 }
 
 interface StyleItem {
@@ -35,7 +37,7 @@ interface DimensionSettings {
   unit: 'px' | 'cm'
 }
 
-export default function Admin({ language, customTypes, onCustomTypesChange }: AdminProps) {
+export default function Admin({ language, customTypes, onCustomTypesChange, invitations, onInvitationsChange }: AdminProps) {
   const t = getTranslation(language)
   const [designStyles, setDesignStyles] = useState<StyleItem[]>([
     { id: 'modern-elegant', name: 'Modern Elegant', description: 'Minimal lines with warm gradients' },
@@ -56,15 +58,36 @@ export default function Admin({ language, customTypes, onCustomTypesChange }: Ad
   const [newBackground, setNewBackground] = useState({ name: '', preview: '' })
   const [newBackgroundFile, setNewBackgroundFile] = useState<File | null>(null)
   const [newInvitationType, setNewInvitationType] = useState({ nameHe: '', nameYi: '', nameEn: '' })
+  const [newInvitation, setNewInvitation] = useState({
+    titleHe: '',
+    titleEn: '',
+    category: 'wedding' as Invitation['category'],
+    imageUrl: '',
+    hosts: '',
+    eventDate: ''
+  })
   const [statusMessage, setStatusMessage] = useState('')
   const [, setUploading] = useState(false)
 
+  const getCategoryLabel = (category: Invitation['category']) => {
+    const categoryMap: Record<Invitation['category'], string> = {
+      wedding: t.gallery.categories.wedding,
+      barMitzvah: t.gallery.categories.barMitzvah,
+      batMitzvah: t.gallery.categories.batMitzvah,
+      birthday: t.gallery.categories.birthday,
+      engagement: t.gallery.categories.engagement,
+      thankYou: language === 'he' ? 'כרטיסי תודה' : 'Thank You Cards'
+    }
+    return categoryMap[category] || category
+  }
+
   const stats = useMemo(() => ([
+    { label: t.admin.stats.invitations, value: invitations.length, icon: ImageIcon, accent: 'from-amber-600 to-orange-500' },
     { label: t.admin.stats.styles, value: designStyles.length, icon: Palette, accent: 'from-amber-500 to-orange-400' },
     { label: t.admin.stats.fonts, value: fonts.length, icon: TypeIcon, accent: 'from-blue-500 to-indigo-500' },
     { label: t.admin.stats.backgrounds, value: backgrounds.length, icon: ImageIcon, accent: 'from-emerald-500 to-teal-500' },
     { label: t.admin.stats.dimensions, value: `${dimensions.width}×${dimensions.height}${dimensions.unit}`, icon: Ruler, accent: 'from-gray-700 to-gray-500' }
-  ]), [designStyles.length, fonts.length, backgrounds.length, dimensions, t])
+  ]), [designStyles.length, fonts.length, backgrounds.length, dimensions, invitations.length, t])
 
   const handleAddStyle = () => {
     if (!newStyle.name.trim()) return
@@ -91,6 +114,27 @@ export default function Admin({ language, customTypes, onCustomTypesChange }: Ad
     const updatedTypes = [...customTypes, { id: crypto.randomUUID(), ...newInvitationType }]
     onCustomTypesChange(updatedTypes)
     setNewInvitationType({ nameHe: '', nameYi: '', nameEn: '' })
+  }
+
+  const handleAddInvitation = () => {
+    if (!newInvitation.titleHe.trim() || !newInvitation.titleEn.trim() || !newInvitation.imageUrl.trim()) return
+    const newItem: Invitation = {
+      id: crypto.randomUUID(),
+      ...newInvitation,
+    }
+    onInvitationsChange([newItem, ...invitations])
+    setNewInvitation({
+      titleHe: '',
+      titleEn: '',
+      category: 'wedding',
+      imageUrl: '',
+      hosts: '',
+      eventDate: ''
+    })
+  }
+
+  const handleRemoveInvitation = (id: string) => {
+    onInvitationsChange(invitations.filter(invitation => invitation.id !== id))
   }
 
   const handleRemoveInvitationType = (id: string) => {
@@ -188,6 +232,103 @@ export default function Admin({ language, customTypes, onCustomTypesChange }: Ad
             </div>
           )
         })}
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 mb-8">
+        <div className="flex items-center gap-3 mb-6">
+          <ImageIcon className="w-6 h-6 text-amber-600" />
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">{t.admin.sections.galleryInvitations.title}</h2>
+            <p className="text-gray-600 text-sm">{t.admin.sections.galleryInvitations.description}</p>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+          <input
+            type="text"
+            value={newInvitation.titleHe}
+            onChange={(e) => setNewInvitation(prev => ({ ...prev, titleHe: e.target.value }))}
+            placeholder={t.admin.fields.name}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-600"
+          />
+          <input
+            type="text"
+            value={newInvitation.titleEn}
+            onChange={(e) => setNewInvitation(prev => ({ ...prev, titleEn: e.target.value }))}
+            placeholder={t.admin.fields.englishName}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-600"
+          />
+          <select
+            value={newInvitation.category}
+            onChange={(e) => setNewInvitation(prev => ({ ...prev, category: e.target.value as Invitation['category'] }))}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-600 bg-white"
+          >
+            <option value="wedding">{t.gallery.categories.wedding}</option>
+            <option value="barMitzvah">{t.gallery.categories.barMitzvah}</option>
+            <option value="batMitzvah">{t.gallery.categories.batMitzvah}</option>
+            <option value="birthday">{t.gallery.categories.birthday}</option>
+            <option value="engagement">{t.gallery.categories.engagement}</option>
+            <option value="thankYou">{language === 'he' ? 'כרטיסי תודה' : 'Thank You'}</option>
+          </select>
+          <input
+            type="url"
+            value={newInvitation.imageUrl}
+            onChange={(e) => setNewInvitation(prev => ({ ...prev, imageUrl: e.target.value }))}
+            placeholder={t.admin.fields.imageUrl}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-600"
+          />
+          <input
+            type="text"
+            value={newInvitation.hosts}
+            onChange={(e) => setNewInvitation(prev => ({ ...prev, hosts: e.target.value }))}
+            placeholder={t.admin.fields.hosts}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-600"
+          />
+          <input
+            type="text"
+            value={newInvitation.eventDate}
+            onChange={(e) => setNewInvitation(prev => ({ ...prev, eventDate: e.target.value }))}
+            placeholder={t.admin.fields.eventDate}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-600"
+          />
+        </div>
+
+        <button
+          onClick={handleAddInvitation}
+          className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-500 text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl"
+        >
+          <Plus className="w-4 h-4" />
+          {t.admin.buttons.add}
+        </button>
+
+        <div className="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {invitations.length === 0 && (
+            <p className="text-gray-500 text-sm text-center py-6 md:col-span-3">{t.admin.messages.empty}</p>
+          )}
+          {invitations.map((invitation) => (
+            <div key={invitation.id} className="p-4 rounded-xl border border-gray-200 bg-gray-50 relative">
+              <div
+                className="h-32 rounded-lg bg-cover bg-center mb-3"
+                style={{ backgroundImage: `url(${invitation.imageUrl})` }}
+              />
+              <h3 className="font-semibold text-gray-800">{language === 'he' ? invitation.titleHe : invitation.titleEn}</h3>
+              <p className="text-sm text-gray-600">{invitation.hosts || t.admin.fields.hosts}</p>
+              {invitation.eventDate && (
+                <p className="text-xs text-gray-500 mt-1">{invitation.eventDate}</p>
+              )}
+              <div className="mt-2 flex items-center justify-between text-sm text-gray-500">
+                <span>{getCategoryLabel(invitation.category)}</span>
+                <button
+                  onClick={() => handleRemoveInvitation(invitation.id)}
+                  className="text-gray-400 hover:text-red-600 transition-colors"
+                  title={t.admin.buttons.delete}
+                >
+                  <Trash className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 mb-8">

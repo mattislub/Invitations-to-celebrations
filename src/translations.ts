@@ -40,6 +40,7 @@ export interface Translations {
   gallery: {
     title: string
     subtitle: string
+    realInvitation: string
     categories: {
       all: string
       wedding: string
@@ -47,6 +48,7 @@ export interface Translations {
       batMitzvah: string
       birthday: string
       engagement: string
+      thankYou: string
     }
   }
   designer: {
@@ -147,6 +149,7 @@ export interface Translations {
     title: string
     subtitle: string
     stats: {
+      invitations: string
       styles: string
       fonts: string
       backgrounds: string
@@ -158,6 +161,10 @@ export interface Translations {
         description: string
       }
       styles: {
+        title: string
+        description: string
+      }
+      galleryInvitations: {
         title: string
         description: string
       }
@@ -185,6 +192,9 @@ export interface Translations {
       unit: string
       yiddishName: string
       englishName: string
+      imageUrl: string
+      hosts: string
+      eventDate: string
     }
     buttons: {
       add: string
@@ -260,15 +270,17 @@ export const translations: Record<Language, Translations> = {
       }
     },
     gallery: {
-      title: 'גלריית עיצובים',
-      subtitle: 'השראה ודוגמאות להזמנות שעוצבו במערכת שלנו',
+      title: 'גלריית הזמנות אמיתיות',
+      subtitle: 'השראה ודוגמאות להזמנות אמיתיות שעוצבו במערכת שלנו',
+      realInvitation: 'הזמנה אמיתית',
       categories: {
         all: 'הכל',
         wedding: 'חתונות',
         barMitzvah: 'בר מצווה',
         batMitzvah: 'בת מצווה',
         birthday: 'ימי הולדת',
-        engagement: 'אירוסין'
+        engagement: 'אירוסין',
+        thankYou: 'כרטיסי תודה'
       }
     },
     designer: {
@@ -369,6 +381,7 @@ export const translations: Record<Language, Translations> = {
       title: 'מרכז ניהול',
       subtitle: 'דף ייעודי לניהול סגנונות, פונטים ורקעים במערכת',
       stats: {
+        invitations: 'הזמנות בגלריה',
         styles: 'סגנונות רשומים',
         fonts: 'פונטים זמינים',
         backgrounds: 'רקעים פעילים',
@@ -382,6 +395,10 @@ export const translations: Record<Language, Translations> = {
         styles: {
           title: 'הוספת סגנונות עיצוב',
           description: 'נהלו קטלוג של סגנונות עיצוב והוסיפו כותרות ותיאורים חדשים.'
+        },
+        galleryInvitations: {
+          title: 'הוספת הזמנות אמיתיות לגלריה',
+          description: 'הזינו הזמנות אמיתיות עם תמונות, בעלי שמחה ותאריך כדי להציג אותן ללקוחות.'
         },
         fonts: {
           title: 'הוספת פונטים',
@@ -406,7 +423,10 @@ export const translations: Record<Language, Translations> = {
         height: 'גובה',
         unit: 'יחידת מידה',
         yiddishName: 'שם ביידיש',
-        englishName: 'שם באנגלית'
+        englishName: 'שם באנגלית',
+        imageUrl: 'קישור לתמונה',
+        hosts: 'מארחים',
+        eventDate: 'תאריך אירוע'
       },
       buttons: {
         add: 'הוספה',
@@ -480,15 +500,17 @@ export const translations: Record<Language, Translations> = {
       }
     },
     gallery: {
-      title: 'Design Gallery',
-      subtitle: 'Inspiration and examples of invitations designed in our system',
+      title: 'Real Invitation Gallery',
+      subtitle: 'Inspiration and examples from real invitations designed in our system',
+      realInvitation: 'Real invitation',
       categories: {
         all: 'All',
         wedding: 'Weddings',
         barMitzvah: 'Bar Mitzvah',
         batMitzvah: 'Bat Mitzvah',
         birthday: 'Birthdays',
-        engagement: 'Engagements'
+        engagement: 'Engagements',
+        thankYou: 'Thank You Cards'
       }
     },
     designer: {
@@ -589,6 +611,7 @@ export const translations: Record<Language, Translations> = {
       title: 'Admin Console',
       subtitle: 'Dedicated workspace for managing design styles, fonts, and backgrounds',
       stats: {
+        invitations: 'Gallery Invitations',
         styles: 'Design Styles',
         fonts: 'Available Fonts',
         backgrounds: 'Active Backgrounds',
@@ -602,6 +625,10 @@ export const translations: Record<Language, Translations> = {
         styles: {
           title: 'Add Design Styles',
           description: 'Maintain your catalog of styles with titles and descriptions.'
+        },
+        galleryInvitations: {
+          title: 'Add Real Invitations to Gallery',
+          description: 'Enter real invitations with images, hosts, and event dates to showcase to visitors.'
         },
         fonts: {
           title: 'Add Fonts',
@@ -626,7 +653,10 @@ export const translations: Record<Language, Translations> = {
         height: 'Height',
         unit: 'Unit',
         yiddishName: 'Yiddish Name',
-        englishName: 'English Name'
+        englishName: 'English Name',
+        imageUrl: 'Image URL',
+        hosts: 'Hosts',
+        eventDate: 'Event Date'
       },
       buttons: {
         add: 'Add',
