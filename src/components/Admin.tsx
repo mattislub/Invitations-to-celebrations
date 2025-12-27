@@ -60,6 +60,7 @@ export default function Admin({
   const [newBackgroundFile, setNewBackgroundFile] = useState<File | null>(null)
   const [newVideoBackground, setNewVideoBackground] = useState({ name: '', url: '', previewImage: '' })
   const [newVideoFile, setNewVideoFile] = useState<File | null>(null)
+  const [newVideoPreviewFile, setNewVideoPreviewFile] = useState<File | null>(null)
   const [newInvitationType, setNewInvitationType] = useState({ nameHe: '', nameYi: '', nameEn: '' })
   const [newInvitation, setNewInvitation] = useState({
     titleHe: '',
@@ -69,6 +70,7 @@ export default function Admin({
     hosts: '',
     eventDate: ''
   })
+  const [newInvitationFile, setNewInvitationFile] = useState<File | null>(null)
   const [statusMessage, setStatusMessage] = useState('')
   const [, setUploading] = useState(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'gallery' | 'types' | 'styles' | 'backgrounds' | 'videos' | 'fonts' | 'dimensions'>('overview')
@@ -112,27 +114,40 @@ export default function Admin({
   }
 
   const handleAddFont = () => {
-    if (!newFont.name.trim() || !newFont.url.trim()) return
+    if (!newFont.name.trim() || !newFont.url.trim() || !newFontFile) {
+      setStatusMessage(t.admin.messages.uploadError)
+      return
+    }
     setFonts(prev => [...prev, { id: crypto.randomUUID(), ...newFont, file: newFontFile?.name }])
     setNewFont({ name: '', url: '' })
     setNewFontFile(null)
+    setStatusMessage('')
   }
 
   const handleAddBackground = () => {
-    if (!newBackground.name.trim() || !newBackground.preview.trim()) return
+    if (!newBackground.name.trim() || !newBackground.preview.trim() || !newBackgroundFile) {
+      setStatusMessage(t.admin.messages.uploadError)
+      return
+    }
     setBackgrounds(prev => [...prev, { id: crypto.randomUUID(), ...newBackground, file: newBackgroundFile?.name }])
     setNewBackground({ name: '', preview: '' })
     setNewBackgroundFile(null)
+    setStatusMessage('')
   }
 
   const handleAddVideoBackground = () => {
-    if (!newVideoBackground.name.trim() || !newVideoBackground.url.trim()) return
+    if (!newVideoBackground.name.trim() || !newVideoBackground.url.trim() || !newVideoFile) {
+      setStatusMessage(t.admin.messages.uploadError)
+      return
+    }
     onVideoBackgroundsChange([
       ...videoBackgrounds,
       { id: crypto.randomUUID(), ...newVideoBackground, previewImage: newVideoBackground.previewImage || undefined }
     ])
     setNewVideoBackground({ name: '', url: '', previewImage: '' })
     setNewVideoFile(null)
+    setNewVideoPreviewFile(null)
+    setStatusMessage('')
   }
 
   const handleAddInvitationType = () => {
@@ -143,7 +158,10 @@ export default function Admin({
   }
 
   const handleAddInvitation = () => {
-    if (!newInvitation.titleHe.trim() || !newInvitation.titleEn.trim() || !newInvitation.imageUrl.trim()) return
+    if (!newInvitation.titleHe.trim() || !newInvitation.titleEn.trim() || !newInvitation.imageUrl.trim() || !newInvitationFile) {
+      setStatusMessage(t.admin.messages.uploadError)
+      return
+    }
     const newItem: Invitation = {
       id: crypto.randomUUID(),
       ...newInvitation,
@@ -157,6 +175,8 @@ export default function Admin({
       hosts: '',
       eventDate: ''
     })
+    setNewInvitationFile(null)
+    setStatusMessage('')
   }
 
   const handleRemoveInvitation = (id: string) => {
@@ -183,7 +203,7 @@ export default function Admin({
     setTimeout(() => setStatusMessage(''), 3000)
   }
 
-  const handleFileUpload = async (file: File, type: 'font' | 'background' | 'video'): Promise<string | null> => {
+  const handleFileUpload = async (file: File, type: 'font' | 'background' | 'video' | 'image' | 'preview'): Promise<string | null> => {
     if (!apiBaseUrl) {
       setStatusMessage(t.admin.server.disabled)
       return null
@@ -317,6 +337,24 @@ export default function Admin({
     const url = await handleFileUpload(file, 'video')
     if (url) {
       setNewVideoBackground(prev => ({ ...prev, url }))
+    }
+  }
+
+  const handlePreviewImageFileChange = async (file: File | null) => {
+    if (!file) return
+    setNewVideoPreviewFile(file)
+    const url = await handleFileUpload(file, 'preview')
+    if (url) {
+      setNewVideoBackground(prev => ({ ...prev, previewImage: url }))
+    }
+  }
+
+  const handleInvitationImageFileChange = async (file: File | null) => {
+    if (!file) return
+    setNewInvitationFile(file)
+    const url = await handleFileUpload(file, 'image')
+    if (url) {
+      setNewInvitation(prev => ({ ...prev, imageUrl: url }))
     }
   }
 
@@ -458,13 +496,27 @@ export default function Admin({
                   <option value="engagement">{t.gallery.categories.engagement}</option>
                   <option value="thankYou">{language === 'he' ? 'כרטיסי תודה' : 'Thank You'}</option>
                 </select>
-                <input
-                  type="url"
-                  value={newInvitation.imageUrl}
-                  onChange={(e) => setNewInvitation(prev => ({ ...prev, imageUrl: e.target.value }))}
-                  placeholder={t.admin.fields.imageUrl}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-600"
-                />
+                <label className="block">
+                  <span className="text-sm font-medium text-gray-700">{t.admin.fields.file}</span>
+                  <div className="mt-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleInvitationImageFileChange(e.target.files?.[0] || null)}
+                      className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                    />
+                    {newInvitationFile && (
+                      <p className="text-xs text-gray-500 mt-1">{newInvitationFile.name}</p>
+                    )}
+                    <input
+                      type="text"
+                      value={newInvitation.imageUrl}
+                      placeholder={t.admin.fields.imageUrl}
+                      readOnly
+                      className="mt-2 w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600"
+                    />
+                  </div>
+                </label>
                 <input
                   type="text"
                   value={newInvitation.hosts}
@@ -654,11 +706,11 @@ export default function Admin({
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
                 <input
-                  type="url"
+                  type="text"
                   value={newBackground.preview}
-                  onChange={(e) => setNewBackground(prev => ({ ...prev, preview: e.target.value }))}
+                  readOnly
                   placeholder={t.admin.fields.url}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600"
                 />
                 <label className="block">
                   <span className="text-sm font-medium text-gray-700">{t.admin.fields.file}</span>
@@ -731,18 +783,18 @@ export default function Admin({
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
                 <input
-                  type="url"
+                  type="text"
                   value={newVideoBackground.url}
-                  onChange={(e) => setNewVideoBackground(prev => ({ ...prev, url: e.target.value }))}
+                  readOnly
                   placeholder={t.admin.fields.videoUrl}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600"
                 />
                 <input
-                  type="url"
+                  type="text"
                   value={newVideoBackground.previewImage}
-                  onChange={(e) => setNewVideoBackground(prev => ({ ...prev, previewImage: e.target.value }))}
+                  readOnly
                   placeholder={t.admin.fields.preview}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600"
                 />
                 <label className="block">
                   <span className="text-sm font-medium text-gray-700">{t.admin.fields.file}</span>
@@ -755,6 +807,20 @@ export default function Admin({
                     />
                     {newVideoFile && (
                       <p className="text-xs text-gray-500 mt-1">{newVideoFile.name}</p>
+                    )}
+                  </div>
+                </label>
+                <label className="block">
+                  <span className="text-sm font-medium text-gray-700">{t.admin.fields.preview}</span>
+                  <div className="mt-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handlePreviewImageFileChange(e.target.files?.[0] || null)}
+                      className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                    />
+                    {newVideoPreviewFile && (
+                      <p className="text-xs text-gray-500 mt-1">{newVideoPreviewFile.name}</p>
                     )}
                   </div>
                 </label>
@@ -829,11 +895,11 @@ export default function Admin({
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 <input
-                  type="url"
+                  type="text"
                   value={newFont.url}
-                  onChange={(e) => setNewFont(prev => ({ ...prev, url: e.target.value }))}
+                  readOnly
                   placeholder={t.admin.fields.url}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600"
                 />
                 <label className="block">
                   <span className="text-sm font-medium text-gray-700">{t.admin.fields.file}</span>

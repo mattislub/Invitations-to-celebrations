@@ -423,15 +423,15 @@ export const translations: Record<Language, Translations> = {
         },
         fonts: {
           title: 'הוספת פונטים',
-          description: 'הוסיפו משפחות פונטים חדשות וקישורי טעינה לעיצובים.'
+          description: 'העלו קבצי פונטים חדשים כדי להשתמש בהם בעיצובים, ללא קישורים חיצוניים.'
         },
         backgrounds: {
           title: 'ניהול רקעים',
-          description: 'צרפו תמונות רקע חדשות או החליפו קישורי רקע קיימים.'
+          description: 'העלו קבצי רקע חדשים במקום להשתמש בקישורים חיצוניים.'
         },
         videoBackgrounds: {
           title: 'וידאו כרקע',
-          description: 'הוסיפו סרטוני וידאו כרקע לעיצובים הדיגיטליים.'
+          description: 'העלו קובצי וידאו כרקע כך שכל המדיה תהיה מאוחסנת בקבצים.'
         },
         dimensions: {
           title: 'הגדרות גודל',
@@ -441,18 +441,18 @@ export const translations: Record<Language, Translations> = {
       fields: {
         name: 'שם',
         description: 'תיאור',
-        url: 'קישור',
-        preview: 'תצוגה מקדימה',
-        file: 'קובץ',
+        url: 'קובץ שהועלה',
+        preview: 'תצוגה מקדימה שהועלתה',
+        file: 'קובץ להעלאה',
         width: 'רוחב',
         height: 'גובה',
         unit: 'יחידת מידה',
         yiddishName: 'שם ביידיש',
         englishName: 'שם באנגלית',
-        imageUrl: 'קישור לתמונה',
+        imageUrl: 'תמונת אירוע שהועלתה',
         hosts: 'מארחים',
         eventDate: 'תאריך אירוע',
-        videoUrl: 'קישור וידאו'
+        videoUrl: 'וידאו שהועלה'
       },
       buttons: {
         add: 'הוספה',
@@ -666,15 +666,15 @@ export const translations: Record<Language, Translations> = {
         },
         fonts: {
           title: 'Add Fonts',
-          description: 'Register new font families and loading URLs for your designs.'
+          description: 'Upload new font files to use in designs instead of external links.'
         },
         backgrounds: {
           title: 'Manage Backgrounds',
-          description: 'Attach new background images or replace existing ones.'
+          description: 'Upload new background files instead of relying on external links.'
         },
         videoBackgrounds: {
           title: 'Video Backgrounds',
-          description: 'Add looping videos that can be used behind invitation designs.'
+          description: 'Upload video files that can be used behind invitation designs.'
         },
         dimensions: {
           title: 'Size Settings',
@@ -684,18 +684,18 @@ export const translations: Record<Language, Translations> = {
       fields: {
         name: 'Name',
         description: 'Description',
-        url: 'URL',
-        preview: 'Preview',
-        file: 'File',
+        url: 'Uploaded file URL',
+        preview: 'Uploaded preview',
+        file: 'File to upload',
         width: 'Width',
         height: 'Height',
         unit: 'Unit',
         yiddishName: 'Yiddish Name',
         englishName: 'English Name',
-        imageUrl: 'Image URL',
+        imageUrl: 'Uploaded image',
         hosts: 'Hosts',
         eventDate: 'Event Date',
-        videoUrl: 'Video URL'
+        videoUrl: 'Uploaded video'
       },
       buttons: {
         add: 'Add',
