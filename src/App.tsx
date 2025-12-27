@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Sparkles, Languages } from 'lucide-react'
+import { Sparkles, Languages, Shield } from 'lucide-react'
 import Home from './components/Home'
 import Gallery from './components/Gallery'
 import Designer from './components/Designer'
+import Admin from './components/Admin'
 import { Language, getTranslation } from './translations'
 
-type Page = 'home' | 'gallery' | 'designer'
+type Page = 'home' | 'gallery' | 'designer' | 'admin'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home')
@@ -49,6 +50,15 @@ function App() {
               >
                 {t.header.gallery}
               </button>
+              <button
+                onClick={() => setCurrentPage('admin')}
+                className={`transition-colors font-medium flex items-center space-x-1 rtl:space-x-reverse ${
+                  currentPage === 'admin' ? 'text-amber-600' : 'text-gray-700 hover:text-amber-600'
+                }`}
+              >
+                <Shield className="w-5 h-5" />
+                <span>{t.header.admin}</span>
+              </button>
               <a href="#" className="text-gray-700 hover:text-amber-600 transition-colors font-medium">{t.header.pricing}</a>
               <a href="#" className="text-gray-700 hover:text-amber-600 transition-colors font-medium">{t.header.contact}</a>
               <button
@@ -84,6 +94,7 @@ function App() {
         {currentPage === 'home' && <Home onStartDesigning={() => setCurrentPage('designer')} language={language} />}
         {currentPage === 'gallery' && <Gallery language={language} />}
         {currentPage === 'designer' && <Designer language={language} />}
+        {currentPage === 'admin' && <Admin language={language} />}
       </main>
 
       <footer className="bg-gray-900 text-white py-12 mt-20">
