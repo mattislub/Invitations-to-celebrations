@@ -5,12 +5,19 @@ import Gallery from './components/Gallery'
 import Designer from './components/Designer'
 import Admin from './components/Admin'
 import { Language, getTranslation } from './translations'
+import { CustomInvitationType } from './types'
 
 type Page = 'home' | 'gallery' | 'designer' | 'admin'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home')
   const [language, setLanguage] = useState<Language>('he')
+  const [customInvitationTypes, setCustomInvitationTypes] = useState<CustomInvitationType[]>([{
+    id: 'family-celebration',
+    nameHe: 'שמחה משפחתית',
+    nameYi: 'משפוחה שמחה',
+    nameEn: 'Family Celebration',
+  }])
 
   const t = getTranslation(language)
   const isRTL = language === 'he'
@@ -93,8 +100,14 @@ function App() {
       <main>
         {currentPage === 'home' && <Home onStartDesigning={() => setCurrentPage('designer')} language={language} />}
         {currentPage === 'gallery' && <Gallery language={language} />}
-        {currentPage === 'designer' && <Designer language={language} />}
-        {currentPage === 'admin' && <Admin language={language} />}
+        {currentPage === 'designer' && <Designer language={language} customTypes={customInvitationTypes} />}
+        {currentPage === 'admin' && (
+          <Admin
+            language={language}
+            customTypes={customInvitationTypes}
+            onCustomTypesChange={setCustomInvitationTypes}
+          />
+        )}
       </main>
 
       <footer className="bg-gray-900 text-white py-12 mt-20">
