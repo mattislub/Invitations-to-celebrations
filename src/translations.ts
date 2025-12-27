@@ -383,6 +383,7 @@ export const translations: Record<Language, Translations> = {
         description: 'תיאור',
         url: 'קישור',
         preview: 'תצוגה מקדימה',
+        file: 'קובץ',
         width: 'רוחב',
         height: 'גובה',
         unit: 'יחידת מידה'
@@ -394,7 +395,9 @@ export const translations: Record<Language, Translations> = {
       },
       messages: {
         empty: 'אין פריטים להצגה כרגע',
-        saved: 'ההגדרות נשמרו'
+        saved: 'ההגדרות נשמרו',
+        uploading: 'מעלה קובץ...',
+        uploadError: 'העלאה נכשלה, נסו שוב'
       }
     }
   },
@@ -591,6 +594,7 @@ export const translations: Record<Language, Translations> = {
         description: 'Description',
         url: 'URL',
         preview: 'Preview',
+        file: 'File',
         width: 'Width',
         height: 'Height',
         unit: 'Unit'
@@ -602,7 +606,9 @@ export const translations: Record<Language, Translations> = {
       },
       messages: {
         empty: 'No items to display yet',
-        saved: 'Settings saved'
+        saved: 'Settings saved',
+        uploading: 'Uploading file...',
+        uploadError: 'Upload failed, please try again.'
       }
     }
   }
