@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw, Upload, Trash, Video as VideoIcon, Server } from 'lucide-react'
+import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw, Upload, Trash, Video as VideoIcon, Server, CloudOff } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
-import { CustomInvitationType, Invitation, VideoBackground } from '../types'
+import { CustomInvitationType, Invitation, VideoBackground, DesignStyle, AdminFont, AdminBackground, AdminDimensions } from '../types'
 
 interface AdminProps {
   language: Language
@@ -13,30 +13,14 @@ interface AdminProps {
   onVideoBackgroundsChange: (backgrounds: VideoBackground[]) => void
 }
 
-interface StyleItem {
-  id: string
-  name: string
-  description: string
-}
-
-interface FontItem {
-  id: string
-  name: string
-  url: string
-  file?: string
-}
-
-interface BackgroundItem {
-  id: string
-  name: string
-  preview: string
-  file?: string
-}
-
-interface DimensionSettings {
-  width: number
-  height: number
-  unit: 'px' | 'cm'
+interface SyncPayload {
+  customTypes: CustomInvitationType[]
+  invitations: Invitation[]
+  videoBackgrounds: VideoBackground[]
+  designStyles: DesignStyle[]
+  fonts: AdminFont[]
+  backgrounds: AdminBackground[]
+  dimensions: AdminDimensions
 }
 
 type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'disabled'
@@ -51,19 +35,19 @@ export default function Admin({
   onVideoBackgroundsChange
 }: AdminProps) {
   const t = getTranslation(language)
-  const [designStyles, setDesignStyles] = useState<StyleItem[]>([
+  const [designStyles, setDesignStyles] = useState<DesignStyle[]>([
     { id: 'modern-elegant', name: 'Modern Elegant', description: 'Minimal lines with warm gradients' },
     { id: 'heritage-gold', name: 'Heritage Gold', description: 'Traditional framing with golden ornaments' }
   ])
-  const [fonts, setFonts] = useState<FontItem[]>([
+  const [fonts, setFonts] = useState<AdminFont[]>([
     { id: 'assistant', name: 'Assistant', url: 'https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&display=swap' },
     { id: 'playfair', name: 'Playfair Display', url: 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap' }
   ])
-  const [backgrounds, setBackgrounds] = useState<BackgroundItem[]>([
+  const [backgrounds, setBackgrounds] = useState<AdminBackground[]>([
     { id: 'soft-blush', name: 'Soft Blush', preview: 'https://images.pexels.com/photos/2043997/pexels-photo-2043997.jpeg?auto=compress&cs=tinysrgb&w=600' },
     { id: 'royal-blue', name: 'Royal Blue', preview: 'https://images.pexels.com/photos/1762851/pexels-photo-1762851.jpeg?auto=compress&cs=tinysrgb&w=600' }
   ])
-  const [dimensions, setDimensions] = useState<DimensionSettings>({ width: 1080, height: 1920, unit: 'px' })
+  const [dimensions, setDimensions] = useState<AdminDimensions>({ width: 1080, height: 1920, unit: 'px' })
   const [newStyle, setNewStyle] = useState({ name: '', description: '' })
   const [newFont, setNewFont] = useState({ name: '', url: '' })
   const [newFontFile, setNewFontFile] = useState<File | null>(null)
@@ -83,9 +67,8 @@ export default function Admin({
   const [statusMessage, setStatusMessage] = useState('')
   const [, setUploading] = useState(false)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(() =>
-    import.meta.env.VITE_API_BASE_URL ? 'idle' : 'disabled'
+    (import.meta.env.VITE_API_BASE_URL as string | undefined) ? 'idle' : 'disabled'
   )
-
   const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
   const getCategoryLabel = (category: Invitation['category']) => {
@@ -188,6 +171,11 @@ export default function Admin({
   }
 
   const handleFileUpload = async (file: File, type: 'font' | 'background' | 'video'): Promise<string | null> => {
+    if (!apiBaseUrl) {
+      setStatusMessage(t.admin.server.disabled)
+      return null
+    }
+
     setUploading(true)
     setStatusMessage(t.admin.messages.uploading)
 
@@ -198,10 +186,6 @@ export default function Admin({
         reader.onerror = () => reject(reader.error)
         reader.readAsDataURL(file)
       })
-
-      if (!apiBaseUrl) {
-        throw new Error('Missing API base URL')
-      }
 
       const response = await fetch(`${apiBaseUrl}/api/upload`, {
         method: 'POST',
@@ -231,20 +215,23 @@ export default function Admin({
       return
     }
 
+    const payload: SyncPayload = {
+      customTypes,
+      invitations,
+      videoBackgrounds,
+      designStyles,
+      fonts,
+      backgrounds,
+      dimensions
+    }
+
     setSyncStatus('syncing')
+
     try {
-      const response = await fetch(`${apiBaseUrl}/api/admin/sync`, {
+      const response = await fetch(`${apiBaseUrl}/api/admin/state`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customTypes,
-          invitations,
-          videoBackgrounds,
-          designStyles,
-          fonts,
-          backgrounds,
-          dimensions
-        })
+        body: JSON.stringify(payload)
       })
 
       if (!response.ok) {
@@ -259,8 +246,39 @@ export default function Admin({
   }, [apiBaseUrl, backgrounds, customTypes, designStyles, dimensions, fonts, invitations, videoBackgrounds])
 
   useEffect(() => {
-    void syncToServer()
-  }, [syncToServer])
+    const fetchData = async () => {
+      if (!apiBaseUrl) {
+        setSyncStatus('disabled')
+        return
+      }
+
+      setSyncStatus('syncing')
+      try {
+        const response = await fetch(`${apiBaseUrl}/api/admin/state`)
+        if (!response.ok) {
+          throw new Error('Failed to fetch admin state')
+        }
+
+        const payload = await response.json() as Partial<SyncPayload>
+        if (payload.designStyles) setDesignStyles(payload.designStyles)
+        if (payload.fonts) setFonts(payload.fonts)
+        if (payload.backgrounds) setBackgrounds(payload.backgrounds)
+        if (payload.customTypes) onCustomTypesChange(payload.customTypes)
+        if (payload.invitations) onInvitationsChange(payload.invitations)
+        if (payload.videoBackgrounds) onVideoBackgroundsChange(payload.videoBackgrounds)
+        if (payload.dimensions) setDimensions(payload.dimensions)
+
+        setSyncStatus('success')
+      } catch (error) {
+        console.error('Fetch error', error)
+        setSyncStatus('error')
+      }
+    }
+
+    void fetchData()
+  }, [apiBaseUrl, onCustomTypesChange, onInvitationsChange, onVideoBackgroundsChange])
+
+  // Sync to server only when user triggers save, keeping admin console predictable.
 
   const handleFontFileChange = async (file: File | null) => {
     if (!file) return
@@ -320,7 +338,7 @@ export default function Admin({
 
       <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 mb-8 flex items-start gap-4">
         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-700 to-gray-500 flex items-center justify-center text-white">
-          <Server className="w-6 h-6" />
+          {syncStatus === 'disabled' ? <CloudOff className="w-6 h-6" /> : <Server className="w-6 h-6" />}
         </div>
         <div className="flex-1">
           <p className="text-sm font-semibold text-gray-700">{t.admin.server.title}</p>
@@ -826,7 +844,7 @@ export default function Admin({
               <label className="text-sm font-medium text-gray-700">{t.admin.fields.unit}</label>
               <select
                 value={dimensions.unit}
-                onChange={(e) => setDimensions(prev => ({ ...prev, unit: e.target.value as DimensionSettings['unit'] }))}
+                onChange={(e) => setDimensions(prev => ({ ...prev, unit: e.target.value as AdminDimensions['unit'] }))}
                 className="px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700"
               >
                 <option value="px">px</option>
