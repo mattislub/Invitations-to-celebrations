@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw, Upload, Trash } from 'lucide-react'
+import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw, Upload, Trash, Video as VideoIcon } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
-import { CustomInvitationType, Invitation } from '../types'
+import { CustomInvitationType, Invitation, VideoBackground } from '../types'
 
 interface AdminProps {
   language: Language
@@ -9,6 +9,8 @@ interface AdminProps {
   onCustomTypesChange: (types: CustomInvitationType[]) => void
   invitations: Invitation[]
   onInvitationsChange: (invitations: Invitation[]) => void
+  videoBackgrounds: VideoBackground[]
+  onVideoBackgroundsChange: (backgrounds: VideoBackground[]) => void
 }
 
 interface StyleItem {
@@ -37,7 +39,15 @@ interface DimensionSettings {
   unit: 'px' | 'cm'
 }
 
-export default function Admin({ language, customTypes, onCustomTypesChange, invitations, onInvitationsChange }: AdminProps) {
+export default function Admin({
+  language,
+  customTypes,
+  onCustomTypesChange,
+  invitations,
+  onInvitationsChange,
+  videoBackgrounds,
+  onVideoBackgroundsChange
+}: AdminProps) {
   const t = getTranslation(language)
   const [designStyles, setDesignStyles] = useState<StyleItem[]>([
     { id: 'modern-elegant', name: 'Modern Elegant', description: 'Minimal lines with warm gradients' },
@@ -57,6 +67,8 @@ export default function Admin({ language, customTypes, onCustomTypesChange, invi
   const [newFontFile, setNewFontFile] = useState<File | null>(null)
   const [newBackground, setNewBackground] = useState({ name: '', preview: '' })
   const [newBackgroundFile, setNewBackgroundFile] = useState<File | null>(null)
+  const [newVideoBackground, setNewVideoBackground] = useState({ name: '', url: '', previewImage: '' })
+  const [newVideoFile, setNewVideoFile] = useState<File | null>(null)
   const [newInvitationType, setNewInvitationType] = useState({ nameHe: '', nameYi: '', nameEn: '' })
   const [newInvitation, setNewInvitation] = useState({
     titleHe: '',
@@ -86,8 +98,9 @@ export default function Admin({ language, customTypes, onCustomTypesChange, invi
     { label: t.admin.stats.styles, value: designStyles.length, icon: Palette, accent: 'from-amber-500 to-orange-400' },
     { label: t.admin.stats.fonts, value: fonts.length, icon: TypeIcon, accent: 'from-blue-500 to-indigo-500' },
     { label: t.admin.stats.backgrounds, value: backgrounds.length, icon: ImageIcon, accent: 'from-emerald-500 to-teal-500' },
+    { label: t.admin.stats.videoBackgrounds, value: videoBackgrounds.length, icon: VideoIcon, accent: 'from-purple-500 to-indigo-500' },
     { label: t.admin.stats.dimensions, value: `${dimensions.width}×${dimensions.height}${dimensions.unit}`, icon: Ruler, accent: 'from-gray-700 to-gray-500' }
-  ]), [designStyles.length, fonts.length, backgrounds.length, dimensions, invitations.length, t])
+  ]), [designStyles.length, fonts.length, backgrounds.length, videoBackgrounds.length, dimensions, invitations.length, t])
 
   const handleAddStyle = () => {
     if (!newStyle.name.trim()) return
@@ -107,6 +120,16 @@ export default function Admin({ language, customTypes, onCustomTypesChange, invi
     setBackgrounds(prev => [...prev, { id: crypto.randomUUID(), ...newBackground, file: newBackgroundFile?.name }])
     setNewBackground({ name: '', preview: '' })
     setNewBackgroundFile(null)
+  }
+
+  const handleAddVideoBackground = () => {
+    if (!newVideoBackground.name.trim() || !newVideoBackground.url.trim()) return
+    onVideoBackgroundsChange([
+      ...videoBackgrounds,
+      { id: crypto.randomUUID(), ...newVideoBackground, previewImage: newVideoBackground.previewImage || undefined }
+    ])
+    setNewVideoBackground({ name: '', url: '', previewImage: '' })
+    setNewVideoFile(null)
   }
 
   const handleAddInvitationType = () => {
@@ -141,6 +164,10 @@ export default function Admin({ language, customTypes, onCustomTypesChange, invi
     onCustomTypesChange(customTypes.filter(type => type.id !== id))
   }
 
+  const handleRemoveVideoBackground = (id: string) => {
+    onVideoBackgroundsChange(videoBackgrounds.filter(bg => bg.id !== id))
+  }
+
   const handleReset = () => {
     setDesignStyles([])
     setFonts([])
@@ -153,7 +180,7 @@ export default function Admin({ language, customTypes, onCustomTypesChange, invi
     setTimeout(() => setStatusMessage(''), 3000)
   }
 
-  const handleFileUpload = async (file: File, type: 'font' | 'background'): Promise<string | null> => {
+  const handleFileUpload = async (file: File, type: 'font' | 'background' | 'video'): Promise<string | null> => {
     setUploading(true)
     setStatusMessage(t.admin.messages.uploading)
 
@@ -202,6 +229,15 @@ export default function Admin({ language, customTypes, onCustomTypesChange, invi
     const url = await handleFileUpload(file, 'background')
     if (url) {
       setNewBackground(prev => ({ ...prev, preview: url }))
+    }
+  }
+
+  const handleVideoFileChange = async (file: File | null) => {
+    if (!file) return
+    setNewVideoFile(file)
+    const url = await handleFileUpload(file, 'video')
+    if (url) {
+      setNewVideoBackground(prev => ({ ...prev, url }))
     }
   }
 
@@ -514,6 +550,102 @@ export default function Admin({ language, customTypes, onCustomTypesChange, invi
                       )}
                     </div>
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+            <div className="flex items-center gap-3 mb-6">
+              <VideoIcon className="w-6 h-6 text-purple-600" />
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800">{t.admin.sections.videoBackgrounds.title}</h2>
+                <p className="text-gray-600 text-sm">{t.admin.sections.videoBackgrounds.description}</p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <input
+                type="text"
+                value={newVideoBackground.name}
+                onChange={(e) => setNewVideoBackground(prev => ({ ...prev, name: e.target.value }))}
+                placeholder={t.admin.fields.name}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <input
+                type="url"
+                value={newVideoBackground.url}
+                onChange={(e) => setNewVideoBackground(prev => ({ ...prev, url: e.target.value }))}
+                placeholder={t.admin.fields.videoUrl}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <input
+                type="url"
+                value={newVideoBackground.previewImage}
+                onChange={(e) => setNewVideoBackground(prev => ({ ...prev, previewImage: e.target.value }))}
+                placeholder={t.admin.fields.preview}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700">{t.admin.fields.file}</span>
+                <div className="mt-2">
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={(e) => handleVideoFileChange(e.target.files?.[0] || null)}
+                    className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                  />
+                  {newVideoFile && (
+                    <p className="text-xs text-gray-500 mt-1">{newVideoFile.name}</p>
+                  )}
+                </div>
+              </label>
+            </div>
+
+            <button
+              onClick={handleAddVideoBackground}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl"
+            >
+              <Plus className="w-4 h-4" />
+              {t.admin.buttons.add}
+            </button>
+
+            <div className="mt-6 grid md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+              {videoBackgrounds.length === 0 && (
+                <p className="text-gray-500 text-sm text-center py-6 md:col-span-2">{t.admin.messages.empty}</p>
+              )}
+              {videoBackgrounds.map(bg => (
+                <div key={bg.id} className="p-4 rounded-xl border border-gray-200 bg-gray-50 flex items-start gap-3">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-black/80 flex-shrink-0 relative">
+                    {bg.url && (
+                      <video
+                        className="w-full h-full object-cover"
+                        src={bg.url}
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        poster={bg.previewImage}
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                      <VideoIcon className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-800">{bg.name}</h3>
+                    <p className="text-xs text-gray-500 break-all">{bg.url}</p>
+                    {bg.previewImage && (
+                      <p className="text-xs text-gray-400 break-all mt-1">{bg.previewImage}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleRemoveVideoBackground(bg.id)}
+                    className="text-gray-400 hover:text-red-600 transition-colors"
+                    title={t.admin.buttons.delete}
+                  >
+                    <Trash className="w-4 h-4" />
+                  </button>
                 </div>
               ))}
             </div>
