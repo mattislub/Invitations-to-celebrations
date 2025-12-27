@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw } from 'lucide-react'
+import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw, Upload } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 
 interface AdminProps {
@@ -16,12 +16,14 @@ interface FontItem {
   id: string
   name: string
   url: string
+  file?: string
 }
 
 interface BackgroundItem {
   id: string
   name: string
   preview: string
+  file?: string
 }
 
 interface DimensionSettings {
@@ -47,8 +49,11 @@ export default function Admin({ language }: AdminProps) {
   const [dimensions, setDimensions] = useState<DimensionSettings>({ width: 1080, height: 1920, unit: 'px' })
   const [newStyle, setNewStyle] = useState({ name: '', description: '' })
   const [newFont, setNewFont] = useState({ name: '', url: '' })
+  const [newFontFile, setNewFontFile] = useState<File | null>(null)
   const [newBackground, setNewBackground] = useState({ name: '', preview: '' })
+  const [newBackgroundFile, setNewBackgroundFile] = useState<File | null>(null)
   const [statusMessage, setStatusMessage] = useState('')
+  const [uploading, setUploading] = useState(false)
 
   const stats = useMemo(() => ([
     { label: t.admin.stats.styles, value: designStyles.length, icon: Palette, accent: 'from-amber-500 to-orange-400' },
@@ -65,14 +70,16 @@ export default function Admin({ language }: AdminProps) {
 
   const handleAddFont = () => {
     if (!newFont.name.trim() || !newFont.url.trim()) return
-    setFonts(prev => [...prev, { id: crypto.randomUUID(), ...newFont }])
+    setFonts(prev => [...prev, { id: crypto.randomUUID(), ...newFont, file: newFontFile?.name }])
     setNewFont({ name: '', url: '' })
+    setNewFontFile(null)
   }
 
   const handleAddBackground = () => {
     if (!newBackground.name.trim() || !newBackground.preview.trim()) return
-    setBackgrounds(prev => [...prev, { id: crypto.randomUUID(), ...newBackground }])
+    setBackgrounds(prev => [...prev, { id: crypto.randomUUID(), ...newBackground, file: newBackgroundFile?.name }])
     setNewBackground({ name: '', preview: '' })
+    setNewBackgroundFile(null)
   }
 
   const handleReset = () => {
@@ -85,6 +92,58 @@ export default function Admin({ language }: AdminProps) {
   const handleSaveDimensions = () => {
     setStatusMessage(t.admin.messages.saved)
     setTimeout(() => setStatusMessage(''), 3000)
+  }
+
+  const handleFileUpload = async (file: File, type: 'font' | 'background'): Promise<string | null> => {
+    setUploading(true)
+    setStatusMessage(t.admin.messages.uploading)
+
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result as string)
+        reader.onerror = () => reject(reader.error)
+        reader.readAsDataURL(file)
+      })
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ data: base64, name: file.name, type })
+      })
+
+      if (!response.ok) throw new Error('Upload failed')
+
+      const result = await response.json()
+      setStatusMessage('')
+      return result.url as string
+    } catch (error) {
+      console.error('Upload error', error)
+      setStatusMessage(t.admin.messages.uploadError)
+      return null
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleFontFileChange = async (file: File | null) => {
+    if (!file) return
+    setNewFontFile(file)
+    const url = await handleFileUpload(file, 'font')
+    if (url) {
+      setNewFont(prev => ({ ...prev, url }))
+    }
+  }
+
+  const handleBackgroundFileChange = async (file: File | null) => {
+    if (!file) return
+    setNewBackgroundFile(file)
+    const url = await handleFileUpload(file, 'background')
+    if (url) {
+      setNewBackground(prev => ({ ...prev, preview: url }))
+    }
   }
 
   return (
@@ -189,6 +248,20 @@ export default function Admin({ language }: AdminProps) {
                 placeholder={t.admin.fields.url}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700">{t.admin.fields.file}</span>
+                <div className="mt-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleBackgroundFileChange(e.target.files?.[0] || null)}
+                    className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                  />
+                  {newBackgroundFile && (
+                    <p className="text-xs text-gray-500 mt-1">{newBackgroundFile.name}</p>
+                  )}
+                </div>
+              </label>
             </div>
 
             <button
@@ -213,6 +286,12 @@ export default function Admin({ language }: AdminProps) {
                     <div>
                       <h3 className="font-semibold text-gray-800">{bg.name}</h3>
                       <p className="text-xs text-gray-500 truncate">{bg.preview}</p>
+                      {bg.file && (
+                        <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                          <Upload className="w-3 h-3" />
+                          <span>{bg.file}</span>
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -246,6 +325,20 @@ export default function Admin({ language }: AdminProps) {
                 placeholder={t.admin.fields.url}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              <label className="block">
+                <span className="text-sm font-medium text-gray-700">{t.admin.fields.file}</span>
+                <div className="mt-2">
+                  <input
+                    type="file"
+                    accept=".ttf,.otf,.woff,.woff2"
+                    onChange={(e) => handleFontFileChange(e.target.files?.[0] || null)}
+                    className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  {newFontFile && (
+                    <p className="text-xs text-gray-500 mt-1">{newFontFile.name}</p>
+                  )}
+                </div>
+              </label>
             </div>
 
             <button
@@ -261,9 +354,15 @@ export default function Admin({ language }: AdminProps) {
                 <p className="text-gray-500 text-sm text-center py-6">{t.admin.messages.empty}</p>
               )}
               {fonts.map(font => (
-                <div key={font.id} className="p-4 rounded-xl border border-gray-200 bg-gray-50">
+                <div key={font.id} className="p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-1">
                   <h3 className="font-semibold text-gray-800">{font.name}</h3>
                   <p className="text-xs text-gray-500 break-all">{font.url}</p>
+                  {font.file && (
+                    <p className="text-xs text-gray-400 flex items-center gap-1">
+                      <Upload className="w-3 h-3" />
+                      <span>{font.file}</span>
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
