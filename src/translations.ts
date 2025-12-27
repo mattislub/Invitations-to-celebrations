@@ -153,7 +153,15 @@ export interface Translations {
       styles: string
       fonts: string
       backgrounds: string
+      videoBackgrounds: string
       dimensions: string
+    }
+    server: {
+      title: string
+      syncing: string
+      synced: string
+      error: string
+      disabled: string
     }
     sections: {
       invitationTypes: {
@@ -393,6 +401,13 @@ export const translations: Record<Language, Translations> = {
         videoBackgrounds: 'רקעי וידאו',
         dimensions: 'תצורת מידה'
       },
+      server: {
+        title: 'סנכרון לשרת',
+        syncing: 'שומר נתונים לשרת...',
+        synced: 'הנתונים מסונכרנים מול השרת.',
+        error: 'לא ניתן לסנכרן מול השרת, השינויים נשמרים מקומית עד לרענון.',
+        disabled: 'לא הוגדר חיבור לשרת, השינויים נשמרים רק בזמן העבודה.'
+      },
       sections: {
         invitationTypes: {
           title: 'ניהול סוגי הזמנות',
@@ -628,6 +643,13 @@ export const translations: Record<Language, Translations> = {
         backgrounds: 'Active Backgrounds',
         videoBackgrounds: 'Video Backgrounds',
         dimensions: 'Dimension Preset'
+      },
+      server: {
+        title: 'Server Sync',
+        syncing: 'Saving data to the server...',
+        synced: 'Data is synchronized with the server.',
+        error: 'Could not sync with the server, keeping session-only changes.',
+        disabled: 'No server connection configured; changes persist only during this session.'
       },
       sections: {
         invitationTypes: {
