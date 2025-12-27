@@ -4,3 +4,13 @@ export interface CustomInvitationType {
   nameYi: string
   nameEn: string
 }
+
+export interface Invitation {
+  id: string
+  titleHe: string
+  titleEn: string
+  category: 'wedding' | 'barMitzvah' | 'batMitzvah' | 'birthday' | 'engagement' | 'thankYou'
+  imageUrl: string
+  hosts?: string
+  eventDate?: string
+}
