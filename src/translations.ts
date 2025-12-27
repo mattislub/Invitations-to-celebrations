@@ -7,6 +7,7 @@ export interface Translations {
     gallery: string
     pricing: string
     contact: string
+    admin: string
     startNow: string
   }
   footer: {
@@ -140,6 +141,52 @@ export interface Translations {
       engagement: string
     }
   }
+  admin: {
+    title: string
+    subtitle: string
+    stats: {
+      styles: string
+      fonts: string
+      backgrounds: string
+      dimensions: string
+    }
+    sections: {
+      styles: {
+        title: string
+        description: string
+      }
+      fonts: {
+        title: string
+        description: string
+      }
+      backgrounds: {
+        title: string
+        description: string
+      }
+      dimensions: {
+        title: string
+        description: string
+      }
+    }
+    fields: {
+      name: string
+      description: string
+      url: string
+      preview: string
+      width: string
+      height: string
+      unit: string
+    }
+    buttons: {
+      add: string
+      save: string
+      reset: string
+    }
+    messages: {
+      empty: string
+      saved: string
+    }
+  }
 }
 
 export const translations: Record<Language, Translations> = {
@@ -150,6 +197,7 @@ export const translations: Record<Language, Translations> = {
       gallery: 'גלריה',
       pricing: 'תמחור',
       contact: 'צור קשר',
+      admin: 'ניהול',
       startNow: 'התחל עכשיו'
     },
     footer: {
@@ -302,6 +350,52 @@ export const translations: Record<Language, Translations> = {
         batMitzvah: 'בס"ד',
         engagement: 'בס"ד'
       }
+    },
+    admin: {
+      title: 'מרכז ניהול',
+      subtitle: 'דף ייעודי לניהול סגנונות, פונטים ורקעים במערכת',
+      stats: {
+        styles: 'סגנונות רשומים',
+        fonts: 'פונטים זמינים',
+        backgrounds: 'רקעים פעילים',
+        dimensions: 'תצורת מידה'
+      },
+      sections: {
+        styles: {
+          title: 'הוספת סגנונות עיצוב',
+          description: 'נהלו קטלוג של סגנונות עיצוב והוסיפו כותרות ותיאורים חדשים.'
+        },
+        fonts: {
+          title: 'הוספת פונטים',
+          description: 'הוסיפו משפחות פונטים חדשות וקישורי טעינה לעיצובים.'
+        },
+        backgrounds: {
+          title: 'ניהול רקעים',
+          description: 'צרפו תמונות רקע חדשות או החליפו קישורי רקע קיימים.'
+        },
+        dimensions: {
+          title: 'הגדרות גודל',
+          description: 'קבעו רוחב ואורך ברירת מחדל להזמנות שלכם.'
+        }
+      },
+      fields: {
+        name: 'שם',
+        description: 'תיאור',
+        url: 'קישור',
+        preview: 'תצוגה מקדימה',
+        width: 'רוחב',
+        height: 'גובה',
+        unit: 'יחידת מידה'
+      },
+      buttons: {
+        add: 'הוספה',
+        save: 'שמירה',
+        reset: 'איפוס'
+      },
+      messages: {
+        empty: 'אין פריטים להצגה כרגע',
+        saved: 'ההגדרות נשמרו'
+      }
     }
   },
   en: {
@@ -311,6 +405,7 @@ export const translations: Record<Language, Translations> = {
       gallery: 'Gallery',
       pricing: 'Pricing',
       contact: 'Contact',
+      admin: 'Admin',
       startNow: 'Start Now'
     },
     footer: {
@@ -462,6 +557,52 @@ export const translations: Record<Language, Translations> = {
         barMitzvah: "B'H",
         batMitzvah: "B'H",
         engagement: "B'H"
+      }
+    },
+    admin: {
+      title: 'Admin Console',
+      subtitle: 'Dedicated workspace for managing design styles, fonts, and backgrounds',
+      stats: {
+        styles: 'Design Styles',
+        fonts: 'Available Fonts',
+        backgrounds: 'Active Backgrounds',
+        dimensions: 'Dimension Preset'
+      },
+      sections: {
+        styles: {
+          title: 'Add Design Styles',
+          description: 'Maintain your catalog of styles with titles and descriptions.'
+        },
+        fonts: {
+          title: 'Add Fonts',
+          description: 'Register new font families and loading URLs for your designs.'
+        },
+        backgrounds: {
+          title: 'Manage Backgrounds',
+          description: 'Attach new background images or replace existing ones.'
+        },
+        dimensions: {
+          title: 'Size Settings',
+          description: 'Define default invitation width and height for downloads.'
+        }
+      },
+      fields: {
+        name: 'Name',
+        description: 'Description',
+        url: 'URL',
+        preview: 'Preview',
+        width: 'Width',
+        height: 'Height',
+        unit: 'Unit'
+      },
+      buttons: {
+        add: 'Add',
+        save: 'Save',
+        reset: 'Reset'
+      },
+      messages: {
+        empty: 'No items to display yet',
+        saved: 'Settings saved'
       }
     }
   }
