@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react'
-import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw, Upload } from 'lucide-react'
+import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw, Upload, Trash } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
+import { CustomInvitationType } from '../types'
 
 interface AdminProps {
   language: Language
+  customTypes: CustomInvitationType[]
+  onCustomTypesChange: (types: CustomInvitationType[]) => void
 }
 
 interface StyleItem {
@@ -32,7 +35,7 @@ interface DimensionSettings {
   unit: 'px' | 'cm'
 }
 
-export default function Admin({ language }: AdminProps) {
+export default function Admin({ language, customTypes, onCustomTypesChange }: AdminProps) {
   const t = getTranslation(language)
   const [designStyles, setDesignStyles] = useState<StyleItem[]>([
     { id: 'modern-elegant', name: 'Modern Elegant', description: 'Minimal lines with warm gradients' },
@@ -52,8 +55,9 @@ export default function Admin({ language }: AdminProps) {
   const [newFontFile, setNewFontFile] = useState<File | null>(null)
   const [newBackground, setNewBackground] = useState({ name: '', preview: '' })
   const [newBackgroundFile, setNewBackgroundFile] = useState<File | null>(null)
+  const [newInvitationType, setNewInvitationType] = useState({ nameHe: '', nameYi: '', nameEn: '' })
   const [statusMessage, setStatusMessage] = useState('')
-  const [uploading, setUploading] = useState(false)
+  const [, setUploading] = useState(false)
 
   const stats = useMemo(() => ([
     { label: t.admin.stats.styles, value: designStyles.length, icon: Palette, accent: 'from-amber-500 to-orange-400' },
@@ -80,6 +84,17 @@ export default function Admin({ language }: AdminProps) {
     setBackgrounds(prev => [...prev, { id: crypto.randomUUID(), ...newBackground, file: newBackgroundFile?.name }])
     setNewBackground({ name: '', preview: '' })
     setNewBackgroundFile(null)
+  }
+
+  const handleAddInvitationType = () => {
+    if (!newInvitationType.nameHe.trim() || !newInvitationType.nameEn.trim()) return
+    const updatedTypes = [...customTypes, { id: crypto.randomUUID(), ...newInvitationType }]
+    onCustomTypesChange(updatedTypes)
+    setNewInvitationType({ nameHe: '', nameYi: '', nameEn: '' })
+  }
+
+  const handleRemoveInvitationType = (id: string) => {
+    onCustomTypesChange(customTypes.filter(type => type.id !== id))
   }
 
   const handleReset = () => {
@@ -173,6 +188,70 @@ export default function Admin({ language }: AdminProps) {
             </div>
           )
         })}
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 mb-8">
+        <div className="flex items-center gap-3 mb-6">
+          <TypeIcon className="w-6 h-6 text-gray-800" />
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">{t.admin.sections.invitationTypes.title}</h2>
+            <p className="text-gray-600 text-sm">{t.admin.sections.invitationTypes.description}</p>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-4 mb-4">
+          <input
+            type="text"
+            value={newInvitationType.nameHe}
+            onChange={(e) => setNewInvitationType(prev => ({ ...prev, nameHe: e.target.value }))}
+            placeholder={t.admin.fields.name}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700"
+          />
+          <input
+            type="text"
+            value={newInvitationType.nameYi}
+            onChange={(e) => setNewInvitationType(prev => ({ ...prev, nameYi: e.target.value }))}
+            placeholder={t.admin.fields.yiddishName}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700"
+          />
+          <input
+            type="text"
+            value={newInvitationType.nameEn}
+            onChange={(e) => setNewInvitationType(prev => ({ ...prev, nameEn: e.target.value }))}
+            placeholder={t.admin.fields.englishName}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700"
+          />
+        </div>
+
+        <button
+          onClick={handleAddInvitationType}
+          className="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl"
+        >
+          <Plus className="w-4 h-4" />
+          {t.admin.buttons.add}
+        </button>
+
+        <div className="mt-6 space-y-3">
+          {customTypes.length === 0 && (
+            <p className="text-gray-500 text-sm text-center py-6">{t.admin.messages.empty}</p>
+          )}
+          {customTypes.map((type) => (
+            <div key={type.id} className="p-4 rounded-xl border border-gray-200 bg-gray-50 flex items-start justify-between gap-4">
+              <div>
+                <p className="font-semibold text-gray-800">{type.nameHe}</p>
+                <p className="text-sm text-gray-600">{t.admin.fields.yiddishName}: {type.nameYi || '-'}</p>
+                <p className="text-sm text-gray-600">{t.admin.fields.englishName}: {type.nameEn}</p>
+              </div>
+              <button
+                onClick={() => handleRemoveInvitationType(type.id)}
+                className="text-gray-500 hover:text-red-600 transition-colors"
+                title={t.admin.buttons.delete}
+              >
+                <Trash className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-8">

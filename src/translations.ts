@@ -90,6 +90,8 @@ export interface Translations {
       venue: string
       time: string
       age: string
+      eventTitle: string
+      hosts: string
     }
     colors: {
       title: string
@@ -151,6 +153,10 @@ export interface Translations {
       dimensions: string
     }
     sections: {
+      invitationTypes: {
+        title: string
+        description: string
+      }
       styles: {
         title: string
         description: string
@@ -173,18 +179,24 @@ export interface Translations {
       description: string
       url: string
       preview: string
+      file: string
       width: string
       height: string
       unit: string
+      yiddishName: string
+      englishName: string
     }
     buttons: {
       add: string
       save: string
       reset: string
+      delete: string
     }
     messages: {
       empty: string
       saved: string
+      uploading: string
+      uploadError: string
     }
   }
 }
@@ -299,7 +311,9 @@ export const translations: Record<Language, Translations> = {
         date: 'תאריך',
         venue: 'מקום',
         time: 'שעה',
-        age: 'גיל'
+        age: 'גיל',
+        eventTitle: 'שם האירוע',
+        hosts: 'מארחים'
       },
       colors: {
         title: 'בחרו ערכת צבעים',
@@ -361,6 +375,10 @@ export const translations: Record<Language, Translations> = {
         dimensions: 'תצורת מידה'
       },
       sections: {
+        invitationTypes: {
+          title: 'ניהול סוגי הזמנות',
+          description: 'הוסיפו שמות סוגים בעברית, יידיש ואנגלית כדי להשתמש בהם בעורך.'
+        },
         styles: {
           title: 'הוספת סגנונות עיצוב',
           description: 'נהלו קטלוג של סגנונות עיצוב והוסיפו כותרות ותיאורים חדשים.'
@@ -386,12 +404,15 @@ export const translations: Record<Language, Translations> = {
         file: 'קובץ',
         width: 'רוחב',
         height: 'גובה',
-        unit: 'יחידת מידה'
+        unit: 'יחידת מידה',
+        yiddishName: 'שם ביידיש',
+        englishName: 'שם באנגלית'
       },
       buttons: {
         add: 'הוספה',
         save: 'שמירה',
-        reset: 'איפוס'
+        reset: 'איפוס',
+        delete: 'מחיקה'
       },
       messages: {
         empty: 'אין פריטים להצגה כרגע',
@@ -510,7 +531,9 @@ export const translations: Record<Language, Translations> = {
         date: 'Date',
         venue: 'Venue',
         time: 'Time',
-        age: 'Age'
+        age: 'Age',
+        eventTitle: 'Event Name',
+        hosts: 'Hosts'
       },
       colors: {
         title: 'Choose Color Scheme',
@@ -572,6 +595,10 @@ export const translations: Record<Language, Translations> = {
         dimensions: 'Dimension Preset'
       },
       sections: {
+        invitationTypes: {
+          title: 'Invitation Types',
+          description: 'Add invitation type names in Hebrew, Yiddish, and English for the designer.'
+        },
         styles: {
           title: 'Add Design Styles',
           description: 'Maintain your catalog of styles with titles and descriptions.'
@@ -597,12 +624,15 @@ export const translations: Record<Language, Translations> = {
         file: 'File',
         width: 'Width',
         height: 'Height',
-        unit: 'Unit'
+        unit: 'Unit',
+        yiddishName: 'Yiddish Name',
+        englishName: 'English Name'
       },
       buttons: {
         add: 'Add',
         save: 'Save',
-        reset: 'Reset'
+        reset: 'Reset',
+        delete: 'Delete'
       },
       messages: {
         empty: 'No items to display yet',

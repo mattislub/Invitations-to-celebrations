@@ -1,20 +1,29 @@
 import { useState, useMemo } from 'react'
-import { Heart, Users, Gift, Cake, PartyPopper, Calendar, MapPin, User, ChevronRight, Wand2, Layers, Sparkles, BookOpen } from 'lucide-react'
+import { Heart, Users, Gift, Cake, PartyPopper, User, ChevronRight, Wand2, Layers, Sparkles, BookOpen } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
+import { CustomInvitationType } from '../types'
 
-type EventType = 'wedding' | 'bar-mitzvah' | 'bat-mitzvah' | 'birthday' | 'engagement' | 'thank-you'
+type EventType = 'wedding' | 'bar-mitzvah' | 'bat-mitzvah' | 'birthday' | 'engagement' | 'thank-you' | `custom-${string}`
 type DesignStyle = 'modern' | 'religious'
+
+interface LocalizedName {
+  he: string
+  en: string
+  yi?: string
+}
 
 interface DesignerProps {
   language: Language
+  customTypes: CustomInvitationType[]
 }
 
 interface EventTemplate {
   id: EventType
-  name: string
+  names: LocalizedName
   icon: typeof Heart
   fields: FormField[]
-  defaultNames: { [key: string]: string }
+  defaultNames: { [key: string]: string | undefined }
+  isCustom?: boolean
 }
 
 interface FormField {
@@ -48,7 +57,7 @@ interface Animation {
   class: string
 }
 
-export default function Designer({ language }: DesignerProps) {
+export default function Designer({ language, customTypes }: DesignerProps) {
   const t = getTranslation(language)
   const [step, setStep] = useState<'type' | 'details' | 'style' | 'design'>('type')
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(null)
@@ -59,10 +68,14 @@ export default function Designer({ language }: DesignerProps) {
   const [selectedAnimation, setSelectedAnimation] = useState<string>('fadeIn')
   const [animationKey, setAnimationKey] = useState<number>(0)
 
-  const eventTemplates: EventTemplate[] = [
+  const eventTemplates = useMemo<EventTemplate[]>(() => ([
     {
       id: 'wedding',
-      name: 'חתונה',
+      names: {
+        he: 'חתונה',
+        en: 'Wedding',
+        yi: 'חתונה'
+      },
       icon: Heart,
       fields: [
         { id: 'groomName', label: 'שם החתן', type: 'text', placeholder: 'יוסי', required: true },
@@ -87,7 +100,11 @@ export default function Designer({ language }: DesignerProps) {
     },
     {
       id: 'bar-mitzvah',
-      name: 'בר מצווה',
+      names: {
+        he: 'בר מצווה',
+        en: 'Bar Mitzvah',
+        yi: 'בר מצוה'
+      },
       icon: Users,
       fields: [
         { id: 'boyName', label: 'שם הבחור', type: 'text', placeholder: 'יוסי', required: true },
@@ -108,7 +125,11 @@ export default function Designer({ language }: DesignerProps) {
     },
     {
       id: 'bat-mitzvah',
-      name: 'בת מצווה',
+      names: {
+        he: 'בת מצווה',
+        en: 'Bat Mitzvah',
+        yi: 'בת מצוה'
+      },
       icon: Gift,
       fields: [
         { id: 'girlName', label: 'שם הבת', type: 'text', placeholder: 'שרה', required: true },
@@ -129,7 +150,11 @@ export default function Designer({ language }: DesignerProps) {
     },
     {
       id: 'birthday',
-      name: 'יום הולדת',
+      names: {
+        he: 'יום הולדת',
+        en: 'Birthday',
+        yi: 'געבורסטאג'
+      },
       icon: Cake,
       fields: [
         { id: 'celebrantName', label: 'שם החוגג/ת', type: 'text', placeholder: 'דני', required: true },
@@ -148,7 +173,11 @@ export default function Designer({ language }: DesignerProps) {
     },
     {
       id: 'engagement',
-      name: 'אירוסין',
+      names: {
+        he: 'אירוסין',
+        en: 'Engagement',
+        yi: 'תנאים'
+      },
       icon: PartyPopper,
       fields: [
         { id: 'groomName', label: 'שם החתן', type: 'text', placeholder: 'יוסי', required: true },
@@ -167,7 +196,11 @@ export default function Designer({ language }: DesignerProps) {
     },
     {
       id: 'thank-you',
-      name: 'כרטיס תודה',
+      names: {
+        he: 'כרטיס תודה',
+        en: 'Thank You Card',
+        yi: 'דאנק קארטל'
+      },
       icon: Heart,
       fields: [
         { id: 'fromName', label: 'מאת', type: 'text', placeholder: 'משפחת כהן', required: true },
@@ -178,7 +211,37 @@ export default function Designer({ language }: DesignerProps) {
         message: 'תודה על בואכם לחגוג איתנו'
       }
     },
-  ]
+  ]), [])
+
+  const customTemplates = useMemo<EventTemplate[]>(() => customTypes.map((type) => ({
+    id: `custom-${type.id}` as EventType,
+    names: {
+      he: type.nameHe,
+      en: type.nameEn,
+      yi: type.nameYi
+    },
+    icon: Sparkles,
+    fields: [
+      { id: 'eventTitle', label: t.designer.form.eventTitle, type: 'text', placeholder: type.nameHe, required: true },
+      { id: 'hosts', label: t.designer.form.hosts, type: 'text', placeholder: language === 'he' ? 'משפחת כהן' : 'Cohen Family' },
+      { id: 'date', label: t.designer.form.date, type: 'date', placeholder: '25.05.2025' },
+      { id: 'venue', label: t.designer.form.venue, type: 'text', placeholder: language === 'he' ? 'אולם אירועים' : 'Event Hall' },
+      { id: 'time', label: t.designer.form.time, type: 'text', placeholder: '20:00' },
+    ],
+    defaultNames: {
+      eventTitle: language === 'he' ? type.nameHe : type.nameEn || type.nameHe,
+      hosts: language === 'he' ? 'משפחת כהן' : 'Cohen Family',
+      date: '25.05.2025',
+      venue: language === 'he' ? 'אולם אירועים' : 'Event Hall',
+      time: '20:00'
+    },
+    isCustom: true
+  })), [customTypes, language, t])
+
+  const templatesWithCustom = useMemo(
+    () => [...eventTemplates, ...customTemplates],
+    [eventTemplates, customTemplates]
+  )
 
   const backgrounds: BackgroundOption[] = [
     {
@@ -308,7 +371,10 @@ export default function Designer({ language }: DesignerProps) {
     { id: 'rotate', name: 'סיבוב', class: 'animate-rotate-in' },
   ]
 
-  const currentTemplate = eventTemplates.find(t => t.id === selectedEventType)
+  const currentTemplate = templatesWithCustom.find(t => t.id === selectedEventType)
+
+  const getTemplateDisplayName = (template: EventTemplate) =>
+    language === 'en' ? template.names.en : template.names.he
 
   const displayData = useMemo(() => {
     if (!currentTemplate) return {}
@@ -644,6 +710,32 @@ export default function Designer({ language }: DesignerProps) {
             )}
           </>
         )
+
+      default:
+        return (
+          <>
+            <Sparkles className="w-16 h-16 mx-auto mb-4" style={{ color: currentColorScheme?.secondary }} />
+            <h4 className="text-3xl font-bold mb-2" style={{ color: currentColorScheme?.primary }}>
+              {displayData.eventTitle || (currentTemplate ? getTemplateDisplayName(currentTemplate) : '')}
+            </h4>
+            {currentTemplate?.names.yi && (
+              <p className="text-md mb-2" style={{ color: currentColorScheme?.text }}>{currentTemplate.names.yi}</p>
+            )}
+            {displayData.hosts && (
+              <p className="text-lg mb-4" style={{ color: currentColorScheme?.text }}>{displayData.hosts}</p>
+            )}
+            <div className="w-20 h-1 mx-auto mb-4 rounded-full" style={{ background: `linear-gradient(to right, ${currentColorScheme?.primary}, ${currentColorScheme?.secondary})` }} />
+            {displayData.date && (
+              <p className="font-medium mb-3" style={{ color: currentColorScheme?.secondary }}>{displayData.date}</p>
+            )}
+            {displayData.venue && (
+              <p className="mb-1" style={{ color: currentColorScheme?.text }}>{displayData.venue}</p>
+            )}
+            {displayData.time && (
+              <p style={{ color: currentColorScheme?.text }}>{language === 'he' ? `שעה: ${displayData.time}` : `Time: ${displayData.time}`}</p>
+            )}
+          </>
+        )
     }
   }
 
@@ -660,7 +752,7 @@ export default function Designer({ language }: DesignerProps) {
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {eventTemplates.map((template) => {
+          {templatesWithCustom.map((template) => {
             const Icon = template.icon
             return (
               <button
@@ -669,7 +761,10 @@ export default function Designer({ language }: DesignerProps) {
                 className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 group hover:scale-105 text-center border-2 border-transparent hover:border-amber-500"
               >
                 <Icon className="w-16 h-16 text-amber-500 mx-auto mb-4 group-hover:scale-110 transition-transform" />
-                <h3 className="text-2xl font-bold text-gray-800 mb-2">{template.name}</h3>
+                <h3 className="text-2xl font-bold text-gray-800 mb-1">{getTemplateDisplayName(template)}</h3>
+                {template.names.yi && (
+                  <p className="text-sm text-gray-600">{template.names.yi}</p>
+                )}
               </button>
             )
           })}
@@ -872,7 +967,6 @@ export default function Designer({ language }: DesignerProps) {
                         : 'ring-2 ring-gray-200 hover:ring-gray-300'
                     }`}
                     style={{
-                      ringColor: scheme.primary,
                       backgroundColor: `${scheme.primary}15`
                     }}
                   >
