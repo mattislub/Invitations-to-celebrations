@@ -1,6 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import type { IncomingMessage, ServerResponse } from 'http'
+import type { NextHandleFunction } from 'connect'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -14,12 +16,12 @@ const ensureDirectory = (dirPath: string) => {
 }
 
 const uploadRoot = path.resolve(__dirname, 'public', 'uploads')
-const allowedUploadTypes = ['font', 'background'] as const
+const allowedUploadTypes = ['font', 'background', 'video'] as const
 type UploadType = (typeof allowedUploadTypes)[number]
 
 const sanitizeFileName = (name: string) => name.replace(/[^a-zA-Z0-9.\-_]/g, '-')
 
-const uploadHandler = async (req: any, res: any, next: any) => {
+const uploadHandler: NextHandleFunction = (req: IncomingMessage, res: ServerResponse, next) => {
   if (req.url !== '/api/upload' || req.method !== 'POST') {
     next()
     return
@@ -59,6 +61,7 @@ const uploadHandler = async (req: any, res: any, next: any) => {
       res.setHeader('Content-Type', 'application/json')
       res.end(JSON.stringify({ url: `/uploads/${uploadType}/${uniqueName}`, name: safeName }))
     } catch (error) {
+      console.error('Failed to save file to local upload directory', error)
       res.statusCode = 500
       res.end(JSON.stringify({ error: 'Failed to save file' }))
     }

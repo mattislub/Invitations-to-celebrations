@@ -247,7 +247,7 @@ export default function Designer({ language, customTypes, videoBackgrounds }: De
     [eventTemplates, customTemplates]
   )
 
-  const baseBackgrounds: BackgroundOption[] = [
+  const baseBackgrounds: BackgroundOption[] = useMemo(() => ([
     {
       id: 'elegant',
       name: 'אלגנטי',
@@ -315,7 +315,7 @@ export default function Designer({ language, customTypes, videoBackgrounds }: De
       style: ['religious'],
       type: 'image'
     }
-  ]
+  ]), [])
 
   const videoBackgroundOptions = useMemo<BackgroundOption[]>(() => videoBackgrounds.map((bg) => ({
     id: `video-${bg.id}`,
@@ -328,7 +328,7 @@ export default function Designer({ language, customTypes, videoBackgrounds }: De
 
   const backgrounds = useMemo(
     () => [...baseBackgrounds, ...videoBackgroundOptions],
-    [videoBackgroundOptions]
+    [baseBackgrounds, videoBackgroundOptions]
   )
 
   const colorSchemes: ColorScheme[] = [

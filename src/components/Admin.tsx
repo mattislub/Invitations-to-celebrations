@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw, Upload, Trash, Video as VideoIcon } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw, Upload, Trash, Video as VideoIcon, Server } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 import { CustomInvitationType, Invitation, VideoBackground } from '../types'
 
@@ -38,6 +38,8 @@ interface DimensionSettings {
   height: number
   unit: 'px' | 'cm'
 }
+
+type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'disabled'
 
 export default function Admin({
   language,
@@ -80,6 +82,11 @@ export default function Admin({
   })
   const [statusMessage, setStatusMessage] = useState('')
   const [, setUploading] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(() =>
+    import.meta.env.VITE_API_BASE_URL ? 'idle' : 'disabled'
+  )
+
+  const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, '') ?? ''
 
   const getCategoryLabel = (category: Invitation['category']) => {
     const categoryMap: Record<Invitation['category'], string> = {
@@ -192,7 +199,11 @@ export default function Admin({
         reader.readAsDataURL(file)
       })
 
-      const response = await fetch('/api/upload', {
+      if (!apiBaseUrl) {
+        throw new Error('Missing API base URL')
+      }
+
+      const response = await fetch(`${apiBaseUrl}/api/upload`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -213,6 +224,43 @@ export default function Admin({
       setUploading(false)
     }
   }
+
+  const syncToServer = useCallback(async () => {
+    if (!apiBaseUrl) {
+      setSyncStatus('disabled')
+      return
+    }
+
+    setSyncStatus('syncing')
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/admin/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customTypes,
+          invitations,
+          videoBackgrounds,
+          designStyles,
+          fonts,
+          backgrounds,
+          dimensions
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('sync failed')
+      }
+
+      setSyncStatus('success')
+    } catch (error) {
+      console.error('Sync error', error)
+      setSyncStatus('error')
+    }
+  }, [apiBaseUrl, backgrounds, customTypes, designStyles, dimensions, fonts, invitations, videoBackgrounds])
+
+  useEffect(() => {
+    void syncToServer()
+  }, [syncToServer])
 
   const handleFontFileChange = async (file: File | null) => {
     if (!file) return
@@ -268,6 +316,30 @@ export default function Admin({
             </div>
           )
         })}
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 mb-8 flex items-start gap-4">
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gray-700 to-gray-500 flex items-center justify-center text-white">
+          <Server className="w-6 h-6" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-gray-700">{t.admin.server.title}</p>
+          <p className="text-sm text-gray-600 mt-1">
+            {syncStatus === 'syncing' && t.admin.server.syncing}
+            {syncStatus === 'success' && t.admin.server.synced}
+            {syncStatus === 'error' && t.admin.server.error}
+            {syncStatus === 'disabled' && t.admin.server.disabled}
+            {syncStatus === 'idle' && t.admin.server.synced}
+          </p>
+        </div>
+        <button
+          onClick={syncToServer}
+          className="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg font-semibold shadow hover:shadow-md disabled:opacity-60"
+          disabled={syncStatus === 'syncing' || syncStatus === 'disabled'}
+        >
+          <RefreshCcw className="w-4 h-4" />
+          {t.admin.buttons.save}
+        </button>
       </div>
 
       <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100 mb-8">
