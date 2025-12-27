@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw, Upload, Trash, Video as VideoIcon, Server, CloudOff, LayoutGrid, Layers } from 'lucide-react'
+import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw, Upload, Trash, Video as VideoIcon, Server, CloudOff, LayoutGrid, Layers, Edit3 } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 import { CustomInvitationType, Invitation, VideoBackground, DesignStyle, AdminFont, AdminBackground, AdminDimensions } from '../types'
+import TemplateEditor from './TemplateEditor'
 
 interface AdminProps {
   language: Language
@@ -71,7 +72,7 @@ export default function Admin({
   })
   const [statusMessage, setStatusMessage] = useState('')
   const [, setUploading] = useState(false)
-  const [activeTab, setActiveTab] = useState<'overview' | 'gallery' | 'types' | 'styles' | 'backgrounds' | 'videos' | 'fonts' | 'dimensions'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'gallery' | 'types' | 'styles' | 'backgrounds' | 'videos' | 'fonts' | 'dimensions' | 'templates'>('overview')
 
   const getCategoryLabel = (category: Invitation['category']) => {
     const categoryMap: Record<Invitation['category'], string> = {
@@ -102,7 +103,8 @@ export default function Admin({
     { id: 'backgrounds' as const, label: t.admin.sections.backgrounds.title, description: t.admin.sections.backgrounds.description, icon: ImageIcon },
     { id: 'videos' as const, label: t.admin.sections.videoBackgrounds.title, description: t.admin.sections.videoBackgrounds.description, icon: VideoIcon },
     { id: 'fonts' as const, label: t.admin.sections.fonts.title, description: t.admin.sections.fonts.description, icon: TypeIcon },
-    { id: 'dimensions' as const, label: t.admin.sections.dimensions.title, description: t.admin.sections.dimensions.description, icon: Ruler }
+    { id: 'dimensions' as const, label: t.admin.sections.dimensions.title, description: t.admin.sections.dimensions.description, icon: Ruler },
+    { id: 'templates' as const, label: t.templateEditor.title, description: t.templateEditor.subtitle, icon: Edit3 }
   ]), [t])
 
   const handleAddStyle = () => {
@@ -517,6 +519,12 @@ export default function Admin({
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {activeTab === 'templates' && (
+            <div className="bg-white rounded-2xl shadow-xl p-2 border border-gray-100">
+              <TemplateEditor language={language} />
             </div>
           )}
 

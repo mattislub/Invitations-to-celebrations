@@ -222,6 +222,33 @@ export interface Translations {
       uploadError: string
     }
   }
+  templateEditor: {
+    title: string
+    subtitle: string
+    fields: string
+    textLines: string
+    background: string
+    addField: string
+    addText: string
+    dragHint: string
+    font: string
+    fontSize: string
+    backgroundUrl: string
+    preview: string
+    placeholders: {
+      fieldLabel: string
+      textLine: string
+    }
+    options: {
+      required: string
+      type: string
+      types: {
+        text: string
+        date: string
+        number: string
+      }
+    }
+  }
 }
 
 export const translations: Record<Language, Translations> = {
@@ -466,6 +493,33 @@ export const translations: Record<Language, Translations> = {
         uploading: 'מעלה קובץ...',
         uploadError: 'העלאה נכשלה, נסו שוב'
       }
+    },
+    templateEditor: {
+      title: 'עורך תבנית הזמנה',
+      subtitle: 'קבעו שדות, טקסטים ורקע לתבנית ההזמנה',
+      fields: 'שדות דינמיים',
+      textLines: 'שורות טקסט',
+      background: 'רקע',
+      addField: 'הוספת שדה',
+      addText: 'הוספת שורת טקסט',
+      dragHint: 'גררו ושחררו לסידור',
+      font: 'פונט',
+      fontSize: 'גודל פונט',
+      backgroundUrl: 'קישור לרקע',
+      preview: 'תצוגה מקדימה',
+      placeholders: {
+        fieldLabel: 'כותרת שדה (למשל: שם מלא)',
+        textLine: 'הקלידו שורת טקסט'
+      },
+      options: {
+        required: 'שדה חובה',
+        type: 'סוג שדה',
+        types: {
+          text: 'טקסט',
+          date: 'תאריך',
+          number: 'מספר'
+        }
+      }
     }
   },
   en: {
@@ -708,6 +762,33 @@ export const translations: Record<Language, Translations> = {
         saved: 'Settings saved',
         uploading: 'Uploading file...',
         uploadError: 'Upload failed, please try again.'
+      }
+    },
+    templateEditor: {
+      title: 'Invitation Template Editor',
+      subtitle: 'Configure fields, text lines, fonts and backgrounds for the template',
+      fields: 'Fields',
+      textLines: 'Text Lines',
+      background: 'Background',
+      addField: 'Add Field',
+      addText: 'Add Text Line',
+      dragHint: 'Drag & drop to reorder',
+      font: 'Font',
+      fontSize: 'Font Size',
+      backgroundUrl: 'Background URL',
+      preview: 'Preview',
+      placeholders: {
+        fieldLabel: 'Field label (e.g. Full Name)',
+        textLine: 'Enter a text line'
+      },
+      options: {
+        required: 'Required',
+        type: 'Field Type',
+        types: {
+          text: 'Text',
+          date: 'Date',
+          number: 'Number'
+        }
       }
     }
   }
