@@ -5,7 +5,7 @@ import Gallery from './components/Gallery'
 import Designer from './components/Designer'
 import Admin from './components/Admin'
 import { Language, getTranslation } from './translations'
-import { AdminBackground, CustomInvitationType, Invitation, InvitationTemplate, VideoBackground } from './types'
+import { AdminBackground, CustomInvitationType, Invitation, InvitationTemplate, VideoBackground, SavedInvitationTemplate } from './types'
 
 type Page = 'home' | 'gallery' | 'designer' | 'admin'
 
@@ -41,6 +41,7 @@ function App() {
   ])
   const [videoBackgrounds, setVideoBackgrounds] = useState<VideoBackground[]>([])
   const [template, setTemplate] = useState<InvitationTemplate | null>(null)
+  const [savedTemplates, setSavedTemplates] = useState<SavedInvitationTemplate[]>([])
 
   const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
   const apiBaseUrl = (configuredApiBaseUrl && configuredApiBaseUrl !== '')
@@ -64,11 +65,13 @@ function App() {
           backgrounds: AdminBackground[]
           videoBackgrounds: VideoBackground[]
           template: InvitationTemplate | null
+          savedTemplates: SavedInvitationTemplate[]
         }>
 
         if (payload.backgrounds) setImageBackgrounds(payload.backgrounds)
         if (payload.videoBackgrounds) setVideoBackgrounds(payload.videoBackgrounds)
         if ('template' in payload) setTemplate(payload.template ?? null)
+        if (payload.savedTemplates) setSavedTemplates(payload.savedTemplates)
       } catch (error) {
         console.error('[App] Failed to load backgrounds', error)
       }
@@ -172,6 +175,8 @@ function App() {
           onVideoBackgroundsChange={setVideoBackgrounds}
           template={template}
           onTemplateChange={setTemplate}
+          savedTemplates={savedTemplates}
+          onSavedTemplatesChange={setSavedTemplates}
         />
       )}
       </main>

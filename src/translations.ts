@@ -155,6 +155,7 @@ export interface Translations {
       backgrounds: string
       videoBackgrounds: string
       dimensions: string
+      templates: string
     }
     server: {
       title: string
@@ -262,6 +263,13 @@ export interface Translations {
     previewFieldHint: string
     font: string
     fontSize: string
+    savedTemplates: {
+      title: string
+      nameLabel: string
+      namePlaceholder: string
+      nameHelper: string
+      empty: string
+    }
     backgrounds: {
       library: string
       libraryHelper: string
@@ -491,11 +499,12 @@ export const translations: Record<Language, Translations> = {
       stats: {
         invitations: 'הזמנות בגלריה',
         styles: 'סגנונות רשומים',
-        fonts: 'פונטים זמינים',
-        backgrounds: 'רקעים פעילים',
-        videoBackgrounds: 'רקעי וידאו',
-        dimensions: 'תצורת מידה'
-      },
+      fonts: 'פונטים זמינים',
+      backgrounds: 'רקעים פעילים',
+      videoBackgrounds: 'רקעי וידאו',
+      dimensions: 'תצורת מידה',
+      templates: 'תבניות שמורות'
+    },
       server: {
         title: 'סנכרון לשרת',
         syncing: 'שומר נתונים לשרת...',
@@ -602,6 +611,13 @@ export const translations: Record<Language, Translations> = {
       previewFieldHint: 'גררו שדה כדי למקם אותו מחדש בתצוגה',
       font: 'פונט',
       fontSize: 'גודל פונט',
+      savedTemplates: {
+        title: 'תבניות שמורות',
+        nameLabel: 'שם התבנית',
+        namePlaceholder: 'לדוגמה: הזמנה דיגיטלית 1080x1920',
+        nameHelper: 'השמות נשמרים כדי שתוכלו לחזור לתבנית ולערוך אותה בהמשך.',
+        empty: 'לא נשמרו תבניות עדיין'
+      },
       backgrounds: {
         library: 'בחרו רקע קיים',
         libraryHelper: 'בחרו מספריית הרקעים במערכת או מהרקעים שהעליתם',
@@ -832,7 +848,8 @@ export const translations: Record<Language, Translations> = {
         fonts: 'Available Fonts',
         backgrounds: 'Active Backgrounds',
         videoBackgrounds: 'Video Backgrounds',
-        dimensions: 'Dimension Preset'
+        dimensions: 'Dimension Preset',
+        templates: 'Saved Templates'
       },
       server: {
         title: 'Server Sync',
@@ -940,6 +957,13 @@ export const translations: Record<Language, Translations> = {
       previewFieldHint: 'Drag fields to reposition them as text in the preview',
       font: 'Font',
       fontSize: 'Font Size',
+      savedTemplates: {
+        title: 'Saved Templates',
+        nameLabel: 'Template Name',
+        namePlaceholder: 'e.g., Digital Invite 1080x1920',
+        nameHelper: 'Name your template so you can return and edit it later.',
+        empty: 'No templates saved yet'
+      },
       backgrounds: {
         library: 'Choose an existing background',
         libraryHelper: 'Use backgrounds from the system or ones you uploaded',

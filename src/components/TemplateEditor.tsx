@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, X, Upload, Film, Move, Save } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
-import { AdminBackground, InvitationTemplate, TemplateField, TemplateTextLine, VideoBackground } from '../types'
+import { AdminBackground, InvitationTemplate, TemplateField, TemplateTextLine, VideoBackground, SavedInvitationTemplate } from '../types'
 
 interface FontOption {
   id: string
@@ -16,6 +16,8 @@ interface TemplateEditorProps {
   videoBackgrounds: VideoBackground[]
   onVideoBackgroundsChange: (backgrounds: VideoBackground[]) => void
   template?: InvitationTemplate | null
+  savedTemplates?: SavedInvitationTemplate[]
+  onSavedTemplatesChange?: (templates: SavedInvitationTemplate[]) => void
   onTemplateSave?: (template: InvitationTemplate) => void
 }
 
@@ -72,6 +74,8 @@ export default function TemplateEditor({
   videoBackgrounds,
   onVideoBackgroundsChange,
   template,
+  savedTemplates = [],
+  onSavedTemplatesChange,
   onTemplateSave
 }: TemplateEditorProps) {
   const t = getTranslation(language)
@@ -92,6 +96,8 @@ export default function TemplateEditor({
   const [selectedBackgroundId, setSelectedBackgroundId] = useState<string>('')
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState('')
+  const [templateName, setTemplateName] = useState('')
+  const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null)
   const previewRef = useRef<HTMLDivElement | null>(null)
   const PX_PER_INCH = 96
   const CM_PER_INCH = 2.54
@@ -137,6 +143,7 @@ export default function TemplateEditor({
     setTemplateWidth(template.dimensions?.width ?? DEFAULT_TEMPLATE_WIDTH)
     setTemplateHeight(template.dimensions?.height ?? DEFAULT_TEMPLATE_HEIGHT)
     setSelectedBackgroundId(template.backgroundId ?? '')
+    setTemplateName((current) => current || (language === 'he' ? 'תבנית חדשה' : 'New Template'))
   }, [language, template])
 
   useEffect(() => {
@@ -500,6 +507,12 @@ export default function TemplateEditor({
   const activePanelConfig = activePanel ? panelConfig[activePanel] : null
 
   const handleSaveTemplate = () => {
+    if (!templateName.trim()) {
+      setSaveMessage(language === 'he' ? 'אנא הזינו שם לתבנית' : 'Please enter a template name')
+      setTimeout(() => setSaveMessage(''), 3500)
+      return
+    }
+
     const snapshot: InvitationTemplate = {
       fields,
       textLines,
@@ -509,10 +522,59 @@ export default function TemplateEditor({
         height: templateHeight
       }
     }
+    const now = new Date().toISOString()
+    const nextTemplate: SavedInvitationTemplate = {
+      id: selectedSavedId ?? crypto.randomUUID(),
+      name: templateName.trim(),
+      template: snapshot,
+      updatedAt: now
+    }
+
+    const existsIndex = savedTemplates.findIndex((item) => item.id === nextTemplate.id)
+    let nextList = savedTemplates
+    if (existsIndex >= 0) {
+      nextList = savedTemplates.map((item, idx) => (idx === existsIndex ? nextTemplate : item))
+    } else {
+      nextList = [nextTemplate, ...savedTemplates]
+    }
+
+    onSavedTemplatesChange?.(nextList)
     onTemplateSave?.(snapshot)
+    setSelectedSavedId(nextTemplate.id)
     setSaveMessage(t.templateEditor.actions.saveTemplateSuccess)
     setTimeout(() => setSaveMessage(''), 3500)
   }
+
+  const handleLoadSavedTemplate = (templateId: string) => {
+    const existing = savedTemplates.find((item) => item.id === templateId)
+    if (!existing) return
+    const { template: saved } = existing
+    setFields(saved.fields?.length ? saved.fields : createDefaultFields(language))
+    setTextLines(saved.textLines?.length ? saved.textLines : createDefaultTextLines(language))
+    setTemplateWidth(saved.dimensions?.width ?? DEFAULT_TEMPLATE_WIDTH)
+    setTemplateHeight(saved.dimensions?.height ?? DEFAULT_TEMPLATE_HEIGHT)
+    setSelectedBackgroundId(saved.backgroundId ?? '')
+    setTemplateName(existing.name)
+    setSelectedSavedId(templateId)
+  }
+
+  const handleDeleteSavedTemplate = (templateId: string) => {
+    const filtered = savedTemplates.filter((item) => item.id !== templateId)
+    onSavedTemplatesChange?.(filtered)
+    if (selectedSavedId === templateId) {
+      setSelectedSavedId(null)
+    }
+  }
+
+  useEffect(() => {
+    if (savedTemplates.length === 0) return
+    if (selectedSavedId && savedTemplates.some((item) => item.id === selectedSavedId)) return
+    const first = savedTemplates[0]
+    if (first) {
+      handleLoadSavedTemplate(first.id)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedTemplates])
 
   const renderPanelContent = () => {
     switch (activePanel) {
@@ -1039,6 +1101,59 @@ export default function TemplateEditor({
       <div className="text-center mb-12">
         <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">{t.templateEditor.title}</h2>
         <p className="text-lg text-gray-600">{t.templateEditor.subtitle}</p>
+      </div>
+
+      <div className="bg-white rounded-3xl shadow-xl border border-amber-50 p-6 lg:p-8 mb-10">
+        <div className="grid md:grid-cols-[1.2fr_1fr] gap-6">
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-gray-800">
+              {t.templateEditor.savedTemplates.nameLabel}
+            </label>
+            <input
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder={t.templateEditor.savedTemplates.namePlaceholder}
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-right focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+            <p className="text-xs text-gray-500">{t.templateEditor.savedTemplates.nameHelper}</p>
+          </div>
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-gray-800">{t.templateEditor.savedTemplates.title}</p>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 md:grid-cols-2 gap-3">
+              {savedTemplates.length === 0 && (
+                <p className="text-gray-500 text-sm col-span-full">{t.templateEditor.savedTemplates.empty}</p>
+              )}
+              {savedTemplates.map((saved) => (
+                <div
+                  key={saved.id}
+                  className={`border rounded-xl p-3 space-y-1 ${selectedSavedId === saved.id ? 'border-amber-400 bg-amber-50' : 'border-gray-200 bg-gray-50'}`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      onClick={() => handleLoadSavedTemplate(saved.id)}
+                      className="text-right text-sm font-semibold text-gray-800 hover:text-amber-700 transition-colors"
+                    >
+                      {saved.name}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSavedTemplate(saved.id)}
+                      className="text-gray-400 hover:text-red-600 transition-colors"
+                      title={t.admin.buttons.delete}
+                      type="button"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {saved.updatedAt && (
+                    <p className="text-[11px] text-gray-500">
+                      {new Date(saved.updatedAt).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="relative">
