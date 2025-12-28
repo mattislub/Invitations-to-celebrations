@@ -89,6 +89,7 @@ export default function TemplateEditor({
   const [selectedFontSize, setSelectedFontSize] = useState<number>(18)
   const [templateWidth, setTemplateWidth] = useState<number>(DEFAULT_TEMPLATE_WIDTH)
   const [templateHeight, setTemplateHeight] = useState<number>(DEFAULT_TEMPLATE_HEIGHT)
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
   const [draggingFieldId, setDraggingFieldId] = useState<string | null>(null)
   const [draggingTextId, setDraggingTextId] = useState<string | null>(null)
   const [draggingElement, setDraggingElement] = useState<{ type: 'field' | 'text'; id: string } | null>(null)
@@ -283,6 +284,79 @@ export default function TemplateEditor({
   const convertPixelsToInches = (value: number) => value / PX_PER_INCH
   const convertCmToPixels = (value: number) => value * PX_PER_CM
   const convertInchesToPixels = (value: number) => value * PX_PER_INCH
+
+  const dimensionPresets = useMemo(
+    () => [
+      {
+        id: 'mobile',
+        label: t.templateEditor.dimensions.presets.mobile,
+        width: 1080,
+        height: 1920
+      },
+      {
+        id: 'square',
+        label: t.templateEditor.dimensions.presets.square,
+        width: 1200,
+        height: 1200
+      },
+      {
+        id: 'a5',
+        label: t.templateEditor.dimensions.presets.a5,
+        width: Math.round((148 / 25.4) * PX_PER_INCH),
+        height: Math.round((210 / 25.4) * PX_PER_INCH)
+      },
+      {
+        id: 'a4',
+        label: t.templateEditor.dimensions.presets.a4,
+        width: Math.round((210 / 25.4) * PX_PER_INCH),
+        height: Math.round((297 / 25.4) * PX_PER_INCH)
+      },
+      {
+        id: 'letter',
+        label: t.templateEditor.dimensions.presets.letter,
+        width: Math.round(8.5 * PX_PER_INCH),
+        height: Math.round(11 * PX_PER_INCH)
+      }
+    ],
+    [
+      t.templateEditor.dimensions.presets.a4,
+      t.templateEditor.dimensions.presets.a5,
+      t.templateEditor.dimensions.presets.letter,
+      t.templateEditor.dimensions.presets.mobile,
+      t.templateEditor.dimensions.presets.square
+    ]
+  )
+
+  const findPresetForDimensions = useCallback(
+    (width: number, height: number) => {
+      const tolerance = 2
+      const preset = dimensionPresets.find(
+        (option) =>
+          Math.abs(option.width - width) <= tolerance && Math.abs(option.height - height) <= tolerance
+      )
+      return preset?.id ?? null
+    },
+    [dimensionPresets]
+  )
+
+  const updatePresetSelection = useCallback(
+    (width: number, height: number) => {
+      setSelectedPresetId(findPresetForDimensions(width, height))
+    },
+    [findPresetForDimensions]
+  )
+
+  const applyDimensionPreset = (presetId: string) => {
+    const preset = dimensionPresets.find((option) => option.id === presetId)
+    if (!preset) return
+    setTemplateWidth(preset.width)
+    setTemplateHeight(preset.height)
+    setSelectedPresetId(presetId)
+  }
+
+  useEffect(() => {
+    updatePresetSelection(templateWidth, templateHeight)
+  }, [templateHeight, templateWidth, updatePresetSelection])
 
   const addField = () => {
     if (!newFieldLabel.trim()) return
@@ -683,6 +757,34 @@ export default function TemplateEditor({
             <div>
               <h4 className="text-lg font-semibold text-gray-800 mb-3">{t.templateEditor.dimensions.title}</h4>
               <p className="text-sm text-gray-500 mb-2">{t.templateEditor.dimensions.unitHelper}</p>
+              <div className="space-y-2 mb-4">
+                <span className="text-sm text-gray-700">{t.templateEditor.dimensions.presetsTitle}</span>
+                <p className="text-xs text-gray-500">{t.templateEditor.dimensions.presetsHelper}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {dimensionPresets.map((preset) => {
+                    const isActive = selectedPresetId === preset.id
+                    return (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => applyDimensionPreset(preset.id)}
+                        className={`text-left rounded-xl border px-4 py-3 transition shadow-sm ${
+                          isActive
+                            ? 'border-amber-500 bg-amber-50 text-amber-800 shadow-amber-100'
+                            : 'border-gray-200 bg-white hover:border-amber-200 hover:bg-amber-50/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-semibold">{preset.label}</span>
+                          <span className="text-[11px] text-gray-500">
+                            {preset.width}×{preset.height}
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <span className="text-sm text-gray-700">{t.templateEditor.dimensions.width}</span>
@@ -696,7 +798,9 @@ export default function TemplateEditor({
                         onChange={(e) => {
                           const value = Number(e.target.value)
                           if (Number.isNaN(value)) return
-                          setTemplateWidth(clampDimension(value, 320, 2000))
+                          const nextWidth = clampDimension(value, 320, 2000)
+                          setTemplateWidth(nextWidth)
+                          updatePresetSelection(nextWidth, templateHeight)
                         }}
                         className="w-full text-right focus:outline-none"
                       />
@@ -712,7 +816,9 @@ export default function TemplateEditor({
                         onChange={(e) => {
                           const value = Number(e.target.value)
                           if (Number.isNaN(value)) return
-                          setTemplateWidth(clampDimension(convertCmToPixels(value), 320, 2000))
+                          const nextWidth = clampDimension(convertCmToPixels(value), 320, 2000)
+                          setTemplateWidth(nextWidth)
+                          updatePresetSelection(nextWidth, templateHeight)
                         }}
                         className="w-full text-right focus:outline-none"
                       />
@@ -728,7 +834,9 @@ export default function TemplateEditor({
                         onChange={(e) => {
                           const value = Number(e.target.value)
                           if (Number.isNaN(value)) return
-                          setTemplateWidth(clampDimension(convertInchesToPixels(value), 320, 2000))
+                          const nextWidth = clampDimension(convertInchesToPixels(value), 320, 2000)
+                          setTemplateWidth(nextWidth)
+                          updatePresetSelection(nextWidth, templateHeight)
                         }}
                         className="w-full text-right focus:outline-none"
                       />
@@ -748,7 +856,9 @@ export default function TemplateEditor({
                         onChange={(e) => {
                           const value = Number(e.target.value)
                           if (Number.isNaN(value)) return
-                          setTemplateHeight(clampDimension(value, 320, 3000))
+                          const nextHeight = clampDimension(value, 320, 3000)
+                          setTemplateHeight(nextHeight)
+                          updatePresetSelection(templateWidth, nextHeight)
                         }}
                         className="w-full text-right focus:outline-none"
                       />
@@ -764,7 +874,9 @@ export default function TemplateEditor({
                         onChange={(e) => {
                           const value = Number(e.target.value)
                           if (Number.isNaN(value)) return
-                          setTemplateHeight(clampDimension(convertCmToPixels(value), 320, 3000))
+                          const nextHeight = clampDimension(convertCmToPixels(value), 320, 3000)
+                          setTemplateHeight(nextHeight)
+                          updatePresetSelection(templateWidth, nextHeight)
                         }}
                         className="w-full text-right focus:outline-none"
                       />
@@ -780,7 +892,9 @@ export default function TemplateEditor({
                         onChange={(e) => {
                           const value = Number(e.target.value)
                           if (Number.isNaN(value)) return
-                          setTemplateHeight(clampDimension(convertInchesToPixels(value), 320, 3000))
+                          const nextHeight = clampDimension(convertInchesToPixels(value), 320, 3000)
+                          setTemplateHeight(nextHeight)
+                          updatePresetSelection(templateWidth, nextHeight)
                         }}
                         className="w-full text-right focus:outline-none"
                       />
