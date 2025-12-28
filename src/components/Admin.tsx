@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ShieldCheck, Type as TypeIcon, Image as ImageIcon, Plus, RefreshCcw, Upload, Trash, Video as VideoIcon, Server, CloudOff, LayoutGrid, Layers, Edit3 } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 import { CustomInvitationType, Invitation, VideoBackground, AdminFont, AdminBackground, InvitationTemplate, SavedInvitationTemplate } from '../types'
-import { getApiBaseUrl } from '../utils/api'
+import { fetchWithApiFallback, getApiBaseUrl, getApiBaseUrlCandidates } from '../utils/api'
 import TemplateEditor from './TemplateEditor'
 
 const MAX_UPLOAD_BYTES = 900 * 1024
@@ -111,7 +111,8 @@ export default function Admin({
   onSavedTemplatesChange
 }: AdminProps) {
   const t = getTranslation(language)
-  const apiBaseUrl = getApiBaseUrl()
+  const apiBaseUrlCandidates = useMemo(() => getApiBaseUrlCandidates(), [])
+  const [apiBaseUrl, setApiBaseUrl] = useState(getApiBaseUrl())
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
   const [fonts, setFonts] = useState<AdminFont[]>([
     { id: 'assistant', name: 'Assistant', url: 'https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&display=swap' },
@@ -271,13 +272,15 @@ export default function Admin({
         return null
       }
 
-      const response = await fetch(`${apiBaseUrl}/upload`, {
+      const uploadResult = await fetchWithApiFallback('/upload', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ data: dataUrl, name: uploadName, type })
-      })
+      }, apiBaseUrlCandidates)
+      const response = uploadResult.response
+      setApiBaseUrl(uploadResult.baseUrl)
 
       if (!response.ok) {
         const errorText = await response.text()
@@ -315,11 +318,13 @@ export default function Admin({
 
     try {
       console.info('[Admin] Syncing admin state to server...')
-      const response = await fetch(`${apiBaseUrl}/admin/state`, {
+      const result = await fetchWithApiFallback('/admin/state', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
-      })
+      }, apiBaseUrlCandidates)
+      const response = result.response
+      setApiBaseUrl(result.baseUrl)
 
       if (!response.ok) {
         throw new Error('sync failed')
@@ -331,17 +336,16 @@ export default function Admin({
       console.error('[Admin] Sync error', error)
       setSyncStatus('error')
     }
-  }, [apiBaseUrl, backgrounds, customTypes, fonts, invitations, savedTemplates, template, videoBackgrounds])
+  }, [apiBaseUrlCandidates, backgrounds, customTypes, fonts, invitations, savedTemplates, template, videoBackgrounds])
 
   useEffect(() => {
     const fetchData = async () => {
       setSyncStatus('syncing')
       try {
         console.info('[Admin] Fetching admin state from server...')
-        const [stateResponse, backgroundsResponse] = await Promise.all([
-          fetch(`${apiBaseUrl}/admin/state`),
-          fetch(`${apiBaseUrl}/admin/backgrounds`)
-        ])
+        const { response: stateResponse, baseUrl } = await fetchWithApiFallback('/admin/state', undefined, apiBaseUrlCandidates)
+        setApiBaseUrl(baseUrl)
+        const backgroundsResponse = await fetch(`${baseUrl}/admin/backgrounds`)
 
         if (!stateResponse.ok) {
           throw new Error('Failed to fetch admin state')
@@ -383,7 +387,7 @@ export default function Admin({
     }
 
     void fetchData()
-  }, [apiBaseUrl, onBackgroundsChange, onCustomTypesChange, onInvitationsChange, onSavedTemplatesChange, onTemplateChange, onVideoBackgroundsChange])
+  }, [apiBaseUrlCandidates, onBackgroundsChange, onCustomTypesChange, onInvitationsChange, onSavedTemplatesChange, onTemplateChange, onVideoBackgroundsChange])
 
   // Sync to server only when user triggers save, keeping admin console predictable.
 
