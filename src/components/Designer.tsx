@@ -85,6 +85,7 @@ export default function Designer({
   const [templateFieldValues, setTemplateFieldValues] = useState<Record<string, string>>({})
   const [templateTextValues, setTemplateTextValues] = useState<Record<string, string>>({})
   const hasAutoSelectedTemplate = useRef(false)
+  const hasJumpedToTemplateDesign = useRef(false)
 
   const eventTemplates = useMemo<EventTemplate[]>(() => ([
     {
@@ -351,6 +352,16 @@ export default function Designer({
     if (!savedTemplates?.some((item) => item.id === initialSavedTemplateId)) return
     setSelectedSavedTemplateId(initialSavedTemplateId)
     hasAutoSelectedTemplate.current = true
+  }, [initialSavedTemplateId, savedTemplates])
+
+  useEffect(() => {
+    if (hasJumpedToTemplateDesign.current) return
+    if (!initialSavedTemplateId) return
+    const hasTargetTemplate = savedTemplates?.some((item) => item.id === initialSavedTemplateId)
+    if (!hasTargetTemplate) return
+
+    setStep('design')
+    hasJumpedToTemplateDesign.current = true
   }, [initialSavedTemplateId, savedTemplates])
 
   useEffect(() => {
