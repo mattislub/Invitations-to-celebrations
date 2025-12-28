@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, X, Upload, Film, Move, Save, RefreshCcw } from 'lucide-react'
+import { Plus, List, GripVertical, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, X, Upload, Film, Move, Save, RefreshCcw } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
-import { AdminBackground, InvitationTemplate, TemplateField, TemplateTextLine, VideoBackground, SavedInvitationTemplate } from '../types'
+import { AdminBackground, InvitationTemplate, TemplateTextLine, VideoBackground, SavedInvitationTemplate } from '../types'
 import { getApiBaseUrl } from '../utils/api'
 
 interface FontOption {
@@ -34,23 +34,6 @@ type BackgroundOption = {
 const DEFAULT_TEMPLATE_WIDTH = 1080
 const DEFAULT_TEMPLATE_HEIGHT = 1920
 
-const createDefaultFields = (language: Language): TemplateField[] => ([
-  {
-    id: crypto.randomUUID(),
-    label: language === 'he' ? 'שם מלא' : 'Full Name',
-    type: 'text',
-    required: true,
-    position: { x: 50, y: 60, width: 70, align: 'center' }
-  },
-  {
-    id: crypto.randomUUID(),
-    label: language === 'he' ? 'תאריך אירוע' : 'Event Date',
-    type: 'text',
-    required: false,
-    position: { x: 50, y: 72, width: 60, align: 'center' }
-  }
-])
-
 const createDefaultTextLines = (language: Language): TemplateTextLine[] => ([
   {
     id: crypto.randomUUID(),
@@ -80,20 +63,17 @@ export default function TemplateEditor({
   onTemplateSave
 }: TemplateEditorProps) {
   const t = getTranslation(language)
-  type PanelKey = 'background' | 'fields' | 'text'
+  type PanelKey = 'background' | 'text'
 
-  const [fields, setFields] = useState<TemplateField[]>(() => createDefaultFields(language))
   const [textLines, setTextLines] = useState<TemplateTextLine[]>(() => createDefaultTextLines(language))
-  const [newFieldLabel, setNewFieldLabel] = useState('')
   const [newTextLine, setNewTextLine] = useState('')
   const [selectedFont, setSelectedFont] = useState<string>('Assistant, sans-serif')
   const [selectedFontSize, setSelectedFontSize] = useState<number>(18)
   const [templateWidth, setTemplateWidth] = useState<number>(DEFAULT_TEMPLATE_WIDTH)
   const [templateHeight, setTemplateHeight] = useState<number>(DEFAULT_TEMPLATE_HEIGHT)
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
-  const [draggingFieldId, setDraggingFieldId] = useState<string | null>(null)
   const [draggingTextId, setDraggingTextId] = useState<string | null>(null)
-  const [draggingElement, setDraggingElement] = useState<{ type: 'field' | 'text'; id: string } | null>(null)
+  const [draggingElementId, setDraggingElementId] = useState<string | null>(null)
   const [activePanel, setActivePanel] = useState<PanelKey | null>('background')
   const [selectedBackgroundId, setSelectedBackgroundId] = useState<string>('')
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null)
@@ -139,7 +119,6 @@ export default function TemplateEditor({
 
   useEffect(() => {
     if (!template) return
-    setFields(template.fields?.length ? template.fields : createDefaultFields(language))
     setTextLines(template.textLines?.length ? template.textLines : createDefaultTextLines(language))
     setTemplateWidth(template.dimensions?.width ?? DEFAULT_TEMPLATE_WIDTH)
     setTemplateHeight(template.dimensions?.height ?? DEFAULT_TEMPLATE_HEIGHT)
@@ -160,7 +139,7 @@ export default function TemplateEditor({
   )
 
   const buildTemplateSnapshot = () => ({
-    fields,
+    fields: [],
     textLines,
     backgroundId: selectedBackgroundId || undefined,
     dimensions: {
@@ -170,7 +149,6 @@ export default function TemplateEditor({
   })
 
   const resetTemplateState = () => {
-    setFields(createDefaultFields(language))
     setTextLines(createDefaultTextLines(language))
     setTemplateWidth(DEFAULT_TEMPLATE_WIDTH)
     setTemplateHeight(DEFAULT_TEMPLATE_HEIGHT)
@@ -358,29 +336,6 @@ export default function TemplateEditor({
     updatePresetSelection(templateWidth, templateHeight)
   }, [templateHeight, templateWidth, updatePresetSelection])
 
-  const addField = () => {
-    if (!newFieldLabel.trim()) return
-    setFields((prev) => {
-      const nextY = 50 + prev.length * 8
-      return [
-        ...prev,
-        {
-          id: crypto.randomUUID(),
-          label: newFieldLabel.trim(),
-          type: 'text',
-          required: false,
-          position: {
-            x: 50,
-            y: Math.min(95, nextY),
-            width: 70,
-            align: 'center'
-          }
-        }
-      ]
-    })
-    setNewFieldLabel('')
-  }
-
   const addTextLine = () => {
     if (!newTextLine.trim()) return
     setTextLines((prev) => [
@@ -399,36 +354,6 @@ export default function TemplateEditor({
       }
     ])
     setNewTextLine('')
-  }
-
-  const toggleRequired = (id: string) => {
-    setFields((prev) =>
-      prev.map((field) => (field.id === id ? { ...field, required: !field.required } : field))
-    )
-  }
-
-  const updateFieldPosition = (id: string, key: 'x' | 'y' | 'width', value: number) => {
-    setFields((prev) =>
-      prev.map((field) =>
-        field.id === id
-          ? {
-              ...field,
-              position: {
-                ...field.position,
-                [key]: clampPercentage(key === 'width' ? Math.max(value, 10) : value)
-              }
-            }
-          : field
-      )
-    )
-  }
-
-  const updateFieldAlignment = (id: string, align: TemplateField['position']['align']) => {
-    setFields((prev) =>
-      prev.map((field) =>
-        field.id === id ? { ...field, position: { ...field.position, align } } : field
-      )
-    )
   }
 
   const updateTextLine = (id: string, key: keyof TemplateTextLine, value: string | number) => {
@@ -459,10 +384,6 @@ export default function TemplateEditor({
     )
   }
 
-  const removeField = (id: string) => {
-    setFields((prev) => prev.filter((field) => field.id !== id))
-  }
-
   const removeTextLine = (id: string) => {
     setTextLines((prev) => prev.filter((line) => line.id !== id))
   }
@@ -478,36 +399,20 @@ export default function TemplateEditor({
     return updated
   }
 
-  const handleFieldDrop = (targetId: string) => {
-    if (!draggingFieldId || draggingFieldId === targetId) return
-    setFields((prev) => reorder(prev, draggingFieldId, targetId))
-    setDraggingFieldId(null)
-  }
-
   const handleTextDrop = (targetId: string) => {
     if (!draggingTextId || draggingTextId === targetId) return
     setTextLines((prev) => reorder(prev, draggingTextId, targetId))
     setDraggingTextId(null)
   }
 
-  const moveElementTo = (type: 'field' | 'text', id: string, x: number, y: number) => {
+  const moveTextTo = (id: string, x: number, y: number) => {
     const clampedX = clampPercentage(x)
     const clampedY = clampPercentage(y)
-    if (type === 'field') {
-      setFields((prev) =>
-        prev.map((field) =>
-          field.id === id
-            ? { ...field, position: { ...field.position, x: clampedX, y: clampedY } }
-            : field
-        )
+    setTextLines((prev) =>
+      prev.map((line) =>
+        line.id === id ? { ...line, position: { ...line.position, x: clampedX, y: clampedY } } : line
       )
-    } else {
-      setTextLines((prev) =>
-        prev.map((line) =>
-          line.id === id ? { ...line, position: { ...line.position, x: clampedX, y: clampedY } } : line
-        )
-      )
-    }
+    )
   }
 
   const moveSelectedTextBy = useCallback(
@@ -570,34 +475,31 @@ export default function TemplateEditor({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [moveSelectedTextBy, selectedTextId])
 
-  const startDraggingElement = (event: ReactPointerEvent, type: 'field' | 'text', id: string) => {
+  const startDraggingText = (event: ReactPointerEvent, id: string) => {
     event.preventDefault()
-    setDraggingElement({ type, id })
-    if (type === 'text') {
-      setSelectedTextId(id)
-    }
+    setDraggingElementId(id)
+    setSelectedTextId(id)
     if (!previewRef.current) return
     const rect = previewRef.current.getBoundingClientRect()
     const x = ((event.clientX - rect.left) / rect.width) * 100
     const y = ((event.clientY - rect.top) / rect.height) * 100
-    moveElementTo(type, id, x, y)
+    moveTextTo(id, x, y)
   }
 
   const handleCanvasPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!draggingElement || !previewRef.current) return
+    if (!draggingElementId || !previewRef.current) return
     const rect = previewRef.current.getBoundingClientRect()
     const x = ((event.clientX - rect.left) / rect.width) * 100
     const y = ((event.clientY - rect.top) / rect.height) * 100
-    moveElementTo(draggingElement.type, draggingElement.id, x, y)
+    moveTextTo(draggingElementId, x, y)
   }
 
   const handleCanvasPointerUp = () => {
-    setDraggingElement(null)
+    setDraggingElementId(null)
   }
 
   const panelConfig: Record<PanelKey, { icon: typeof ImageIcon; label: string; helper?: string }> = {
     background: { icon: ImageIcon, label: t.templateEditor.background },
-    fields: { icon: TypeIcon, label: t.templateEditor.fields, helper: t.templateEditor.dragHint },
     text: { icon: List, label: t.templateEditor.textLines, helper: t.templateEditor.dragHint }
   }
   const activePanelConfig = activePanel ? panelConfig[activePanel] : null
@@ -638,7 +540,6 @@ export default function TemplateEditor({
     const existing = savedTemplates.find((item) => item.id === templateId)
     if (!existing) return
     const { template: saved } = existing
-    setFields(saved.fields?.length ? saved.fields : createDefaultFields(language))
     setTextLines(saved.textLines?.length ? saved.textLines : createDefaultTextLines(language))
     setTemplateWidth(saved.dimensions?.width ?? DEFAULT_TEMPLATE_WIDTH)
     setTemplateHeight(saved.dimensions?.height ?? DEFAULT_TEMPLATE_HEIGHT)
@@ -922,132 +823,6 @@ export default function TemplateEditor({
             </div>
           </div>
         )
-      case 'fields':
-        return (
-          <div className="space-y-3">
-            {fields.map((field) => (
-              <div
-                key={field.id}
-                className="flex items-center gap-3 bg-gray-50 rounded-xl p-4 border border-gray-200"
-                draggable
-                onDragStart={() => setDraggingFieldId(field.id)}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => handleFieldDrop(field.id)}
-              >
-                <GripVertical className="w-5 h-5 text-gray-400 cursor-grab" />
-                <div className="flex-1 text-right">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                    <span className="font-semibold text-gray-800">{field.label}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700">
-                        {t.templateEditor.options.types.text}
-                      </span>
-                      <label className="flex items-center gap-2 text-sm text-gray-600">
-                        <input
-                          type="checkbox"
-                          checked={field.required}
-                          onChange={() => toggleRequired(field.id)}
-                        />
-                        {t.templateEditor.options.required}
-                      </label>
-                      <button
-                        onClick={() => removeField(field.id)}
-                        className="text-red-500 text-sm hover:underline"
-                      >
-                        {t.admin.buttons.delete}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="grid sm:grid-cols-3 gap-3 mt-3">
-                    <label className="text-xs text-gray-600 flex flex-col gap-1">
-                      <span>{t.templateEditor.layout.positionX}</span>
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={field.position.x}
-                        onChange={(e) => updateFieldPosition(field.id, 'x', Number(e.target.value))}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                      />
-                    </label>
-                    <label className="text-xs text-gray-600 flex flex-col gap-1">
-                      <span>{t.templateEditor.layout.positionY}</span>
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={field.position.y}
-                        onChange={(e) => updateFieldPosition(field.id, 'y', Number(e.target.value))}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                      />
-                    </label>
-                    <label className="text-xs text-gray-600 flex flex-col gap-1">
-                      <span>{t.templateEditor.layout.width}</span>
-                      <input
-                        type="number"
-                        min={10}
-                        max={100}
-                        value={field.position.width}
-                        onChange={(e) => updateFieldPosition(field.id, 'width', Number(e.target.value))}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                      />
-                    </label>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <span className="text-xs font-semibold text-gray-700">{t.templateEditor.layout.alignment}</span>
-                    <div className="flex rounded-lg overflow-hidden border border-gray-300">
-                      <button
-                        onClick={() => updateFieldAlignment(field.id, 'left')}
-                        className={`px-3 py-2 ${field.position.align === 'left' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
-                        title={t.templateEditor.layout.alignLeft}
-                        type="button"
-                      >
-                        <AlignLeft className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => updateFieldAlignment(field.id, 'center')}
-                        className={`px-3 py-2 ${field.position.align === 'center' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
-                        title={t.templateEditor.layout.alignCenter}
-                        type="button"
-                      >
-                        <AlignCenter className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => updateFieldAlignment(field.id, 'right')}
-                        className={`px-3 py-2 ${field.position.align === 'right' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
-                        title={t.templateEditor.layout.alignRight}
-                        type="button"
-                      >
-                        <AlignRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <p className="text-xs text-gray-500">{t.templateEditor.layout.overlapHint}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            <div className="pt-3 grid md:grid-cols-3 gap-3">
-              <input
-                type="text"
-                value={newFieldLabel}
-                onChange={(e) => setNewFieldLabel(e.target.value)}
-                placeholder={t.templateEditor.placeholders.fieldLabel}
-                className="md:col-span-2 w-full border border-gray-300 rounded-lg px-4 py-3 text-right"
-              />
-              <div className="w-full border border-gray-200 rounded-lg px-3 py-3 text-right bg-gray-50 text-sm font-semibold text-gray-700">
-                {t.templateEditor.options.types.text}
-              </div>
-            </div>
-            <button
-              onClick={addField}
-              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-gray-700 to-amber-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200"
-            >
-              <Plus className="w-5 h-5" />
-              {t.templateEditor.addField}
-            </button>
-          </div>
-        )
       case 'text':
         return (
           <div className="space-y-3">
@@ -1297,16 +1072,16 @@ export default function TemplateEditor({
 
       <div className="relative">
         <div className="bg-white rounded-3xl shadow-2xl p-6 lg:p-10 border border-amber-50">
-          <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
-            <div>
-              <h3 className="text-2xl font-bold text-gray-800">{t.templateEditor.preview}</h3>
-              <p className="text-sm text-gray-500">{t.templateEditor.layout.dragAnywhere}</p>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap justify-end">
-              <div className="text-sm text-gray-600 flex items-center gap-2">
-                <span className="inline-flex h-2 w-2 rounded-full bg-amber-500" />
-                {t.templateEditor.previewFieldHint}
+            <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-800">{t.templateEditor.preview}</h3>
+                <p className="text-sm text-gray-500">{t.templateEditor.layout.dragAnywhere}</p>
               </div>
+              <div className="flex items-center gap-3 flex-wrap justify-end">
+                <div className="text-sm text-gray-600 flex items-center gap-2">
+                  <span className="inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                  {t.templateEditor.dragHint}
+                </div>
               <p className="text-xs text-gray-500">{t.templateEditor.actions.saveTemplateHelper}</p>
               {saveMessage && (
                 <span className="inline-flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
@@ -1363,7 +1138,7 @@ export default function TemplateEditor({
                         transform: 'translate(-50%, -50%)',
                         textAlign: line.position.align as 'left' | 'center' | 'right'
                       }}
-                      onPointerDown={(e) => startDraggingElement(e, 'text', line.id)}
+                      onPointerDown={(e) => startDraggingText(e, line.id)}
                       tabIndex={0}
                       onFocus={() => setSelectedTextId(line.id)}
                       onClick={() => setSelectedTextId(line.id)}
@@ -1378,27 +1153,6 @@ export default function TemplateEditor({
                     </div>
                   )
                 })}
-                {fields.map((field) => (
-                  <div
-                    key={field.id}
-                    className="absolute cursor-move bg-amber-50/90 border border-amber-300 rounded-lg px-3 py-2 shadow-sm"
-                    style={{
-                      left: `${field.position.x}%`,
-                      top: `${field.position.y}%`,
-                      width: `${field.position.width}%`,
-                      transform: 'translate(-50%, -50%)',
-                      textAlign: field.position.align as 'left' | 'center' | 'right'
-                    }}
-                    onPointerDown={(e) => startDraggingElement(e, 'field', field.id)}
-                  >
-                    <p className="text-sm font-semibold text-amber-800">
-                      {'{{ '}
-                      {field.label}
-                      {' }}'} {field.required && <span className="text-red-500">*</span>}
-                    </p>
-                    <p className="text-xs text-amber-700">{t.templateEditor.previewFieldHint}</p>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
