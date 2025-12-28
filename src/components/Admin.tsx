@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ShieldCheck, Type as TypeIcon, Image as ImageIcon, Plus, RefreshCcw, Upload, Trash, Video as VideoIcon, Server, CloudOff, LayoutGrid, Layers, Edit3 } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
-import { CustomInvitationType, Invitation, VideoBackground, AdminFont, AdminBackground } from '../types'
+import { CustomInvitationType, Invitation, VideoBackground, AdminFont, AdminBackground, InvitationTemplate } from '../types'
 import TemplateEditor from './TemplateEditor'
 
 const MAX_UPLOAD_BYTES = 900 * 1024
@@ -63,6 +63,8 @@ interface AdminProps {
   onBackgroundsChange: (backgrounds: AdminBackground[]) => void
   videoBackgrounds: VideoBackground[]
   onVideoBackgroundsChange: (backgrounds: VideoBackground[]) => void
+  template?: InvitationTemplate | null
+  onTemplateChange?: (template: InvitationTemplate | null) => void
 }
 
 interface SyncPayload {
@@ -71,6 +73,7 @@ interface SyncPayload {
   videoBackgrounds: VideoBackground[]
   fonts: AdminFont[]
   backgrounds: AdminBackground[]
+  template?: InvitationTemplate | null
 }
 
 type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'disabled'
@@ -84,7 +87,9 @@ export default function Admin({
   backgrounds,
   onBackgroundsChange,
   videoBackgrounds,
-  onVideoBackgroundsChange
+  onVideoBackgroundsChange,
+  template,
+  onTemplateChange
 }: AdminProps) {
   const t = getTranslation(language)
   const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
@@ -332,7 +337,8 @@ export default function Admin({
       invitations,
       videoBackgrounds,
       fonts,
-      backgrounds
+      backgrounds,
+      template: template ?? null
     }
 
     setSyncStatus('syncing')
@@ -355,7 +361,7 @@ export default function Admin({
       console.error('[Admin] Sync error', error)
       setSyncStatus('error')
     }
-  }, [apiBaseUrl, backgrounds, customTypes, fonts, invitations, videoBackgrounds])
+  }, [apiBaseUrl, backgrounds, customTypes, fonts, invitations, template, videoBackgrounds])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -373,11 +379,14 @@ export default function Admin({
         if (payload.customTypes) onCustomTypesChange(payload.customTypes)
         if (payload.invitations) onInvitationsChange(payload.invitations)
         if (payload.videoBackgrounds) onVideoBackgroundsChange(payload.videoBackgrounds)
+        if ('template' in payload && onTemplateChange) onTemplateChange(payload.template ?? null)
 
         console.info('[Admin] Admin state fetched', {
           fonts: payload.fonts?.length ?? 0,
           backgrounds: payload.backgrounds?.length ?? 0,
-          invitations: payload.invitations?.length ?? 0
+          invitations: payload.invitations?.length ?? 0,
+          templateFields: payload.template?.fields?.length ?? 0,
+          templateTexts: payload.template?.textLines?.length ?? 0
         })
         setSyncStatus('success')
       } catch (error) {
@@ -387,7 +396,7 @@ export default function Admin({
     }
 
     void fetchData()
-  }, [apiBaseUrl, onBackgroundsChange, onCustomTypesChange, onInvitationsChange, onVideoBackgroundsChange])
+  }, [apiBaseUrl, onBackgroundsChange, onCustomTypesChange, onInvitationsChange, onTemplateChange, onVideoBackgroundsChange])
 
   // Sync to server only when user triggers save, keeping admin console predictable.
 
@@ -672,6 +681,11 @@ export default function Admin({
                 onBackgroundsChange={onBackgroundsChange}
                 videoBackgrounds={videoBackgrounds}
                 onVideoBackgroundsChange={onVideoBackgroundsChange}
+                template={template}
+                onTemplateSave={(nextTemplate) => {
+                  onTemplateChange?.(nextTemplate)
+                  setStatusMessage(t.templateEditor.actions.saveTemplateSuccess)
+                }}
               />
             </div>
           )}

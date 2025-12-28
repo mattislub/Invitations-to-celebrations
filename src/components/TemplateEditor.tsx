@@ -1,35 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, X, Upload, Film, Move } from 'lucide-react'
+import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, X, Upload, Film, Move, Save } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
-import { AdminBackground, VideoBackground } from '../types'
-
-type FieldType = 'text'
-
-interface TemplateField {
-  id: string
-  label: string
-  type: FieldType
-  required: boolean
-  position: {
-    x: number
-    y: number
-    width: number
-    align: 'left' | 'center' | 'right'
-  }
-}
-
-interface TextLine {
-  id: string
-  text: string
-  font: string
-  fontSize: number
-  position: {
-    x: number
-    y: number
-    width: number
-    align: 'left' | 'center' | 'right'
-  }
-}
+import { AdminBackground, InvitationTemplate, TemplateField, TemplateTextLine, VideoBackground } from '../types'
 
 interface FontOption {
   id: string
@@ -43,6 +15,8 @@ interface TemplateEditorProps {
   onBackgroundsChange: (backgrounds: AdminBackground[]) => void
   videoBackgrounds: VideoBackground[]
   onVideoBackgroundsChange: (backgrounds: VideoBackground[]) => void
+  template?: InvitationTemplate | null
+  onTemplateSave?: (template: InvitationTemplate) => void
 }
 
 type BackgroundOption = {
@@ -54,60 +28,70 @@ type BackgroundOption = {
   isDefault?: boolean
 }
 
+const DEFAULT_TEMPLATE_WIDTH = 1080
+const DEFAULT_TEMPLATE_HEIGHT = 1920
+
+const createDefaultFields = (language: Language): TemplateField[] => ([
+  {
+    id: crypto.randomUUID(),
+    label: language === 'he' ? 'שם מלא' : 'Full Name',
+    type: 'text',
+    required: true,
+    position: { x: 50, y: 60, width: 70, align: 'center' }
+  },
+  {
+    id: crypto.randomUUID(),
+    label: language === 'he' ? 'תאריך אירוע' : 'Event Date',
+    type: 'text',
+    required: false,
+    position: { x: 50, y: 72, width: 60, align: 'center' }
+  }
+])
+
+const createDefaultTextLines = (language: Language): TemplateTextLine[] => ([
+  {
+    id: crypto.randomUUID(),
+    text: language === 'he' ? 'באהבה רבה' : 'With great joy',
+    font: 'Playfair Display, serif',
+    fontSize: 26,
+    position: { x: 50, y: 20, width: 90, align: 'center' }
+  },
+  {
+    id: crypto.randomUUID(),
+    text: language === 'he' ? 'נשמח לראותכם' : 'Looking forward to celebrating together',
+    font: 'Assistant, sans-serif',
+    fontSize: 18,
+    position: { x: 50, y: 30, width: 90, align: 'center' }
+  }
+])
+
 export default function TemplateEditor({
   language,
   backgrounds,
   onBackgroundsChange,
   videoBackgrounds,
-  onVideoBackgroundsChange
+  onVideoBackgroundsChange,
+  template,
+  onTemplateSave
 }: TemplateEditorProps) {
   const t = getTranslation(language)
   type PanelKey = 'background' | 'fields' | 'text'
 
-  const [fields, setFields] = useState<TemplateField[]>([
-    {
-      id: crypto.randomUUID(),
-      label: language === 'he' ? 'שם מלא' : 'Full Name',
-      type: 'text',
-      required: true,
-      position: { x: 50, y: 60, width: 70, align: 'center' }
-    },
-    {
-      id: crypto.randomUUID(),
-      label: language === 'he' ? 'תאריך אירוע' : 'Event Date',
-      type: 'text',
-      required: false,
-      position: { x: 50, y: 72, width: 60, align: 'center' }
-    }
-  ])
-  const [textLines, setTextLines] = useState<TextLine[]>([
-    {
-      id: crypto.randomUUID(),
-      text: language === 'he' ? 'באהבה רבה' : 'With great joy',
-      font: 'Playfair Display, serif',
-      fontSize: 26,
-      position: { x: 50, y: 20, width: 90, align: 'center' }
-    },
-    {
-      id: crypto.randomUUID(),
-      text: language === 'he' ? 'נשמח לראותכם' : 'Looking forward to celebrating together',
-      font: 'Assistant, sans-serif',
-      fontSize: 18,
-      position: { x: 50, y: 30, width: 90, align: 'center' }
-    }
-  ])
+  const [fields, setFields] = useState<TemplateField[]>(() => createDefaultFields(language))
+  const [textLines, setTextLines] = useState<TemplateTextLine[]>(() => createDefaultTextLines(language))
   const [newFieldLabel, setNewFieldLabel] = useState('')
   const [newTextLine, setNewTextLine] = useState('')
   const [selectedFont, setSelectedFont] = useState<string>('Assistant, sans-serif')
   const [selectedFontSize, setSelectedFontSize] = useState<number>(18)
-  const [templateWidth, setTemplateWidth] = useState<number>(1080)
-  const [templateHeight, setTemplateHeight] = useState<number>(1920)
+  const [templateWidth, setTemplateWidth] = useState<number>(DEFAULT_TEMPLATE_WIDTH)
+  const [templateHeight, setTemplateHeight] = useState<number>(DEFAULT_TEMPLATE_HEIGHT)
   const [draggingFieldId, setDraggingFieldId] = useState<string | null>(null)
   const [draggingTextId, setDraggingTextId] = useState<string | null>(null)
   const [draggingElement, setDraggingElement] = useState<{ type: 'field' | 'text'; id: string } | null>(null)
   const [activePanel, setActivePanel] = useState<PanelKey | null>('background')
   const [selectedBackgroundId, setSelectedBackgroundId] = useState<string>('')
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null)
+  const [saveMessage, setSaveMessage] = useState('')
   const previewRef = useRef<HTMLDivElement | null>(null)
   const PX_PER_INCH = 96
   const CM_PER_INCH = 2.54
@@ -145,6 +129,15 @@ export default function TemplateEditor({
       return exists ? current : backgroundOptions[0].id
     })
   }, [backgroundOptions])
+
+  useEffect(() => {
+    if (!template) return
+    setFields(template.fields?.length ? template.fields : createDefaultFields(language))
+    setTextLines(template.textLines?.length ? template.textLines : createDefaultTextLines(language))
+    setTemplateWidth(template.dimensions?.width ?? DEFAULT_TEMPLATE_WIDTH)
+    setTemplateHeight(template.dimensions?.height ?? DEFAULT_TEMPLATE_HEIGHT)
+    setSelectedBackgroundId(template.backgroundId ?? '')
+  }, [language, template])
 
   useEffect(() => {
     if (!selectedTextId) return
@@ -335,7 +328,7 @@ export default function TemplateEditor({
     )
   }
 
-  const updateTextLine = (id: string, key: keyof TextLine, value: string | number) => {
+  const updateTextLine = (id: string, key: keyof TemplateTextLine, value: string | number) => {
     setTextLines((prev) =>
       prev.map((line) => (line.id === id ? { ...line, [key]: value } : line))
     )
@@ -357,7 +350,7 @@ export default function TemplateEditor({
     )
   }
 
-  const updateTextAlignment = (id: string, align: TextLine['position']['align']) => {
+  const updateTextAlignment = (id: string, align: TemplateTextLine['position']['align']) => {
     setTextLines((prev) =>
       prev.map((line) => (line.id === id ? { ...line, position: { ...line.position, align } } : line))
     )
@@ -505,6 +498,21 @@ export default function TemplateEditor({
     text: { icon: List, label: t.templateEditor.textLines, helper: t.templateEditor.dragHint }
   }
   const activePanelConfig = activePanel ? panelConfig[activePanel] : null
+
+  const handleSaveTemplate = () => {
+    const snapshot: InvitationTemplate = {
+      fields,
+      textLines,
+      backgroundId: selectedBackgroundId || undefined,
+      dimensions: {
+        width: templateWidth,
+        height: templateHeight
+      }
+    }
+    onTemplateSave?.(snapshot)
+    setSaveMessage(t.templateEditor.actions.saveTemplateSuccess)
+    setTimeout(() => setSaveMessage(''), 3500)
+  }
 
   const renderPanelContent = () => {
     switch (activePanel) {
@@ -1040,9 +1048,25 @@ export default function TemplateEditor({
               <h3 className="text-2xl font-bold text-gray-800">{t.templateEditor.preview}</h3>
               <p className="text-sm text-gray-500">{t.templateEditor.layout.dragAnywhere}</p>
             </div>
-            <div className="text-sm text-gray-600 flex items-center gap-2">
-              <span className="inline-flex h-2 w-2 rounded-full bg-amber-500" />
-              {t.templateEditor.previewFieldHint}
+            <div className="flex items-center gap-3 flex-wrap justify-end">
+              <div className="text-sm text-gray-600 flex items-center gap-2">
+                <span className="inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                {t.templateEditor.previewFieldHint}
+              </div>
+              <p className="text-xs text-gray-500">{t.templateEditor.actions.saveTemplateHelper}</p>
+              {saveMessage && (
+                <span className="inline-flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                  {saveMessage}
+                </span>
+              )}
+              <button
+                onClick={handleSaveTemplate}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-500 text-white px-4 py-2 rounded-xl font-semibold shadow hover:shadow-lg transition-colors"
+                type="button"
+              >
+                <Save className="w-4 h-4" />
+                {t.templateEditor.actions.saveTemplate}
+              </button>
             </div>
           </div>
           <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-100">

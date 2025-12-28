@@ -130,7 +130,9 @@ const server = createServer(async (req, res) => {
         customTypes: body.customTypes?.length,
         invitations: body.invitations?.length,
         backgrounds: body.backgrounds?.length,
-        videoBackgrounds: body.videoBackgrounds?.length
+        videoBackgrounds: body.videoBackgrounds?.length,
+        templateFields: body.template?.fields?.length,
+        templateTexts: body.template?.textLines?.length
       })
       sendJson(res, 200, { ok: true })
     } catch (error) {
