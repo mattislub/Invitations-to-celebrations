@@ -323,6 +323,8 @@ export interface Translations {
       saveTemplate: string
       saveTemplateSuccess: string
       saveTemplateHelper: string
+      saveAsNew: string
+      startNewTemplate: string
     }
   }
 }
@@ -670,7 +672,9 @@ export const translations: Record<Language, Translations> = {
     actions: {
       saveTemplate: 'שמירת תבנית',
       saveTemplateSuccess: 'התבנית נשמרה. לחצו "שמירה" בלוח הניהול כדי לסנכרן לשרת.',
-      saveTemplateHelper: 'שמרו את פריסת השדות, הטקסטים והרקע לפני סנכרון לשרת'
+      saveTemplateHelper: 'שמרו את פריסת השדות, הטקסטים והרקע לפני סנכרון לשרת',
+      saveAsNew: 'שמור כתבנית חדשה',
+      startNewTemplate: 'תבנית חדשה'
     }
   }
 },
@@ -1016,7 +1020,9 @@ export const translations: Record<Language, Translations> = {
     actions: {
       saveTemplate: 'Save Template',
       saveTemplateSuccess: 'Template saved. Click "Save" in the admin panel to sync to the server.',
-      saveTemplateHelper: 'Store the fields, text layout, and background before syncing to the server'
+      saveTemplateHelper: 'Store the fields, text layout, and background before syncing to the server',
+      saveAsNew: 'Save as New Template',
+      startNewTemplate: 'New Template'
     }
   }
 }

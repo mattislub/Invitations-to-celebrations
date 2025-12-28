@@ -368,7 +368,7 @@ export default function Admin({
       console.error('[Admin] Sync error', error)
       setSyncStatus('error')
     }
-  }, [apiBaseUrl, backgrounds, customTypes, fonts, invitations, template, videoBackgrounds])
+  }, [apiBaseUrl, backgrounds, customTypes, fonts, invitations, savedTemplates, template, videoBackgrounds])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -404,7 +404,7 @@ export default function Admin({
     }
 
     void fetchData()
-  }, [apiBaseUrl, onBackgroundsChange, onCustomTypesChange, onInvitationsChange, onTemplateChange, onVideoBackgroundsChange])
+  }, [apiBaseUrl, onBackgroundsChange, onCustomTypesChange, onInvitationsChange, onSavedTemplatesChange, onTemplateChange, onVideoBackgroundsChange])
 
   // Sync to server only when user triggers save, keeping admin console predictable.
 

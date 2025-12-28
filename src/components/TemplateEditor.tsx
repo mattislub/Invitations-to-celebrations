@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, X, Upload, Film, Move, Save } from 'lucide-react'
+import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, X, Upload, Film, Move, Save, RefreshCcw } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 import { AdminBackground, InvitationTemplate, TemplateField, TemplateTextLine, VideoBackground, SavedInvitationTemplate } from '../types'
 
@@ -157,6 +157,28 @@ export default function TemplateEditor({
     () => backgroundOptions.find((option) => option.id === selectedBackgroundId),
     [backgroundOptions, selectedBackgroundId]
   )
+
+  const buildTemplateSnapshot = () => ({
+    fields,
+    textLines,
+    backgroundId: selectedBackgroundId || undefined,
+    dimensions: {
+      width: templateWidth,
+      height: templateHeight
+    }
+  })
+
+  const resetTemplateState = () => {
+    setFields(createDefaultFields(language))
+    setTextLines(createDefaultTextLines(language))
+    setTemplateWidth(DEFAULT_TEMPLATE_WIDTH)
+    setTemplateHeight(DEFAULT_TEMPLATE_HEIGHT)
+    setSelectedBackgroundId('')
+    setTemplateName('')
+    setSelectedSavedId(null)
+    setSaveMessage('')
+    setActivePanel('background')
+  }
 
   const readFileAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
@@ -506,37 +528,30 @@ export default function TemplateEditor({
   }
   const activePanelConfig = activePanel ? panelConfig[activePanel] : null
 
-  const handleSaveTemplate = () => {
+  const handleSaveTemplate = (mode: 'update' | 'createNew' = 'update') => {
     if (!templateName.trim()) {
       setSaveMessage(language === 'he' ? 'אנא הזינו שם לתבנית' : 'Please enter a template name')
       setTimeout(() => setSaveMessage(''), 3500)
       return
     }
 
-    const snapshot: InvitationTemplate = {
-      fields,
-      textLines,
-      backgroundId: selectedBackgroundId || undefined,
-      dimensions: {
-        width: templateWidth,
-        height: templateHeight
-      }
-    }
+    const snapshot: InvitationTemplate = buildTemplateSnapshot()
     const now = new Date().toISOString()
+    const targetId = mode === 'createNew' || !selectedSavedId ? crypto.randomUUID() : selectedSavedId
     const nextTemplate: SavedInvitationTemplate = {
-      id: selectedSavedId ?? crypto.randomUUID(),
+      id: targetId,
       name: templateName.trim(),
       template: snapshot,
       updatedAt: now
     }
 
     const existsIndex = savedTemplates.findIndex((item) => item.id === nextTemplate.id)
-    let nextList = savedTemplates
-    if (existsIndex >= 0) {
-      nextList = savedTemplates.map((item, idx) => (idx === existsIndex ? nextTemplate : item))
-    } else {
-      nextList = [nextTemplate, ...savedTemplates]
-    }
+    const nextList =
+      mode === 'createNew'
+        ? [nextTemplate, ...savedTemplates]
+        : existsIndex >= 0
+          ? savedTemplates.map((item, idx) => (idx === existsIndex ? nextTemplate : item))
+          : [nextTemplate, ...savedTemplates]
 
     onSavedTemplatesChange?.(nextList)
     onTemplateSave?.(snapshot)
@@ -1106,9 +1121,19 @@ export default function TemplateEditor({
       <div className="bg-white rounded-3xl shadow-xl border border-amber-50 p-6 lg:p-8 mb-10">
         <div className="grid md:grid-cols-[1.2fr_1fr] gap-6">
           <div className="space-y-3">
-            <label className="block text-sm font-semibold text-gray-800">
-              {t.templateEditor.savedTemplates.nameLabel}
-            </label>
+            <div className="flex items-center justify-between gap-3">
+              <label className="block text-sm font-semibold text-gray-800">
+                {t.templateEditor.savedTemplates.nameLabel}
+              </label>
+              <button
+                type="button"
+                onClick={resetTemplateState}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-700 hover:border-amber-300 hover:text-amber-700 transition-colors"
+              >
+                <RefreshCcw className="w-4 h-4" />
+                {t.templateEditor.actions.startNewTemplate}
+              </button>
+            </div>
             <input
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
@@ -1174,14 +1199,24 @@ export default function TemplateEditor({
                   {saveMessage}
                 </span>
               )}
-              <button
-                onClick={handleSaveTemplate}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-500 text-white px-4 py-2 rounded-xl font-semibold shadow hover:shadow-lg transition-colors"
-                type="button"
-              >
-                <Save className="w-4 h-4" />
-                {t.templateEditor.actions.saveTemplate}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleSaveTemplate('createNew')}
+                  className="inline-flex items-center gap-2 border border-amber-200 bg-white text-amber-700 px-4 py-2 rounded-xl font-semibold shadow-sm hover:shadow transition-colors"
+                  type="button"
+                >
+                  <Save className="w-4 h-4" />
+                  {t.templateEditor.actions.saveAsNew}
+                </button>
+                <button
+                  onClick={() => handleSaveTemplate('update')}
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-500 text-white px-4 py-2 rounded-xl font-semibold shadow hover:shadow-lg transition-colors"
+                  type="button"
+                >
+                  <Save className="w-4 h-4" />
+                  {t.templateEditor.actions.saveTemplate}
+                </button>
+              </div>
             </div>
           </div>
           <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-100">
