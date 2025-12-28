@@ -18,6 +18,7 @@ interface DesignerProps {
   imageBackgrounds: AdminBackground[]
   videoBackgrounds: VideoBackground[]
   savedTemplates?: SavedInvitationTemplate[]
+  initialSavedTemplateId?: string
 }
 
 interface EventTemplate {
@@ -68,7 +69,8 @@ export default function Designer({
   customTypes,
   imageBackgrounds,
   videoBackgrounds,
-  savedTemplates = []
+  savedTemplates = [],
+  initialSavedTemplateId
 }: DesignerProps) {
   const t = getTranslation(language)
   const [step, setStep] = useState<'type' | 'details' | 'style' | 'design'>('type')
@@ -343,6 +345,13 @@ export default function Designer({
     setTemplateFieldValues({})
     setTemplateTextValues({})
   }, [selectedSavedTemplateId])
+
+  useEffect(() => {
+    if (!initialSavedTemplateId) return
+    if (!savedTemplates?.some((item) => item.id === initialSavedTemplateId)) return
+    setSelectedSavedTemplateId(initialSavedTemplateId)
+    hasAutoSelectedTemplate.current = true
+  }, [initialSavedTemplateId, savedTemplates])
 
   useEffect(() => {
     if (hasAutoSelectedTemplate.current) return
