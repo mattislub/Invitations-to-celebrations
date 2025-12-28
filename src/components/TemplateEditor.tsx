@@ -402,11 +402,23 @@ export default function TemplateEditor({ language }: TemplateEditorProps) {
                 ))}
                 <div className="grid gap-3">
                   {fields.map((field) => (
-                    <div key={field.id} className="text-right">
-                      <p className="text-sm text-gray-600">
-                        {field.label} {field.required && <span className="text-red-500">*</span>}
-                      </p>
-                      <div className="h-10 w-full rounded-lg border border-gray-300 bg-white shadow-inner" />
+                    <div
+                      key={field.id}
+                      className="flex items-center gap-3 bg-amber-50/80 border border-dashed border-amber-300 rounded-lg px-4 py-3 shadow-sm cursor-move"
+                      draggable
+                      onDragStart={() => setDraggingFieldId(field.id)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => handleFieldDrop(field.id)}
+                    >
+                      <GripVertical className="w-4 h-4 text-amber-600 shrink-0" />
+                      <div className="flex-1 text-right">
+                        <p className="text-sm font-semibold text-amber-800">
+                          {'{{ '}
+                          {field.label}
+                          {' }}'} {field.required && <span className="text-red-500">*</span>}
+                        </p>
+                        <p className="text-xs text-amber-700">{t.templateEditor.previewFieldHint}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
