@@ -43,10 +43,10 @@ export default function Admin({
 }: AdminProps) {
   const t = getTranslation(language)
   const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
-  const apiBaseUrl = configuredApiBaseUrl ? configuredApiBaseUrl.replace(/\/$/, '') : ''
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>(() =>
-    configuredApiBaseUrl ? 'idle' : 'disabled'
-  )
+  const apiBaseUrl = (configuredApiBaseUrl && configuredApiBaseUrl !== '')
+    ? configuredApiBaseUrl.replace(/\/$/, '')
+    : '/api'
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
   const [designStyles, setDesignStyles] = useState<DesignStyle[]>([
     { id: 'modern-elegant', name: 'Modern Elegant', description: 'Minimal lines with warm gradients' },
     { id: 'heritage-gold', name: 'Heritage Gold', description: 'Traditional framing with golden ornaments' }
@@ -78,6 +78,10 @@ export default function Admin({
   const [, setUploading] = useState(false)
   const [fieldLayouts, setFieldLayouts] = useState<InvitationFieldLayout[]>([])
   const [activeTab, setActiveTab] = useState<'overview' | 'gallery' | 'types' | 'fields' | 'styles' | 'backgrounds' | 'videos' | 'fonts' | 'dimensions' | 'templates'>('overview')
+
+  useEffect(() => {
+    console.info('[Admin] Using API base URL:', apiBaseUrl)
+  }, [apiBaseUrl])
 
   const getCategoryLabel = (category: Invitation['category']) => {
     const categoryMap: Record<Invitation['category'], string> = {
@@ -211,13 +215,10 @@ export default function Admin({
   }
 
   const handleFileUpload = async (file: File, type: 'font' | 'background' | 'video' | 'image' | 'preview'): Promise<string | null> => {
-    if (!apiBaseUrl) {
-      setStatusMessage(t.admin.server.disabled)
-      return null
-    }
-
     setUploading(true)
     setStatusMessage(t.admin.messages.uploading)
+
+    console.info('[Admin] Upload started', { type, name: file.name, size: file.size, apiBaseUrl })
 
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -235,13 +236,20 @@ export default function Admin({
         body: JSON.stringify({ data: base64, name: file.name, type })
       })
 
-      if (!response.ok) throw new Error('Upload failed')
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Upload failed (${response.status}): ${errorText}`)
+      }
 
-      const result = await response.json()
+      const result = await response.json() as { url?: string }
+      if (!result.url) {
+        throw new Error('Upload failed: missing URL in server response')
+      }
+      console.info('[Admin] Upload succeeded', { type, name: file.name, url: result.url })
       setStatusMessage('')
-      return result.url as string
+      return result.url
     } catch (error) {
-      console.error('Upload error', error)
+      console.error('[Admin] Upload error', error)
       setStatusMessage(t.admin.messages.uploadError)
       return null
     } finally {
@@ -250,11 +258,6 @@ export default function Admin({
   }
 
   const syncToServer = useCallback(async () => {
-    if (!apiBaseUrl) {
-      setSyncStatus('disabled')
-      return
-    }
-
     const payload: SyncPayload = {
       customTypes,
       invitations,
@@ -269,6 +272,7 @@ export default function Admin({
     setSyncStatus('syncing')
 
     try {
+      console.info('[Admin] Syncing admin state to server...')
       const response = await fetch(`${apiBaseUrl}/admin/state`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -279,22 +283,19 @@ export default function Admin({
         throw new Error('sync failed')
       }
 
+      console.info('[Admin] Sync succeeded')
       setSyncStatus('success')
     } catch (error) {
-      console.error('Sync error', error)
+      console.error('[Admin] Sync error', error)
       setSyncStatus('error')
     }
   }, [apiBaseUrl, backgrounds, customTypes, designStyles, dimensions, fieldLayouts, fonts, invitations, videoBackgrounds])
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!apiBaseUrl) {
-        setSyncStatus('disabled')
-        return
-      }
-
       setSyncStatus('syncing')
       try {
+        console.info('[Admin] Fetching admin state from server...')
         const response = await fetch(`${apiBaseUrl}/admin/state`)
         if (!response.ok) {
           throw new Error('Failed to fetch admin state')
@@ -310,9 +311,15 @@ export default function Admin({
         if (payload.dimensions) setDimensions(payload.dimensions)
         if (payload.fieldLayouts) setFieldLayouts(payload.fieldLayouts)
 
+        console.info('[Admin] Admin state fetched', {
+          designStyles: payload.designStyles?.length ?? 0,
+          fonts: payload.fonts?.length ?? 0,
+          backgrounds: payload.backgrounds?.length ?? 0,
+          invitations: payload.invitations?.length ?? 0
+        })
         setSyncStatus('success')
       } catch (error) {
-        console.error('Fetch error', error)
+        console.error('[Admin] Fetch error', error)
         setSyncStatus('error')
       }
     }

@@ -115,6 +115,7 @@ const server = createServer(async (req, res) => {
   }
 
   if (pathname === '/api/admin/state' && req.method === 'GET') {
+    console.info('[Server] GET /api/admin/state')
     const data = await getAdminState()
     sendJson(res, 200, data)
     return
@@ -122,10 +123,18 @@ const server = createServer(async (req, res) => {
 
   if (pathname === '/api/admin/state' && req.method === 'POST') {
     try {
+      console.info('[Server] POST /api/admin/state - reading body')
       const body = await readJsonBody(req)
       await saveAdminState(body)
+      console.info('[Server] Admin state saved', {
+        customTypes: body.customTypes?.length,
+        invitations: body.invitations?.length,
+        backgrounds: body.backgrounds?.length,
+        videoBackgrounds: body.videoBackgrounds?.length
+      })
       sendJson(res, 200, { ok: true })
     } catch (error) {
+      console.error('[Server] Failed to save admin state', error)
       sendJson(res, 400, { error: error.message })
     }
     return
@@ -134,6 +143,12 @@ const server = createServer(async (req, res) => {
   if (pathname === '/api/upload' && req.method === 'POST') {
     try {
       const { data, name, type } = await readJsonBody(req)
+      console.info('[Server] Upload request received', {
+        type,
+        name,
+        dataSize: typeof data === 'string' ? data.length : 0,
+        host: req.headers.host
+      })
       if (!data || !name || !type) {
         sendJson(res, 400, { error: 'Missing upload fields' })
         return
@@ -145,8 +160,10 @@ const server = createServer(async (req, res) => {
         protocol,
         host: req.headers.host
       })
+      console.info('[Server] Upload stored', { url })
       sendJson(res, 200, { url })
     } catch (error) {
+      console.error('[Server] Upload failed', error)
       sendJson(res, 400, { error: error.message || 'Upload failed' })
     }
     return
