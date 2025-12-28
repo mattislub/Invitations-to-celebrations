@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Heart, Users, Gift, Cake, PartyPopper, User, ChevronRight, Wand2, Layers, Sparkles, BookOpen, Video } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
-import { AdminBackground, CustomInvitationType, VideoBackground } from '../types'
+import { AdminBackground, CustomInvitationType, SavedInvitationTemplate, VideoBackground } from '../types'
 
 type EventType = 'wedding' | 'bar-mitzvah' | 'bat-mitzvah' | 'birthday' | 'engagement' | 'thank-you' | `custom-${string}`
 type DesignStyle = 'modern' | 'religious'
@@ -17,6 +17,7 @@ interface DesignerProps {
   customTypes: CustomInvitationType[]
   imageBackgrounds: AdminBackground[]
   videoBackgrounds: VideoBackground[]
+  savedTemplates?: SavedInvitationTemplate[]
 }
 
 interface EventTemplate {
@@ -62,7 +63,13 @@ interface Animation {
   class: string
 }
 
-export default function Designer({ language, customTypes, imageBackgrounds, videoBackgrounds }: DesignerProps) {
+export default function Designer({
+  language,
+  customTypes,
+  imageBackgrounds,
+  videoBackgrounds,
+  savedTemplates = []
+}: DesignerProps) {
   const t = getTranslation(language)
   const [step, setStep] = useState<'type' | 'details' | 'style' | 'design'>('type')
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(null)
@@ -72,6 +79,10 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
   const [selectedColorScheme, setSelectedColorScheme] = useState<string>('amber')
   const [selectedAnimation, setSelectedAnimation] = useState<string>('fadeIn')
   const [animationKey, setAnimationKey] = useState<number>(0)
+  const [selectedSavedTemplateId, setSelectedSavedTemplateId] = useState<string>('')
+  const [templateFieldValues, setTemplateFieldValues] = useState<Record<string, string>>({})
+  const [templateTextValues, setTemplateTextValues] = useState<Record<string, string>>({})
+  const hasAutoSelectedTemplate = useRef(false)
 
   const eventTemplates = useMemo<EventTemplate[]>(() => ([
     {
@@ -271,9 +282,82 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
     [baseBackgrounds, uploadedBackgroundOptions, videoBackgroundOptions]
   )
 
+  const selectedSavedTemplate = useMemo(
+    () => savedTemplates?.find((item) => item.id === selectedSavedTemplateId),
+    [savedTemplates, selectedSavedTemplateId]
+  )
+
+  const resolveBackgroundOption = useCallback((backgroundId?: string | null): BackgroundOption | undefined => {
+    if (!backgroundId) return undefined
+    if (backgroundId.startsWith('image-')) {
+      const id = backgroundId.replace('image-', '')
+      const match = imageBackgrounds.find((bg) => bg.id === id)
+      if (!match) return undefined
+      return {
+        id: backgroundId,
+        name: match.name,
+        images: match.preview ? [match.preview] : [],
+        type: 'image'
+      }
+    }
+    if (backgroundId.startsWith('video-')) {
+      const id = backgroundId.replace('video-', '')
+      const match = videoBackgrounds.find((bg) => bg.id === id)
+      if (!match) return undefined
+      return {
+        id: backgroundId,
+        name: match.name,
+        images: match.previewImage ? [match.previewImage] : [],
+        videoUrl: match.url,
+        previewImage: match.previewImage,
+        type: 'video'
+      }
+    }
+    return backgrounds.find((bg) => bg.id === backgroundId)
+  }, [backgrounds, imageBackgrounds, videoBackgrounds])
+
+  const selectedTemplateBackground = useMemo(
+    () => resolveBackgroundOption(selectedSavedTemplate?.template.backgroundId),
+    [resolveBackgroundOption, selectedSavedTemplate?.template.backgroundId]
+  )
+
   useEffect(() => {
     setSelectedBackground((current) => current || backgrounds[0]?.id || '')
   }, [backgrounds])
+
+  useEffect(() => {
+    if (!selectedSavedTemplate) return
+    const nextTextValues: Record<string, string> = {}
+    selectedSavedTemplate.template.textLines?.forEach((line) => {
+      nextTextValues[line.id] = line.text
+    })
+    setTemplateFieldValues({})
+    setTemplateTextValues(nextTextValues)
+    if (selectedSavedTemplate.template.backgroundId) {
+      setSelectedBackground(selectedSavedTemplate.template.backgroundId)
+    }
+  }, [selectedSavedTemplate])
+
+  useEffect(() => {
+    if (selectedSavedTemplateId) return
+    setTemplateFieldValues({})
+    setTemplateTextValues({})
+  }, [selectedSavedTemplateId])
+
+  useEffect(() => {
+    if (hasAutoSelectedTemplate.current) return
+    if (!selectedSavedTemplateId && (savedTemplates?.length ?? 0) > 0) {
+      setSelectedSavedTemplateId(savedTemplates?.[0]?.id ?? '')
+      hasAutoSelectedTemplate.current = true
+    }
+  }, [savedTemplates, selectedSavedTemplateId])
+
+  const formatTemplateDate = (value?: string) => {
+    if (!value) return ''
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return ''
+    return date.toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US')
+  }
 
   const colorSchemes: ColorScheme[] = [
     {
@@ -355,9 +439,13 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
     return data
   }, [formData, currentTemplate])
 
+  const templateMode = Boolean(selectedSavedTemplate)
   const filteredBackgrounds = backgrounds.filter(bg => !bg.style || bg.style.includes(designStyle))
   const filteredColorSchemes = colorSchemes.filter(cs => !cs.style || cs.style.includes(designStyle))
   const selectedBackgroundOption = backgrounds.find(b => b.id === selectedBackground)
+  const activeBackgroundOption = templateMode
+    ? (selectedTemplateBackground ?? selectedBackgroundOption)
+    : selectedBackgroundOption
   const currentColorScheme = colorSchemes.find(cs => cs.id === selectedColorScheme)
 
   const religiousBlessings: { [key in EventType]?: string } = {
@@ -734,6 +822,61 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
     }
   }
 
+  const renderSavedTemplateContent = () => {
+    if (!selectedSavedTemplate) return null
+    const { template } = selectedSavedTemplate
+
+    return (
+      <>
+        {template.textLines?.map((line) => (
+          <div
+            key={line.id}
+            className="absolute"
+            style={{
+              left: `${line.position.x}%`,
+              top: `${line.position.y}%`,
+              width: `${line.position.width}%`,
+              transform: 'translate(-50%, -50%)',
+              textAlign: line.position.align as 'left' | 'center' | 'right'
+            }}
+          >
+            <p
+              style={{
+                fontFamily: line.font,
+                fontSize: line.fontSize,
+                color: currentColorScheme?.primary ?? '#1f2937'
+              }}
+              className="leading-tight"
+            >
+              {templateTextValues[line.id] ?? line.text}
+            </p>
+          </div>
+        ))}
+        {template.fields?.map((field) => (
+          <div
+            key={field.id}
+            className="absolute"
+            style={{
+              left: `${field.position.x}%`,
+              top: `${field.position.y}%`,
+              width: `${field.position.width}%`,
+              transform: 'translate(-50%, -50%)',
+              textAlign: field.position.align as 'left' | 'center' | 'right'
+            }}
+          >
+            <p
+              className="text-base font-semibold"
+              style={{ color: currentColorScheme?.text ?? '#1f2937' }}
+            >
+              {templateFieldValues[field.id] || field.label}
+              {field.required && <span className="text-red-500"> *</span>}
+            </p>
+          </div>
+        ))}
+      </>
+    )
+  }
+
   if (step === 'type') {
     return (
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -902,142 +1045,276 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
         </div>
 
         <div className="space-y-12">
-          <div className="grid lg:grid-cols-2 gap-12 items-start">
-            <div className="space-y-8">
-              <div className="bg-white rounded-2xl shadow-xl p-8">
-                <div className="flex items-center mb-6">
-                  <Layers className="w-6 h-6 text-amber-500 ml-2" />
-                  <h3 className="text-2xl font-bold text-gray-800">בחרו רקע</h3>
-                </div>
-                {filteredBackgrounds.length === 0 ? (
-                  <div className="p-4 rounded-xl bg-gray-50 text-gray-600 text-sm text-right">
-                    {language === 'he'
-                      ? 'עדיין אין רקעים שהועלו. הוסיפו רקעים בלשונית הניהול כדי לבחור אותם כאן.'
-                      : 'No uploaded backgrounds yet. Add backgrounds in the admin panel to select them here.'}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-4">
-                    {filteredBackgrounds.map((bg) => (
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-800">{t.designer.savedTemplates.title}</h3>
+                <p className="text-gray-600">{t.designer.savedTemplates.subtitle}</p>
+              </div>
+              {selectedSavedTemplateId && (
+                <button
+                  onClick={() => setSelectedSavedTemplateId('')}
+                  className="text-sm font-semibold text-gray-700 border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  {t.designer.savedTemplates.clear}
+                </button>
+              )}
+            </div>
+
+            {savedTemplates?.length ? (
+              <>
+                <div className="grid md:grid-cols-3 gap-4">
+                  {savedTemplates.map((saved) => {
+                    const isActive = saved.id === selectedSavedTemplateId
+                    return (
                       <button
-                        key={bg.id}
-                        onClick={() => setSelectedBackground(bg.id)}
-                        className={`relative rounded-xl overflow-hidden h-32 transition-all duration-300 ${
-                          selectedBackground === bg.id
-                            ? 'ring-4 ring-amber-500 scale-105'
-                            : 'ring-2 ring-gray-200 hover:ring-amber-300'
+                        key={saved.id}
+                        onClick={() => setSelectedSavedTemplateId(saved.id)}
+                        className={`text-right rounded-xl border p-4 transition-all duration-200 ${
+                          isActive
+                            ? 'border-amber-400 shadow-lg shadow-amber-100 bg-amber-50/70'
+                            : 'border-gray-200 hover:border-amber-200 hover:shadow'
                         }`}
                       >
-                        <div className="absolute inset-0">
-                          {bg.type === 'video' && bg.videoUrl ? (
-                            <video
-                              className="w-full h-full object-cover"
-                              src={bg.videoUrl}
-                              autoPlay
-                              muted
-                              loop
-                              playsInline
-                              poster={bg.previewImage}
-                              style={{ opacity: 0.6 }}
-                            />
-                          ) : (
-                            bg.images.map((image, index) => (
-                              <div
-                                key={index}
-                                className="absolute inset-0 bg-cover bg-center"
-                                style={{
-                                  backgroundImage: `url(${image})`,
-                                  opacity: index === 0 ? 0.6 : 0.4,
-                                }}
+                        <p className="font-bold text-gray-800 line-clamp-1">{saved.name}</p>
+                        {saved.updatedAt && (
+                          <p className="text-xs text-gray-500 mt-1">{formatTemplateDate(saved.updatedAt)}</p>
+                        )}
+                        <p className={`text-xs mt-2 ${isActive ? 'text-amber-700' : 'text-gray-500'}`}>
+                          {t.designer.savedTemplates.useHint}
+                        </p>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {selectedSavedTemplate && (
+                  <>
+                    {selectedSavedTemplate.template.backgroundId && (
+                      <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                        {t.designer.savedTemplates.backgroundLocked}
+                      </div>
+                    )}
+                    <div className="grid lg:grid-cols-2 gap-6 mt-8">
+                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h4 className="text-lg font-semibold text-gray-800">{t.designer.savedTemplates.fieldsTitle}</h4>
+                          <p className="text-xs text-gray-500">{t.designer.savedTemplates.fieldsHelper}</p>
+                      </div>
+                      {selectedSavedTemplate.template.fields?.length ? (
+                        <div className="space-y-3">
+                          {selectedSavedTemplate.template.fields.map((field) => (
+                            <label key={field.id} className="block">
+                              <span className="text-sm font-medium text-gray-700 block mb-1">
+                                {field.label} {field.required && <span className="text-red-500">*</span>}
+                              </span>
+                              <input
+                                type="text"
+                                value={templateFieldValues[field.id] ?? ''}
+                                onChange={(e) => setTemplateFieldValues((prev) => ({
+                                  ...prev,
+                                  [field.id]: e.target.value
+                                }))}
+                                placeholder={field.label}
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 text-right"
                               />
-                            ))
-                          )}
+                            </label>
+                          ))}
                         </div>
-                        {selectedBackground === bg.id && (
-                          <div className="absolute inset-0 bg-black/10" />
-                        )}
-                        {bg.type === 'video' && (
-                          <div className="absolute bottom-2 right-2 bg-black/50 text-white px-3 py-1 rounded-full flex items-center gap-1 text-xs font-semibold">
-                            <Video className="w-3 h-3" />
-                            <span>{language === 'he' ? 'וידאו' : 'Video'}</span>
+                      ) : (
+                        <p className="text-sm text-gray-500">{t.designer.savedTemplates.empty}</p>
+                      )}
+                    </div>
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-lg font-semibold text-gray-800">{t.designer.savedTemplates.textLinesTitle}</h4>
+                        <p className="text-xs text-gray-500">{t.designer.savedTemplates.textLinesHelper}</p>
+                      </div>
+                      {selectedSavedTemplate.template.textLines?.length ? (
+                        <div className="space-y-3">
+                          {selectedSavedTemplate.template.textLines.map((line, index) => (
+                            <label key={line.id} className="block">
+                              <span className="text-sm font-medium text-gray-700 block mb-1">
+                                {`${t.designer.savedTemplates.textLinesTitle} ${index + 1}`}
+                              </span>
+                              <input
+                                type="text"
+                                value={templateTextValues[line.id] ?? line.text}
+                                onChange={(e) => setTemplateTextValues((prev) => ({
+                                  ...prev,
+                                  [line.id]: e.target.value
+                                }))}
+                                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 text-right"
+                              />
+                            </label>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500">{t.designer.savedTemplates.empty}</p>
+                      )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">{t.designer.savedTemplates.empty}</p>
+            )}
+          </div>
+
+          {!templateMode && (
+            <div className="grid lg:grid-cols-2 gap-12 items-start">
+              <div className="space-y-8">
+                <div className="bg-white rounded-2xl shadow-xl p-8">
+                  <div className="flex items-center mb-6">
+                    <Layers className="w-6 h-6 text-amber-500 ml-2" />
+                    <h3 className="text-2xl font-bold text-gray-800">בחרו רקע</h3>
+                  </div>
+                  {filteredBackgrounds.length === 0 ? (
+                    <div className="p-4 rounded-xl bg-gray-50 text-gray-600 text-sm text-right">
+                      {language === 'he'
+                        ? 'עדיין אין רקעים שהועלו. הוסיפו רקעים בלשונית הניהול כדי לבחור אותם כאן.'
+                        : 'No uploaded backgrounds yet. Add backgrounds in the admin panel to select them here.'}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      {filteredBackgrounds.map((bg) => (
+                        <button
+                          key={bg.id}
+                          onClick={() => setSelectedBackground(bg.id)}
+                          className={`relative rounded-xl overflow-hidden h-32 transition-all duration-300 ${
+                            selectedBackground === bg.id
+                              ? 'ring-4 ring-amber-500 scale-105'
+                              : 'ring-2 ring-gray-200 hover:ring-amber-300'
+                          }`}
+                        >
+                          <div className="absolute inset-0">
+                            {bg.type === 'video' && bg.videoUrl ? (
+                              <video
+                                className="w-full h-full object-cover"
+                                src={bg.videoUrl}
+                                autoPlay
+                                muted
+                                loop
+                                playsInline
+                                poster={bg.previewImage}
+                                style={{ opacity: 0.6 }}
+                              />
+                            ) : (
+                              bg.images.map((image, index) => (
+                                <div
+                                  key={index}
+                                  className="absolute inset-0 bg-cover bg-center"
+                                  style={{
+                                    backgroundImage: `url(${image})`,
+                                    opacity: index === 0 ? 0.6 : 0.4,
+                                  }}
+                                />
+                              ))
+                            )}
                           </div>
-                        )}
+                          {selectedBackground === bg.id && (
+                            <div className="absolute inset-0 bg-black/10" />
+                          )}
+                          {bg.type === 'video' && (
+                            <div className="absolute bottom-2 right-2 bg-black/50 text-white px-3 py-1 rounded-full flex items-center gap-1 text-xs font-semibold">
+                              <Video className="w-3 h-3" />
+                              <span>{language === 'he' ? 'וידאו' : 'Video'}</span>
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="bg-white rounded-2xl shadow-xl p-8">
+                  <div className="flex items-center mb-6">
+                    <Sparkles className="w-6 h-6 text-amber-500 ml-2" />
+                    <h3 className="text-2xl font-bold text-gray-800">בחרו ערכת צבעים</h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {filteredColorSchemes.map((scheme) => (
+                      <button
+                        key={scheme.id}
+                        onClick={() => setSelectedColorScheme(scheme.id)}
+                        className={`p-4 rounded-xl transition-all duration-300 text-right ${
+                          selectedColorScheme === scheme.id
+                            ? 'ring-4 ring-offset-2 scale-105'
+                            : 'ring-2 ring-gray-200 hover:ring-gray-300'
+                        }`}
+                        style={{
+                          backgroundColor: `${scheme.primary}15`
+                        }}
+                      >
+                        <div className="flex gap-2 mb-2">
+                          <div className="w-6 h-6 rounded-full" style={{ backgroundColor: scheme.primary }} />
+                          <div className="w-6 h-6 rounded-full" style={{ backgroundColor: scheme.secondary }} />
+                          <div className="w-6 h-6 rounded-full" style={{ backgroundColor: scheme.accent }} />
+                        </div>
+                        <p className="font-bold text-sm" style={{ color: scheme.primary }}>{scheme.name}</p>
                       </button>
                     ))}
                   </div>
-                )}
+                </div>
               </div>
 
-              <div className="bg-white rounded-2xl shadow-xl p-8">
-                <div className="flex items-center mb-6">
-                  <Sparkles className="w-6 h-6 text-amber-500 ml-2" />
-                  <h3 className="text-2xl font-bold text-gray-800">בחרו ערכת צבעים</h3>
+              <div className="space-y-8">
+                <div className="bg-white rounded-2xl shadow-xl p-8">
+                  <div className="flex items-center mb-6">
+                    <Sparkles className="w-6 h-6 text-amber-500 ml-2" />
+                    <h3 className="text-2xl font-bold text-gray-800">בחרו אנימציה</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {animations.map((animation) => (
+                      <button
+                        key={animation.id}
+                        onClick={() => handleAnimationChange(animation.id)}
+                        className={`w-full text-right p-4 rounded-xl transition-all duration-300 ${
+                          selectedAnimation === animation.id
+                            ? 'bg-gradient-to-r from-gray-700 to-amber-500 text-white shadow-lg scale-105'
+                            : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        <div className="font-bold text-lg">{animation.name}</div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {filteredColorSchemes.map((scheme) => (
-                    <button
-                      key={scheme.id}
-                      onClick={() => setSelectedColorScheme(scheme.id)}
-                      className={`p-4 rounded-xl transition-all duration-300 text-right ${
-                        selectedColorScheme === scheme.id
-                          ? 'ring-4 ring-offset-2 scale-105'
-                          : 'ring-2 ring-gray-200 hover:ring-gray-300'
-                      }`}
-                      style={{
-                        backgroundColor: `${scheme.primary}15`
-                      }}
-                    >
-                      <div className="flex gap-2 mb-2">
-                        <div className="w-6 h-6 rounded-full" style={{ backgroundColor: scheme.primary }} />
-                        <div className="w-6 h-6 rounded-full" style={{ backgroundColor: scheme.secondary }} />
-                        <div className="w-6 h-6 rounded-full" style={{ backgroundColor: scheme.accent }} />
-                      </div>
-                      <p className="font-bold text-sm" style={{ color: scheme.primary }}>{scheme.name}</p>
-                    </button>
-                  ))}
+
+                <div className="bg-white rounded-2xl shadow-xl p-8">
+                  <button className="w-full bg-gradient-to-r from-gray-700 to-amber-500 text-white px-8 py-4 rounded-xl text-lg font-bold hover:shadow-xl hover:scale-105 transition-all duration-300">
+                    שמירה והורדה
+                  </button>
                 </div>
               </div>
             </div>
-
-            <div className="space-y-8">
-              <div className="bg-white rounded-2xl shadow-xl p-8">
-                <div className="flex items-center mb-6">
-                  <Sparkles className="w-6 h-6 text-amber-500 ml-2" />
-                  <h3 className="text-2xl font-bold text-gray-800">בחרו אנימציה</h3>
-                </div>
-                <div className="space-y-3">
-                  {animations.map((animation) => (
-                    <button
-                      key={animation.id}
-                      onClick={() => handleAnimationChange(animation.id)}
-                      className={`w-full text-right p-4 rounded-xl transition-all duration-300 ${
-                        selectedAnimation === animation.id
-                          ? 'bg-gradient-to-r from-gray-700 to-amber-500 text-white shadow-lg scale-105'
-                          : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      <div className="font-bold text-lg">{animation.name}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl shadow-xl p-8">
-                <button className="w-full bg-gradient-to-r from-gray-700 to-amber-500 text-white px-8 py-4 rounded-xl text-lg font-bold hover:shadow-xl hover:scale-105 transition-all duration-300">
-                  שמירה והורדה
-                </button>
-              </div>
-            </div>
-          </div>
+          )}
 
           <div className="bg-gradient-to-br from-gray-100 to-amber-50 rounded-2xl p-8">
             <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">תצוגה מקדימה סופית</h3>
             <div className="relative min-h-[600px] w-full flex items-center justify-center rounded-xl overflow-hidden">
-              {renderBackgroundLayer(selectedBackgroundOption, 0.28)}
+              {renderBackgroundLayer(activeBackgroundOption, 0.28)}
+              {templateMode && <div className="absolute inset-0 bg-white/70" />}
               <div
                 key={animationKey}
-                className={`bg-white rounded-2xl p-10 md:p-12 shadow-2xl text-center relative z-10 w-full max-w-5xl ${animations.find(a => a.id === selectedAnimation)?.class}`}
+                className={`bg-white/90 backdrop-blur-sm rounded-2xl p-10 md:p-12 shadow-2xl text-center relative z-10 w-full max-w-5xl ${animations.find(a => a.id === selectedAnimation)?.class}`}
               >
-                {renderInvitationContent()}
+                {templateMode ? (
+                  <div className="relative w-full" style={{ minHeight: '540px' }}>
+                    {selectedTemplateBackground && (
+                      <div className="absolute inset-0 rounded-2xl overflow-hidden">
+                        {renderBackgroundLayer(selectedTemplateBackground, 0.24)}
+                        <div className="absolute inset-0 bg-white/65" />
+                      </div>
+                    )}
+                    <div className="relative w-full h-full min-h-[500px]">
+                      {renderSavedTemplateContent()}
+                    </div>
+                  </div>
+                ) : (
+                  renderInvitationContent()
+                )}
               </div>
             </div>
           </div>
