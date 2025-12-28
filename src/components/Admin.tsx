@@ -11,6 +11,8 @@ interface AdminProps {
   onCustomTypesChange: (types: CustomInvitationType[]) => void
   invitations: Invitation[]
   onInvitationsChange: (invitations: Invitation[]) => void
+  backgrounds: AdminBackground[]
+  onBackgroundsChange: (backgrounds: AdminBackground[]) => void
   videoBackgrounds: VideoBackground[]
   onVideoBackgroundsChange: (backgrounds: VideoBackground[]) => void
 }
@@ -34,6 +36,8 @@ export default function Admin({
   onCustomTypesChange,
   invitations,
   onInvitationsChange,
+  backgrounds,
+  onBackgroundsChange,
   videoBackgrounds,
   onVideoBackgroundsChange
 }: AdminProps) {
@@ -50,10 +54,6 @@ export default function Admin({
   const [fonts, setFonts] = useState<AdminFont[]>([
     { id: 'assistant', name: 'Assistant', url: 'https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&display=swap' },
     { id: 'playfair', name: 'Playfair Display', url: 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap' }
-  ])
-  const [backgrounds, setBackgrounds] = useState<AdminBackground[]>([
-    { id: 'soft-blush', name: 'Soft Blush', preview: 'https://images.pexels.com/photos/2043997/pexels-photo-2043997.jpeg?auto=compress&cs=tinysrgb&w=600' },
-    { id: 'royal-blue', name: 'Royal Blue', preview: 'https://images.pexels.com/photos/1762851/pexels-photo-1762851.jpeg?auto=compress&cs=tinysrgb&w=600' }
   ])
   const [dimensions, setDimensions] = useState<AdminDimensions>({ width: 1080, height: 1920, unit: 'px' })
   const [newStyle, setNewStyle] = useState({ name: '', description: '' })
@@ -135,7 +135,7 @@ export default function Admin({
       setStatusMessage(t.admin.messages.uploadError)
       return
     }
-    setBackgrounds(prev => [...prev, { id: crypto.randomUUID(), ...newBackground, file: newBackgroundFile?.name }])
+    onBackgroundsChange([...backgrounds, { id: crypto.randomUUID(), ...newBackground, file: newBackgroundFile?.name }])
     setNewBackground({ name: '', preview: '' })
     setNewBackgroundFile(null)
     setStatusMessage('')
@@ -200,7 +200,7 @@ export default function Admin({
   const handleReset = () => {
     setDesignStyles([])
     setFonts([])
-    setBackgrounds([])
+    onBackgroundsChange([])
     setFieldLayouts([])
     setStatusMessage('')
   }
@@ -303,7 +303,7 @@ export default function Admin({
         const payload = await response.json() as Partial<SyncPayload>
         if (payload.designStyles) setDesignStyles(payload.designStyles)
         if (payload.fonts) setFonts(payload.fonts)
-        if (payload.backgrounds) setBackgrounds(payload.backgrounds)
+        if (payload.backgrounds) onBackgroundsChange(payload.backgrounds)
         if (payload.customTypes) onCustomTypesChange(payload.customTypes)
         if (payload.invitations) onInvitationsChange(payload.invitations)
         if (payload.videoBackgrounds) onVideoBackgroundsChange(payload.videoBackgrounds)
@@ -318,7 +318,7 @@ export default function Admin({
     }
 
     void fetchData()
-  }, [apiBaseUrl, onCustomTypesChange, onInvitationsChange, onVideoBackgroundsChange])
+  }, [apiBaseUrl, onBackgroundsChange, onCustomTypesChange, onInvitationsChange, onVideoBackgroundsChange])
 
   // Sync to server only when user triggers save, keeping admin console predictable.
 

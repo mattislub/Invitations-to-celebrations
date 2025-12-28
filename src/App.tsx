@@ -5,7 +5,7 @@ import Gallery from './components/Gallery'
 import Designer from './components/Designer'
 import Admin from './components/Admin'
 import { Language, getTranslation } from './translations'
-import { CustomInvitationType, Invitation, VideoBackground } from './types'
+import { AdminBackground, CustomInvitationType, Invitation, VideoBackground } from './types'
 
 type Page = 'home' | 'gallery' | 'designer' | 'admin'
 
@@ -18,6 +18,18 @@ function App() {
     nameYi: 'משפוחה שמחה',
     nameEn: 'Family Celebration',
   }])
+  const [imageBackgrounds, setImageBackgrounds] = useState<AdminBackground[]>([
+    {
+      id: 'soft-blush',
+      name: 'Soft Blush',
+      preview: 'https://images.pexels.com/photos/2043997/pexels-photo-2043997.jpeg?auto=compress&cs=tinysrgb&w=800'
+    },
+    {
+      id: 'royal-blue',
+      name: 'Royal Blue',
+      preview: 'https://images.pexels.com/photos/1762851/pexels-photo-1762851.jpeg?auto=compress&cs=tinysrgb&w=800'
+    }
+  ])
   const [invitations, setInvitations] = useState<Invitation[]>([
     {
       id: 'wedding-1',
@@ -129,23 +141,26 @@ function App() {
         {currentPage === 'home' && <Home onStartDesigning={() => setCurrentPage('designer')} language={language} />}
         {currentPage === 'gallery' && <Gallery language={language} invitations={invitations} />}
         {currentPage === 'designer' && (
-          <Designer
-            language={language}
-            customTypes={customInvitationTypes}
-            videoBackgrounds={videoBackgrounds}
-          />
-        )}
-        {currentPage === 'admin' && (
-          <Admin
-            language={language}
-            customTypes={customInvitationTypes}
-            onCustomTypesChange={setCustomInvitationTypes}
-            invitations={invitations}
-            onInvitationsChange={setInvitations}
-            videoBackgrounds={videoBackgrounds}
-            onVideoBackgroundsChange={setVideoBackgrounds}
-          />
-        )}
+        <Designer
+          language={language}
+          customTypes={customInvitationTypes}
+          imageBackgrounds={imageBackgrounds}
+          videoBackgrounds={videoBackgrounds}
+        />
+      )}
+      {currentPage === 'admin' && (
+        <Admin
+          language={language}
+          customTypes={customInvitationTypes}
+          onCustomTypesChange={setCustomInvitationTypes}
+          invitations={invitations}
+          onInvitationsChange={setInvitations}
+          backgrounds={imageBackgrounds}
+          onBackgroundsChange={setImageBackgrounds}
+          videoBackgrounds={videoBackgrounds}
+          onVideoBackgroundsChange={setVideoBackgrounds}
+        />
+      )}
       </main>
 
       <footer className="bg-gray-900 text-white py-12 mt-20">
