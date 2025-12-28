@@ -231,6 +231,7 @@ export interface Translations {
     addField: string
     addText: string
     dragHint: string
+    previewFieldHint: string
     font: string
     fontSize: string
     backgroundUrl: string
@@ -509,6 +510,7 @@ export const translations: Record<Language, Translations> = {
       addField: 'הוספת שדה',
       addText: 'הוספת שורת טקסט',
       dragHint: 'גררו ושחררו לסידור',
+      previewFieldHint: 'גררו שדה כדי למקם אותו מחדש בתצוגה',
       font: 'פונט',
       fontSize: 'גודל פונט',
       backgroundUrl: 'קישור לרקע',
@@ -785,6 +787,7 @@ export const translations: Record<Language, Translations> = {
       addField: 'Add Field',
       addText: 'Add Text Line',
       dragHint: 'Drag & drop to reorder',
+      previewFieldHint: 'Drag fields to reposition them as text in the preview',
       font: 'Font',
       fontSize: 'Font Size',
       backgroundUrl: 'Background URL',
