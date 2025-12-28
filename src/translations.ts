@@ -298,6 +298,17 @@ export interface Translations {
         number: string
       }
     }
+    layout: {
+      dragAnywhere: string
+      positionX: string
+      positionY: string
+      width: string
+      alignment: string
+      alignLeft: string
+      alignCenter: string
+      alignRight: string
+      overlapHint: string
+    }
   }
 }
 
@@ -619,6 +630,17 @@ export const translations: Record<Language, Translations> = {
           date: 'תאריך',
           number: 'מספר'
         }
+      },
+      layout: {
+        dragAnywhere: 'גררו כל שדה או טקסט על הקנבס כדי להציבו ללא שוליים (ניתן גם לחפיפה מלאה)',
+        positionX: 'מיקום X (%)',
+        positionY: 'מיקום Y (%)',
+        width: 'רוחב (%)',
+        alignment: 'יישור',
+        alignLeft: 'שמאל',
+        alignCenter: 'מרכז',
+        alignRight: 'ימין',
+        overlapHint: 'אפשר למקם ללא שוליים ולדרוס אלמנטים אחרים'
       }
     }
   },
@@ -939,6 +961,17 @@ export const translations: Record<Language, Translations> = {
           date: 'Date',
           number: 'Number'
         }
+      },
+      layout: {
+        dragAnywhere: 'Drag any text or field directly on the canvas to place it with no margins (overlaps allowed)',
+        positionX: 'Position X (%)',
+        positionY: 'Position Y (%)',
+        width: 'Width (%)',
+        alignment: 'Alignment',
+        alignLeft: 'Align left',
+        alignCenter: 'Align center',
+        alignRight: 'Align right',
+        overlapHint: 'You can position items edge-to-edge and even stack them'
       }
     }
   }

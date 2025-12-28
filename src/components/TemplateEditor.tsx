@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, Image as ImageIcon, X, Upload, Film } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, X, Upload, Film } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 import { AdminBackground, VideoBackground } from '../types'
 
@@ -10,6 +10,12 @@ interface TemplateField {
   label: string
   type: FieldType
   required: boolean
+  position: {
+    x: number
+    y: number
+    width: number
+    align: 'left' | 'center' | 'right'
+  }
 }
 
 interface TextLine {
@@ -17,6 +23,12 @@ interface TextLine {
   text: string
   font: string
   fontSize: number
+  position: {
+    x: number
+    y: number
+    width: number
+    align: 'left' | 'center' | 'right'
+  }
 }
 
 interface FontOption {
@@ -53,12 +65,36 @@ export default function TemplateEditor({
   type PanelKey = 'background' | 'fields' | 'text'
 
   const [fields, setFields] = useState<TemplateField[]>([
-    { id: crypto.randomUUID(), label: language === 'he' ? 'שם מלא' : 'Full Name', type: 'text', required: true },
-    { id: crypto.randomUUID(), label: language === 'he' ? 'תאריך אירוע' : 'Event Date', type: 'date', required: false }
+    {
+      id: crypto.randomUUID(),
+      label: language === 'he' ? 'שם מלא' : 'Full Name',
+      type: 'text',
+      required: true,
+      position: { x: 50, y: 60, width: 70, align: 'center' }
+    },
+    {
+      id: crypto.randomUUID(),
+      label: language === 'he' ? 'תאריך אירוע' : 'Event Date',
+      type: 'date',
+      required: false,
+      position: { x: 50, y: 72, width: 60, align: 'center' }
+    }
   ])
   const [textLines, setTextLines] = useState<TextLine[]>([
-    { id: crypto.randomUUID(), text: language === 'he' ? 'באהבה רבה' : 'With great joy', font: 'Playfair Display, serif', fontSize: 26 },
-    { id: crypto.randomUUID(), text: language === 'he' ? 'נשמח לראותכם' : 'Looking forward to celebrating together', font: 'Assistant, sans-serif', fontSize: 18 }
+    {
+      id: crypto.randomUUID(),
+      text: language === 'he' ? 'באהבה רבה' : 'With great joy',
+      font: 'Playfair Display, serif',
+      fontSize: 26,
+      position: { x: 50, y: 20, width: 90, align: 'center' }
+    },
+    {
+      id: crypto.randomUUID(),
+      text: language === 'he' ? 'נשמח לראותכם' : 'Looking forward to celebrating together',
+      font: 'Assistant, sans-serif',
+      fontSize: 18,
+      position: { x: 50, y: 30, width: 90, align: 'center' }
+    }
   ])
   const [newFieldLabel, setNewFieldLabel] = useState('')
   const [newFieldType, setNewFieldType] = useState<FieldType>('text')
@@ -69,8 +105,10 @@ export default function TemplateEditor({
   const [templateHeight, setTemplateHeight] = useState<number>(1920)
   const [draggingFieldId, setDraggingFieldId] = useState<string | null>(null)
   const [draggingTextId, setDraggingTextId] = useState<string | null>(null)
+  const [draggingElement, setDraggingElement] = useState<{ type: 'field' | 'text'; id: string } | null>(null)
   const [activePanel, setActivePanel] = useState<PanelKey | null>('background')
   const [selectedBackgroundId, setSelectedBackgroundId] = useState<string>('')
+  const previewRef = useRef<HTMLDivElement | null>(null)
 
   const defaultBackground: AdminBackground = useMemo(
     () => ({
@@ -186,12 +224,28 @@ export default function TemplateEditor({
     [language]
   )
 
+  const clampPercentage = (value: number) => Math.min(100, Math.max(0, value))
+
   const addField = () => {
     if (!newFieldLabel.trim()) return
-    setFields((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), label: newFieldLabel.trim(), type: newFieldType, required: false }
-    ])
+    setFields((prev) => {
+      const nextY = 50 + prev.length * 8
+      return [
+        ...prev,
+        {
+          id: crypto.randomUUID(),
+          label: newFieldLabel.trim(),
+          type: newFieldType,
+          required: false,
+          position: {
+            x: 50,
+            y: Math.min(95, nextY),
+            width: 70,
+            align: 'center'
+          }
+        }
+      ]
+    })
     setNewFieldLabel('')
     setNewFieldType('text')
   }
@@ -200,7 +254,18 @@ export default function TemplateEditor({
     if (!newTextLine.trim()) return
     setTextLines((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), text: newTextLine.trim(), font: selectedFont, fontSize: selectedFontSize }
+      {
+        id: crypto.randomUUID(),
+        text: newTextLine.trim(),
+        font: selectedFont,
+        fontSize: selectedFontSize,
+        position: {
+          x: 50,
+          y: Math.min(95, 20 + prev.length * 8),
+          width: 90,
+          align: 'center'
+        }
+      }
     ])
     setNewTextLine('')
   }
@@ -215,9 +280,55 @@ export default function TemplateEditor({
     setFields((prev) => prev.map((field) => (field.id === id ? { ...field, type } : field)))
   }
 
+  const updateFieldPosition = (id: string, key: 'x' | 'y' | 'width', value: number) => {
+    setFields((prev) =>
+      prev.map((field) =>
+        field.id === id
+          ? {
+              ...field,
+              position: {
+                ...field.position,
+                [key]: clampPercentage(key === 'width' ? Math.max(value, 10) : value)
+              }
+            }
+          : field
+      )
+    )
+  }
+
+  const updateFieldAlignment = (id: string, align: TemplateField['position']['align']) => {
+    setFields((prev) =>
+      prev.map((field) =>
+        field.id === id ? { ...field, position: { ...field.position, align } } : field
+      )
+    )
+  }
+
   const updateTextLine = (id: string, key: keyof TextLine, value: string | number) => {
     setTextLines((prev) =>
       prev.map((line) => (line.id === id ? { ...line, [key]: value } : line))
+    )
+  }
+
+  const updateTextPosition = (id: string, key: 'x' | 'y' | 'width', value: number) => {
+    setTextLines((prev) =>
+      prev.map((line) =>
+        line.id === id
+          ? {
+              ...line,
+              position: {
+                ...line.position,
+                [key]: clampPercentage(key === 'width' ? Math.max(value, 10) : value)
+              }
+            }
+          : line
+      )
+    )
+  }
+
+  const updateTextAlignment = (id: string, align: TextLine['position']['align']) => {
+    setTextLines((prev) =>
+      prev.map((line) => (line.id === id ? { ...line, position: { ...line.position, align } } : line))
     )
   }
 
@@ -250,6 +361,48 @@ export default function TemplateEditor({
     if (!draggingTextId || draggingTextId === targetId) return
     setTextLines((prev) => reorder(prev, draggingTextId, targetId))
     setDraggingTextId(null)
+  }
+
+  const moveElementTo = (type: 'field' | 'text', id: string, x: number, y: number) => {
+    const clampedX = clampPercentage(x)
+    const clampedY = clampPercentage(y)
+    if (type === 'field') {
+      setFields((prev) =>
+        prev.map((field) =>
+          field.id === id
+            ? { ...field, position: { ...field.position, x: clampedX, y: clampedY } }
+            : field
+        )
+      )
+    } else {
+      setTextLines((prev) =>
+        prev.map((line) =>
+          line.id === id ? { ...line, position: { ...line.position, x: clampedX, y: clampedY } } : line
+        )
+      )
+    }
+  }
+
+  const startDraggingElement = (event: ReactPointerEvent, type: 'field' | 'text', id: string) => {
+    event.preventDefault()
+    setDraggingElement({ type, id })
+    if (!previewRef.current) return
+    const rect = previewRef.current.getBoundingClientRect()
+    const x = ((event.clientX - rect.left) / rect.width) * 100
+    const y = ((event.clientY - rect.top) / rect.height) * 100
+    moveElementTo(type, id, x, y)
+  }
+
+  const handleCanvasPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!draggingElement || !previewRef.current) return
+    const rect = previewRef.current.getBoundingClientRect()
+    const x = ((event.clientX - rect.left) / rect.width) * 100
+    const y = ((event.clientY - rect.top) / rect.height) * 100
+    moveElementTo(draggingElement.type, draggingElement.id, x, y)
+  }
+
+  const handleCanvasPointerUp = () => {
+    setDraggingElement(null)
   }
 
   const panelConfig: Record<PanelKey, { icon: typeof ImageIcon; label: string; helper?: string }> = {
@@ -441,6 +594,71 @@ export default function TemplateEditor({
                       </button>
                     </div>
                   </div>
+                  <div className="grid sm:grid-cols-3 gap-3 mt-3">
+                    <label className="text-xs text-gray-600 flex flex-col gap-1">
+                      <span>{t.templateEditor.layout.positionX}</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={field.position.x}
+                        onChange={(e) => updateFieldPosition(field.id, 'x', Number(e.target.value))}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="text-xs text-gray-600 flex flex-col gap-1">
+                      <span>{t.templateEditor.layout.positionY}</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={field.position.y}
+                        onChange={(e) => updateFieldPosition(field.id, 'y', Number(e.target.value))}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="text-xs text-gray-600 flex flex-col gap-1">
+                      <span>{t.templateEditor.layout.width}</span>
+                      <input
+                        type="number"
+                        min={10}
+                        max={100}
+                        value={field.position.width}
+                        onChange={(e) => updateFieldPosition(field.id, 'width', Number(e.target.value))}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      />
+                    </label>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <span className="text-xs font-semibold text-gray-700">{t.templateEditor.layout.alignment}</span>
+                    <div className="flex rounded-lg overflow-hidden border border-gray-300">
+                      <button
+                        onClick={() => updateFieldAlignment(field.id, 'left')}
+                        className={`px-3 py-2 ${field.position.align === 'left' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
+                        title={t.templateEditor.layout.alignLeft}
+                        type="button"
+                      >
+                        <AlignLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => updateFieldAlignment(field.id, 'center')}
+                        className={`px-3 py-2 ${field.position.align === 'center' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
+                        title={t.templateEditor.layout.alignCenter}
+                        type="button"
+                      >
+                        <AlignCenter className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => updateFieldAlignment(field.id, 'right')}
+                        className={`px-3 py-2 ${field.position.align === 'right' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
+                        title={t.templateEditor.layout.alignRight}
+                        type="button"
+                      >
+                        <AlignRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500">{t.templateEditor.layout.overlapHint}</p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -491,11 +709,11 @@ export default function TemplateEditor({
                     onChange={(e) => updateTextLine(line.id, 'text', e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2 text-right"
                   />
-                  <div className="flex flex-wrap gap-3 items-center">
-                    <select
-                      value={line.font}
-                      onChange={(e) => updateTextLine(line.id, 'font', e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                <div className="flex flex-wrap gap-3 items-center">
+                  <select
+                    value={line.font}
+                    onChange={(e) => updateTextLine(line.id, 'font', e.target.value)}
+                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     >
                       {fontOptions.map((font) => (
                         <option key={font.id} value={font.css}>
@@ -517,6 +735,71 @@ export default function TemplateEditor({
                     >
                       {t.admin.buttons.delete}
                     </button>
+                  </div>
+                  <div className="grid sm:grid-cols-3 gap-3 mt-3">
+                    <label className="text-xs text-gray-600 flex flex-col gap-1">
+                      <span>{t.templateEditor.layout.positionX}</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={line.position.x}
+                        onChange={(e) => updateTextPosition(line.id, 'x', Number(e.target.value))}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="text-xs text-gray-600 flex flex-col gap-1">
+                      <span>{t.templateEditor.layout.positionY}</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={line.position.y}
+                        onChange={(e) => updateTextPosition(line.id, 'y', Number(e.target.value))}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="text-xs text-gray-600 flex flex-col gap-1">
+                      <span>{t.templateEditor.layout.width}</span>
+                      <input
+                        type="number"
+                        min={10}
+                        max={100}
+                        value={line.position.width}
+                        onChange={(e) => updateTextPosition(line.id, 'width', Number(e.target.value))}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      />
+                    </label>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                    <span className="text-xs font-semibold text-gray-700">{t.templateEditor.layout.alignment}</span>
+                    <div className="flex rounded-lg overflow-hidden border border-gray-300">
+                      <button
+                        onClick={() => updateTextAlignment(line.id, 'left')}
+                        className={`px-3 py-2 ${line.position.align === 'left' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
+                        title={t.templateEditor.layout.alignLeft}
+                        type="button"
+                      >
+                        <AlignLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => updateTextAlignment(line.id, 'center')}
+                        className={`px-3 py-2 ${line.position.align === 'center' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
+                        title={t.templateEditor.layout.alignCenter}
+                        type="button"
+                      >
+                        <AlignCenter className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => updateTextAlignment(line.id, 'right')}
+                        className={`px-3 py-2 ${line.position.align === 'right' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
+                        title={t.templateEditor.layout.alignRight}
+                        type="button"
+                      >
+                        <AlignRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500">{t.templateEditor.layout.overlapHint}</p>
                   </div>
                 </div>
               </div>
@@ -581,7 +864,7 @@ export default function TemplateEditor({
           <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
             <div>
               <h3 className="text-2xl font-bold text-gray-800">{t.templateEditor.preview}</h3>
-              <p className="text-sm text-gray-500">{t.templateEditor.dragHint}</p>
+              <p className="text-sm text-gray-500">{t.templateEditor.layout.dragAnywhere}</p>
             </div>
             <div className="text-sm text-gray-600 flex items-center gap-2">
               <span className="inline-flex h-2 w-2 rounded-full bg-amber-500" />
@@ -597,38 +880,56 @@ export default function TemplateEditor({
               }}
             >
               {renderBackgroundMedia(selectedBackground, 0.95)}
-              <div className="absolute inset-0 bg-white/85 backdrop-blur-sm rounded-xl p-6 sm:p-10 space-y-4 overflow-auto">
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-xl" />
+              <div
+                ref={previewRef}
+                className="absolute inset-0"
+                onPointerMove={handleCanvasPointerMove}
+                onPointerUp={handleCanvasPointerUp}
+                onPointerLeave={handleCanvasPointerUp}
+              >
                 {textLines.map((line) => (
-                  <p
+                  <div
                     key={line.id}
-                    style={{ fontFamily: line.font, fontSize: line.fontSize }}
-                    className="text-gray-800 text-center"
+                    className="absolute cursor-move"
+                    style={{
+                      left: `${line.position.x}%`,
+                      top: `${line.position.y}%`,
+                      width: `${line.position.width}%`,
+                      transform: 'translate(-50%, -50%)',
+                      textAlign: line.position.align as 'left' | 'center' | 'right'
+                    }}
+                    onPointerDown={(e) => startDraggingElement(e, 'text', line.id)}
                   >
-                    {line.text}
-                  </p>
-                ))}
-                <div className="grid gap-3">
-                  {fields.map((field) => (
-                    <div
-                      key={field.id}
-                      className="flex items-center gap-3 bg-amber-50/80 border border-dashed border-amber-300 rounded-lg px-4 py-3 shadow-sm cursor-move"
-                      draggable
-                      onDragStart={() => setDraggingFieldId(field.id)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={() => handleFieldDrop(field.id)}
+                    <p
+                      style={{ fontFamily: line.font, fontSize: line.fontSize }}
+                      className="text-gray-800"
                     >
-                      <GripVertical className="w-4 h-4 text-amber-600 shrink-0" />
-                      <div className="flex-1 text-right">
-                        <p className="text-sm font-semibold text-amber-800">
-                          {'{{ '}
-                          {field.label}
-                          {' }}'} {field.required && <span className="text-red-500">*</span>}
-                        </p>
-                        <p className="text-xs text-amber-700">{t.templateEditor.previewFieldHint}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      {line.text}
+                    </p>
+                  </div>
+                ))}
+                {fields.map((field) => (
+                  <div
+                    key={field.id}
+                    className="absolute cursor-move bg-amber-50/90 border border-amber-300 rounded-lg px-3 py-2 shadow-sm"
+                    style={{
+                      left: `${field.position.x}%`,
+                      top: `${field.position.y}%`,
+                      width: `${field.position.width}%`,
+                      transform: 'translate(-50%, -50%)',
+                      textAlign: field.position.align as 'left' | 'center' | 'right'
+                    }}
+                    onPointerDown={(e) => startDraggingElement(e, 'field', field.id)}
+                  >
+                    <p className="text-sm font-semibold text-amber-800">
+                      {'{{ '}
+                      {field.label}
+                      {' }}'} {field.required && <span className="text-red-500">*</span>}
+                    </p>
+                    <p className="text-xs text-amber-700">{t.templateEditor.previewFieldHint}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
