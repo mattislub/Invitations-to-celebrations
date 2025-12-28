@@ -961,131 +961,135 @@ export default function Designer({ language, customTypes, videoBackgrounds }: De
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12">
-          <div className="space-y-8">
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-              <div className="flex items-center mb-6">
-                <Layers className="w-6 h-6 text-amber-500 ml-2" />
-                <h3 className="text-2xl font-bold text-gray-800">בחרו רקע</h3>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                {filteredBackgrounds.map((bg) => (
-                  <button
-                    key={bg.id}
-                    onClick={() => setSelectedBackground(bg.id)}
-                    className={`relative rounded-xl overflow-hidden h-32 transition-all duration-300 ${
-                      selectedBackground === bg.id
-                        ? 'ring-4 ring-amber-500 scale-105'
-                        : 'ring-2 ring-gray-200 hover:ring-amber-300'
-                    }`}
-                  >
-                    <div className="absolute inset-0">
-                      {bg.type === 'video' && bg.videoUrl ? (
-                        <video
-                          className="w-full h-full object-cover"
-                          src={bg.videoUrl}
-                          autoPlay
-                          muted
-                          loop
-                          playsInline
-                          poster={bg.previewImage}
-                          style={{ opacity: 0.6 }}
-                        />
-                      ) : (
-                        bg.images.map((image, index) => (
-                          <div
-                            key={index}
-                            className="absolute inset-0 bg-cover bg-center"
-                            style={{
-                              backgroundImage: `url(${image})`,
-                              opacity: index === 0 ? 0.6 : 0.4,
-                            }}
+        <div className="space-y-12">
+          <div className="grid lg:grid-cols-2 gap-12 items-start">
+            <div className="space-y-8">
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <div className="flex items-center mb-6">
+                  <Layers className="w-6 h-6 text-amber-500 ml-2" />
+                  <h3 className="text-2xl font-bold text-gray-800">בחרו רקע</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {filteredBackgrounds.map((bg) => (
+                    <button
+                      key={bg.id}
+                      onClick={() => setSelectedBackground(bg.id)}
+                      className={`relative rounded-xl overflow-hidden h-32 transition-all duration-300 ${
+                        selectedBackground === bg.id
+                          ? 'ring-4 ring-amber-500 scale-105'
+                          : 'ring-2 ring-gray-200 hover:ring-amber-300'
+                      }`}
+                    >
+                      <div className="absolute inset-0">
+                        {bg.type === 'video' && bg.videoUrl ? (
+                          <video
+                            className="w-full h-full object-cover"
+                            src={bg.videoUrl}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            poster={bg.previewImage}
+                            style={{ opacity: 0.6 }}
                           />
-                        ))
-                      )}
-                    </div>
-                    {selectedBackground === bg.id && (
-                      <div className="absolute inset-0 bg-black/10" />
-                    )}
-                    {bg.type === 'video' && (
-                      <div className="absolute bottom-2 right-2 bg-black/50 text-white px-3 py-1 rounded-full flex items-center gap-1 text-xs font-semibold">
-                        <Video className="w-3 h-3" />
-                        <span>{language === 'he' ? 'וידאו' : 'Video'}</span>
+                        ) : (
+                          bg.images.map((image, index) => (
+                            <div
+                              key={index}
+                              className="absolute inset-0 bg-cover bg-center"
+                              style={{
+                                backgroundImage: `url(${image})`,
+                                opacity: index === 0 ? 0.6 : 0.4,
+                              }}
+                            />
+                          ))
+                        )}
                       </div>
-                    )}
-                  </button>
-                ))}
+                      {selectedBackground === bg.id && (
+                        <div className="absolute inset-0 bg-black/10" />
+                      )}
+                      {bg.type === 'video' && (
+                        <div className="absolute bottom-2 right-2 bg-black/50 text-white px-3 py-1 rounded-full flex items-center gap-1 text-xs font-semibold">
+                          <Video className="w-3 h-3" />
+                          <span>{language === 'he' ? 'וידאו' : 'Video'}</span>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <div className="flex items-center mb-6">
+                  <Sparkles className="w-6 h-6 text-amber-500 ml-2" />
+                  <h3 className="text-2xl font-bold text-gray-800">בחרו ערכת צבעים</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {filteredColorSchemes.map((scheme) => (
+                    <button
+                      key={scheme.id}
+                      onClick={() => setSelectedColorScheme(scheme.id)}
+                      className={`p-4 rounded-xl transition-all duration-300 text-right ${
+                        selectedColorScheme === scheme.id
+                          ? 'ring-4 ring-offset-2 scale-105'
+                          : 'ring-2 ring-gray-200 hover:ring-gray-300'
+                      }`}
+                      style={{
+                        backgroundColor: `${scheme.primary}15`
+                      }}
+                    >
+                      <div className="flex gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full" style={{ backgroundColor: scheme.primary }} />
+                        <div className="w-6 h-6 rounded-full" style={{ backgroundColor: scheme.secondary }} />
+                        <div className="w-6 h-6 rounded-full" style={{ backgroundColor: scheme.accent }} />
+                      </div>
+                      <p className="font-bold text-sm" style={{ color: scheme.primary }}>{scheme.name}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-              <div className="flex items-center mb-6">
-                <Sparkles className="w-6 h-6 text-amber-500 ml-2" />
-                <h3 className="text-2xl font-bold text-gray-800">בחרו ערכת צבעים</h3>
+            <div className="space-y-8">
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <div className="flex items-center mb-6">
+                  <Sparkles className="w-6 h-6 text-amber-500 ml-2" />
+                  <h3 className="text-2xl font-bold text-gray-800">בחרו אנימציה</h3>
+                </div>
+                <div className="space-y-3">
+                  {animations.map((animation) => (
+                    <button
+                      key={animation.id}
+                      onClick={() => handleAnimationChange(animation.id)}
+                      className={`w-full text-right p-4 rounded-xl transition-all duration-300 ${
+                        selectedAnimation === animation.id
+                          ? 'bg-gradient-to-r from-gray-700 to-amber-500 text-white shadow-lg scale-105'
+                          : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
+                      }`}
+                    >
+                      <div className="font-bold text-lg">{animation.name}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                {filteredColorSchemes.map((scheme) => (
-                  <button
-                    key={scheme.id}
-                    onClick={() => setSelectedColorScheme(scheme.id)}
-                    className={`p-4 rounded-xl transition-all duration-300 text-right ${
-                      selectedColorScheme === scheme.id
-                        ? 'ring-4 ring-offset-2 scale-105'
-                        : 'ring-2 ring-gray-200 hover:ring-gray-300'
-                    }`}
-                    style={{
-                      backgroundColor: `${scheme.primary}15`
-                    }}
-                  >
-                    <div className="flex gap-2 mb-2">
-                      <div className="w-6 h-6 rounded-full" style={{ backgroundColor: scheme.primary }} />
-                      <div className="w-6 h-6 rounded-full" style={{ backgroundColor: scheme.secondary }} />
-                      <div className="w-6 h-6 rounded-full" style={{ backgroundColor: scheme.accent }} />
-                    </div>
-                    <p className="font-bold text-sm" style={{ color: scheme.primary }}>{scheme.name}</p>
-                  </button>
-                ))}
+
+              <div className="bg-white rounded-2xl shadow-xl p-8">
+                <button className="w-full bg-gradient-to-r from-gray-700 to-amber-500 text-white px-8 py-4 rounded-xl text-lg font-bold hover:shadow-xl hover:scale-105 transition-all duration-300">
+                  שמירה והורדה
+                </button>
               </div>
             </div>
-
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-              <div className="flex items-center mb-6">
-                <Sparkles className="w-6 h-6 text-amber-500 ml-2" />
-                <h3 className="text-2xl font-bold text-gray-800">בחרו אנימציה</h3>
-              </div>
-              <div className="space-y-3">
-                {animations.map((animation) => (
-                  <button
-                    key={animation.id}
-                    onClick={() => handleAnimationChange(animation.id)}
-                    className={`w-full text-right p-4 rounded-xl transition-all duration-300 ${
-                      selectedAnimation === animation.id
-                        ? 'bg-gradient-to-r from-gray-700 to-amber-500 text-white shadow-lg scale-105'
-                        : 'bg-gray-50 hover:bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    <div className="font-bold text-lg">{animation.name}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button className="w-full bg-gradient-to-r from-gray-700 to-amber-500 text-white px-8 py-4 rounded-xl text-lg font-bold hover:shadow-xl hover:scale-105 transition-all duration-300">
-              שמירה והורדה
-            </button>
           </div>
 
-          <div className="lg:sticky lg:top-24 self-start">
-            <div className="bg-gradient-to-br from-gray-100 to-amber-50 rounded-2xl p-8">
-              <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">תצוגה מקדימה סופית</h3>
-              <div className="relative min-h-[600px] flex items-center justify-center rounded-xl overflow-hidden">
-                {renderBackgroundLayer(selectedBackgroundOption, 0.28)}
-                <div
-                  key={animationKey}
-                  className={`bg-white rounded-2xl p-8 shadow-2xl text-center relative z-10 max-w-md ${animations.find(a => a.id === selectedAnimation)?.class}`}
-                >
-                  {renderInvitationContent()}
-                </div>
+          <div className="bg-gradient-to-br from-gray-100 to-amber-50 rounded-2xl p-8">
+            <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">תצוגה מקדימה סופית</h3>
+            <div className="relative min-h-[600px] w-full flex items-center justify-center rounded-xl overflow-hidden">
+              {renderBackgroundLayer(selectedBackgroundOption, 0.28)}
+              <div
+                key={animationKey}
+                className={`bg-white rounded-2xl p-10 md:p-12 shadow-2xl text-center relative z-10 w-full max-w-5xl ${animations.find(a => a.id === selectedAnimation)?.class}`}
+              >
+                {renderInvitationContent()}
               </div>
             </div>
           </div>
