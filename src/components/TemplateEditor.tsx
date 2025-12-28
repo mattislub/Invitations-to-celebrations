@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, Image as ImageIcon } from 'lucide-react'
+import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, Image as ImageIcon, X } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 
 type FieldType = 'text' | 'date' | 'number'
@@ -30,6 +30,7 @@ interface TemplateEditorProps {
 
 export default function TemplateEditor({ language }: TemplateEditorProps) {
   const t = getTranslation(language)
+  type PanelKey = 'background' | 'fields' | 'text'
 
   const [fields, setFields] = useState<TemplateField[]>([
     { id: crypto.randomUUID(), label: language === 'he' ? 'שם מלא' : 'Full Name', type: 'text', required: true },
@@ -49,6 +50,7 @@ export default function TemplateEditor({ language }: TemplateEditorProps) {
   const [templateHeight, setTemplateHeight] = useState<number>(1920)
   const [draggingFieldId, setDraggingFieldId] = useState<string | null>(null)
   const [draggingTextId, setDraggingTextId] = useState<string | null>(null)
+  const [activePanel, setActivePanel] = useState<PanelKey | null>('background')
 
   const fontOptions: FontOption[] = useMemo(
     () => [
@@ -126,79 +128,26 @@ export default function TemplateEditor({ language }: TemplateEditorProps) {
     setDraggingTextId(null)
   }
 
-  return (
-    <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <div className="text-center mb-12">
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">{t.templateEditor.title}</h2>
-        <p className="text-lg text-gray-600">{t.templateEditor.subtitle}</p>
-      </div>
+  const panelConfig: Record<PanelKey, { icon: typeof ImageIcon; label: string; helper?: string }> = {
+    background: { icon: ImageIcon, label: t.templateEditor.background },
+    fields: { icon: TypeIcon, label: t.templateEditor.fields, helper: t.templateEditor.dragHint },
+    text: { icon: List, label: t.templateEditor.textLines, helper: t.templateEditor.dragHint }
+  }
+  const activePanelConfig = activePanel ? panelConfig[activePanel] : null
 
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px] items-start">
-        <div className="bg-white rounded-3xl shadow-2xl p-6 lg:p-10">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-2xl font-bold text-gray-800">{t.templateEditor.preview}</h3>
-            <p className="text-sm text-gray-500">{t.templateEditor.dragHint}</p>
-          </div>
-          <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-100">
-            <div
-              className="w-full bg-center bg-cover transition-all duration-300"
-              style={{
-                backgroundImage: `url(${backgroundUrl || ''})`,
-                aspectRatio: `${templateWidth}/${templateHeight}`,
-                minHeight: '60vh'
-              }}
-            >
-              <div className="h-full bg-white/85 backdrop-blur-sm rounded-xl p-6 sm:p-10 space-y-4 overflow-auto">
-                {textLines.map((line) => (
-                  <p
-                    key={line.id}
-                    style={{ fontFamily: line.font, fontSize: line.fontSize }}
-                    className="text-gray-800 text-center"
-                  >
-                    {line.text}
-                  </p>
-                ))}
-                <div className="grid gap-3">
-                  {fields.map((field) => (
-                    <div
-                      key={field.id}
-                      className="flex items-center gap-3 bg-amber-50/80 border border-dashed border-amber-300 rounded-lg px-4 py-3 shadow-sm cursor-move"
-                      draggable
-                      onDragStart={() => setDraggingFieldId(field.id)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={() => handleFieldDrop(field.id)}
-                    >
-                      <GripVertical className="w-4 h-4 text-amber-600 shrink-0" />
-                      <div className="flex-1 text-right">
-                        <p className="text-sm font-semibold text-amber-800">
-                          {'{{ '}
-                          {field.label}
-                          {' }}'} {field.required && <span className="text-red-500">*</span>}
-                        </p>
-                        <p className="text-xs text-amber-700">{t.templateEditor.previewFieldHint}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-6 lg:sticky lg:top-6 lg:max-h-[80vh] lg:overflow-y-auto lg:pr-1">
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <div className="flex items-center mb-6">
-              <ImageIcon className="w-6 h-6 text-amber-500 ml-2" />
-              <h3 className="text-2xl font-bold text-gray-800">{t.templateEditor.background}</h3>
-            </div>
+  const renderPanelContent = () => {
+    switch (activePanel) {
+      case 'background':
+        return (
+          <div className="space-y-6">
             <input
               type="text"
               value={backgroundUrl}
               onChange={(e) => setBackgroundUrl(e.target.value)}
               placeholder={t.templateEditor.backgroundUrl}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-right mb-4"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-right"
             />
-            <div className="mb-6">
+            <div>
               <h4 className="text-lg font-semibold text-gray-800 mb-3">{t.templateEditor.dimensions.title}</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <label className="block">
@@ -246,62 +195,54 @@ export default function TemplateEditor({ language }: TemplateEditorProps) {
               />
             </div>
           </div>
-
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <div className="flex items-center mb-6">
-              <TypeIcon className="w-6 h-6 text-amber-500 ml-2" />
-              <div>
-                <h3 className="text-2xl font-bold text-gray-800">{t.templateEditor.fields}</h3>
-                <p className="text-sm text-gray-500">{t.templateEditor.dragHint}</p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {fields.map((field) => (
-                <div
-                  key={field.id}
-                  className="flex items-center gap-3 bg-gray-50 rounded-xl p-4 border border-gray-200"
-                  draggable
-                  onDragStart={() => setDraggingFieldId(field.id)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => handleFieldDrop(field.id)}
-                >
-                  <GripVertical className="w-5 h-5 text-gray-400 cursor-grab" />
-                  <div className="flex-1 text-right">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                      <span className="font-semibold text-gray-800">{field.label}</span>
-                      <div className="flex items-center gap-2">
-                        <select
-                          value={field.type}
-                          onChange={(e) => updateFieldType(field.id, e.target.value as FieldType)}
-                          className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                        >
-                          <option value="text">{t.templateEditor.options.types.text}</option>
-                          <option value="date">{t.templateEditor.options.types.date}</option>
-                          <option value="number">{t.templateEditor.options.types.number}</option>
-                        </select>
-                        <label className="flex items-center gap-2 text-sm text-gray-600">
-                          <input
-                            type="checkbox"
-                            checked={field.required}
-                            onChange={() => toggleRequired(field.id)}
-                          />
-                          {t.templateEditor.options.required}
-                        </label>
-                        <button
-                          onClick={() => removeField(field.id)}
-                          className="text-red-500 text-sm hover:underline"
-                        >
-                          {t.admin.buttons.delete}
-                        </button>
-                      </div>
+        )
+      case 'fields':
+        return (
+          <div className="space-y-3">
+            {fields.map((field) => (
+              <div
+                key={field.id}
+                className="flex items-center gap-3 bg-gray-50 rounded-xl p-4 border border-gray-200"
+                draggable
+                onDragStart={() => setDraggingFieldId(field.id)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => handleFieldDrop(field.id)}
+              >
+                <GripVertical className="w-5 h-5 text-gray-400 cursor-grab" />
+                <div className="flex-1 text-right">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <span className="font-semibold text-gray-800">{field.label}</span>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={field.type}
+                        onChange={(e) => updateFieldType(field.id, e.target.value as FieldType)}
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      >
+                        <option value="text">{t.templateEditor.options.types.text}</option>
+                        <option value="date">{t.templateEditor.options.types.date}</option>
+                        <option value="number">{t.templateEditor.options.types.number}</option>
+                      </select>
+                      <label className="flex items-center gap-2 text-sm text-gray-600">
+                        <input
+                          type="checkbox"
+                          checked={field.required}
+                          onChange={() => toggleRequired(field.id)}
+                        />
+                        {t.templateEditor.options.required}
+                      </label>
+                      <button
+                        onClick={() => removeField(field.id)}
+                        className="text-red-500 text-sm hover:underline"
+                      >
+                        {t.admin.buttons.delete}
+                      </button>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
 
-            <div className="mt-6 grid md:grid-cols-3 gap-3">
+            <div className="pt-3 grid md:grid-cols-3 gap-3">
               <input
                 type="text"
                 value={newFieldLabel}
@@ -321,72 +262,64 @@ export default function TemplateEditor({ language }: TemplateEditorProps) {
             </div>
             <button
               onClick={addField}
-              className="mt-4 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-gray-700 to-amber-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200"
+              className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-gray-700 to-amber-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200"
             >
               <Plus className="w-5 h-5" />
               {t.templateEditor.addField}
             </button>
           </div>
-
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <div className="flex items-center mb-6">
-              <List className="w-6 h-6 text-amber-500 ml-2" />
-              <div>
-                <h3 className="text-2xl font-bold text-gray-800">{t.templateEditor.textLines}</h3>
-                <p className="text-sm text-gray-500">{t.templateEditor.dragHint}</p>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {textLines.map((line) => (
-                <div
-                  key={line.id}
-                  className="flex items-center gap-3 bg-gray-50 rounded-xl p-4 border border-gray-200"
-                  draggable
-                  onDragStart={() => setDraggingTextId(line.id)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => handleTextDrop(line.id)}
-                >
-                  <GripVertical className="w-5 h-5 text-gray-400 cursor-grab" />
-                  <div className="flex-1">
+        )
+      case 'text':
+        return (
+          <div className="space-y-3">
+            {textLines.map((line) => (
+              <div
+                key={line.id}
+                className="flex items-center gap-3 bg-gray-50 rounded-xl p-4 border border-gray-200"
+                draggable
+                onDragStart={() => setDraggingTextId(line.id)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => handleTextDrop(line.id)}
+              >
+                <GripVertical className="w-5 h-5 text-gray-400 cursor-grab" />
+                <div className="flex-1">
+                  <input
+                    value={line.text}
+                    onChange={(e) => updateTextLine(line.id, 'text', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2 text-right"
+                  />
+                  <div className="flex flex-wrap gap-3 items-center">
+                    <select
+                      value={line.font}
+                      onChange={(e) => updateTextLine(line.id, 'font', e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                    >
+                      {fontOptions.map((font) => (
+                        <option key={font.id} value={font.css}>
+                          {font.label}
+                        </option>
+                      ))}
+                    </select>
                     <input
-                      value={line.text}
-                      onChange={(e) => updateTextLine(line.id, 'text', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2 text-right"
+                      type="number"
+                      min={12}
+                      max={64}
+                      value={line.fontSize}
+                      onChange={(e) => updateTextLine(line.id, 'fontSize', Number(e.target.value))}
+                      className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm"
                     />
-                    <div className="flex flex-wrap gap-3 items-center">
-                      <select
-                        value={line.font}
-                        onChange={(e) => updateTextLine(line.id, 'font', e.target.value)}
-                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                      >
-                        {fontOptions.map((font) => (
-                          <option key={font.id} value={font.css}>
-                            {font.label}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        type="number"
-                        min={12}
-                        max={64}
-                        value={line.fontSize}
-                        onChange={(e) => updateTextLine(line.id, 'fontSize', Number(e.target.value))}
-                        className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                      />
-                      <button
-                        onClick={() => removeTextLine(line.id)}
-                        className="text-red-500 text-sm hover:underline"
-                      >
-                        {t.admin.buttons.delete}
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => removeTextLine(line.id)}
+                      className="text-red-500 text-sm hover:underline"
+                    >
+                      {t.admin.buttons.delete}
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
 
-            <div className="mt-6 space-y-3">
+            <div className="pt-3 space-y-3">
               <textarea
                 value={newTextLine}
                 onChange={(e) => setNewTextLine(e.target.value)}
@@ -420,14 +353,136 @@ export default function TemplateEditor({ language }: TemplateEditorProps) {
               </div>
               <button
                 onClick={addTextLine}
-                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-gray-700 to-amber-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200"
+                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-gray-700 to-amber-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200"
               >
                 <Plus className="w-5 h-5" />
                 {t.templateEditor.addText}
               </button>
             </div>
           </div>
+        )
+      default:
+        return null
+    }
+  }
+
+  return (
+    <section className="w-full px-4 sm:px-6 lg:px-12 py-16">
+      <div className="text-center mb-12">
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">{t.templateEditor.title}</h2>
+        <p className="text-lg text-gray-600">{t.templateEditor.subtitle}</p>
+      </div>
+
+      <div className="relative">
+        <div className="bg-white rounded-3xl shadow-2xl p-6 lg:p-10 border border-amber-50">
+          <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-800">{t.templateEditor.preview}</h3>
+              <p className="text-sm text-gray-500">{t.templateEditor.dragHint}</p>
+            </div>
+            <div className="text-sm text-gray-600 flex items-center gap-2">
+              <span className="inline-flex h-2 w-2 rounded-full bg-amber-500" />
+              {t.templateEditor.previewFieldHint}
+            </div>
+          </div>
+          <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-100">
+            <div
+              className="w-full bg-center bg-cover transition-all duration-300"
+              style={{
+                backgroundImage: `url(${backgroundUrl || ''})`,
+                aspectRatio: `${templateWidth}/${templateHeight}`,
+                minHeight: '70vh'
+              }}
+            >
+              <div className="h-full bg-white/85 backdrop-blur-sm rounded-xl p-6 sm:p-10 space-y-4 overflow-auto">
+                {textLines.map((line) => (
+                  <p
+                    key={line.id}
+                    style={{ fontFamily: line.font, fontSize: line.fontSize }}
+                    className="text-gray-800 text-center"
+                  >
+                    {line.text}
+                  </p>
+                ))}
+                <div className="grid gap-3">
+                  {fields.map((field) => (
+                    <div
+                      key={field.id}
+                      className="flex items-center gap-3 bg-amber-50/80 border border-dashed border-amber-300 rounded-lg px-4 py-3 shadow-sm cursor-move"
+                      draggable
+                      onDragStart={() => setDraggingFieldId(field.id)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => handleFieldDrop(field.id)}
+                    >
+                      <GripVertical className="w-4 h-4 text-amber-600 shrink-0" />
+                      <div className="flex-1 text-right">
+                        <p className="text-sm font-semibold text-amber-800">
+                          {'{{ '}
+                          {field.label}
+                          {' }}'} {field.required && <span className="text-red-500">*</span>}
+                        </p>
+                        <p className="text-xs text-amber-700">{t.templateEditor.previewFieldHint}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+
+        <div className="fixed right-4 bottom-6 md:right-10 md:bottom-10 z-30">
+          <div className="bg-white/95 backdrop-blur-md shadow-2xl border border-amber-100 rounded-full p-3 flex md:flex-col gap-3">
+            {(Object.keys(panelConfig) as PanelKey[]).map((panel) => {
+              const Icon = panelConfig[panel].icon
+              const isActive = activePanel === panel
+              return (
+                <button
+                  key={panel}
+                  onClick={() => setActivePanel(isActive ? null : panel)}
+                  className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ${
+                    isActive
+                      ? 'bg-amber-500 border-amber-600 text-white shadow-lg shadow-amber-200'
+                      : 'bg-white border-gray-200 text-gray-700 hover:bg-amber-50'
+                  }`}
+                  title={panelConfig[panel].label}
+                  aria-label={panelConfig[panel].label}
+                >
+                  <Icon className="w-5 h-5" />
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {activePanelConfig && (
+          <div className="fixed left-4 right-4 bottom-24 md:bottom-auto md:top-24 md:right-[6.5rem] md:left-auto md:w-96 z-30">
+            <div className="bg-white shadow-2xl border border-amber-100 rounded-2xl p-6 max-h-[70vh] overflow-y-auto">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const Icon = activePanelConfig.icon
+                      return <Icon className="w-5 h-5 text-amber-500" />
+                    })()}
+                    <h3 className="text-xl font-bold text-gray-800">{activePanelConfig.label}</h3>
+                  </div>
+                  {activePanelConfig.helper && (
+                    <p className="text-sm text-gray-500 mt-1">{activePanelConfig.helper}</p>
+                  )}
+                </div>
+                <button
+                  onClick={() => setActivePanel(null)}
+                  className="text-gray-500 hover:text-gray-800 transition-colors"
+                  aria-label={language === 'he' ? 'סגור הגדרות' : 'Close settings'}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              {renderPanelContent()}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   )
