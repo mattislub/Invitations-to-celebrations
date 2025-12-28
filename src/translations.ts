@@ -232,6 +232,7 @@ export interface Translations {
       saved: string
       uploading: string
       uploadError: string
+      uploadTooLarge: string
     }
     fieldLayout: {
       selectType: string
@@ -552,7 +553,8 @@ export const translations: Record<Language, Translations> = {
         empty: 'אין פריטים להצגה כרגע',
         saved: 'ההגדרות נשמרו',
         uploading: 'מעלה קובץ...',
-        uploadError: 'העלאה נכשלה, נסו שוב'
+        uploadError: 'העלאה נכשלה, נסו שוב',
+        uploadTooLarge: 'הקובץ גדול מדי, נסו להקטין את התמונה (עד 900KB)'
       },
       fieldLayout: {
         selectType: 'בחרו סוג הזמנה לעריכה',
@@ -871,7 +873,8 @@ export const translations: Record<Language, Translations> = {
         empty: 'No items to display yet',
         saved: 'Settings saved',
         uploading: 'Uploading file...',
-        uploadError: 'Upload failed, please try again.'
+        uploadError: 'Upload failed, please try again.',
+        uploadTooLarge: 'File is too large—please use an image under 900KB.'
       },
       fieldLayout: {
         selectType: 'Pick an invitation type to edit',

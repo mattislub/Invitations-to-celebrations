@@ -5,6 +5,55 @@ import { CustomInvitationType, Invitation, VideoBackground, DesignStyle, AdminFo
 import TemplateEditor from './TemplateEditor'
 import FieldLayoutEditor from './FieldLayoutEditor'
 
+const MAX_UPLOAD_BYTES = 900 * 1024
+const MAX_IMAGE_DIMENSION = 1920
+
+const getDataUrlSize = (dataUrl: string) => {
+  const base64 = dataUrl.split(',')[1] ?? dataUrl
+  return Math.floor((base64.length * 3) / 4)
+}
+
+const optimizeImageForUpload = async (file: File) => {
+  const objectUrl = URL.createObjectURL(file)
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve(img)
+      img.onerror = () => reject(new Error('Failed to load image for optimization'))
+      img.src = objectUrl
+    })
+
+    const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(image.width, image.height))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.max(1, Math.round(image.width * scale))
+    canvas.height = Math.max(1, Math.round(image.height * scale))
+    const ctx = canvas.getContext('2d')
+    if (!ctx) {
+      throw new Error('Unable to draw image for optimization')
+    }
+
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height)
+
+    let quality = 0.92
+    let dataUrl = canvas.toDataURL('image/jpeg', quality)
+
+    while (getDataUrlSize(dataUrl) > MAX_UPLOAD_BYTES && quality > 0.55) {
+      quality -= 0.1
+      dataUrl = canvas.toDataURL('image/jpeg', quality)
+    }
+
+    if (getDataUrlSize(dataUrl) > MAX_UPLOAD_BYTES) {
+      return null
+    }
+
+    const optimizedName = file.name.replace(/\.[^.]+$/, '') + '.jpg'
+    return { dataUrl, name: optimizedName }
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
+}
+
 interface AdminProps {
   language: Language
   customTypes: CustomInvitationType[]
@@ -242,19 +291,53 @@ export default function Admin({
     console.info('[Admin] Upload started', { type, name: file.name, size: file.size, apiBaseUrl })
 
     try {
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(reader.result as string)
-        reader.onerror = () => reject(reader.error)
-        reader.readAsDataURL(file)
-      })
+      const isImage = file.type.startsWith('image/') || type === 'background' || type === 'image' || type === 'preview'
+      let dataUrl: string | null = null
+      let uploadName = file.name
+
+      if (isImage) {
+        const optimized = await optimizeImageForUpload(file)
+        if (optimized) {
+          dataUrl = optimized.dataUrl
+          uploadName = optimized.name
+          console.info('[Admin] Image optimized for upload', {
+            originalSize: file.size,
+            optimizedSize: getDataUrlSize(dataUrl)
+          })
+        } else {
+          console.warn('[Admin] Upload blocked - optimized image still too large', {
+            originalSize: file.size
+          })
+          setStatusMessage(t.admin.messages.uploadTooLarge)
+          return null
+        }
+      }
+
+      if (!dataUrl) {
+        dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.onerror = () => reject(reader.error)
+          reader.readAsDataURL(file)
+        })
+      }
+
+      if (getDataUrlSize(dataUrl) > MAX_UPLOAD_BYTES) {
+        console.warn('[Admin] Upload blocked - payload exceeds limit', {
+          type,
+          name: uploadName,
+          payloadSize: getDataUrlSize(dataUrl)
+        })
+        setStatusMessage(t.admin.messages.uploadTooLarge)
+        return null
+      }
 
       const response = await fetch(`${apiBaseUrl}/upload`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ data: base64, name: file.name, type })
+        body: JSON.stringify({ data: dataUrl, name: uploadName, type })
       })
 
       if (!response.ok) {
