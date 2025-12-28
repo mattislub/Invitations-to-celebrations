@@ -31,7 +31,7 @@ interface EventTemplate {
 interface FormField {
   id: string
   label: string
-  type: 'text' | 'date'
+  type: 'text'
   placeholder: string
   required?: boolean
 }
@@ -88,7 +88,7 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
         { id: 'groomParents', label: 'שמות הורי החתן', type: 'text', placeholder: 'משה ורחל כהן' },
         { id: 'brideParents', label: 'שמות הורי הכלה', type: 'text', placeholder: 'דוד ומרים לוי' },
         { id: 'hebrewDate', label: 'תאריך עברי', type: 'text', placeholder: "ח' אדר תשפ\"ה" },
-        { id: 'gregorianDate', label: 'תאריך לועזי', type: 'date', placeholder: '15.08.2025' },
+        { id: 'gregorianDate', label: 'תאריך לועזי', type: 'text', placeholder: '15.08.2025' },
         { id: 'venue', label: 'מקום האירוע', type: 'text', placeholder: 'גן אירועים רויאל' },
         { id: 'time', label: 'שעה', type: 'text', placeholder: '19:00' },
       ],
@@ -115,7 +115,7 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
         { id: 'boyName', label: 'שם הבחור', type: 'text', placeholder: 'יוסי', required: true },
         { id: 'parentsNames', label: 'שמות ההורים', type: 'text', placeholder: 'דוד ושרה כהן' },
         { id: 'hebrewDate', label: 'תאריך עברי', type: 'text', placeholder: "כ\"א אדר תשפ\"ה" },
-        { id: 'gregorianDate', label: 'תאריך לועזי', type: 'date', placeholder: '22.03.2025' },
+        { id: 'gregorianDate', label: 'תאריך לועזי', type: 'text', placeholder: '22.03.2025' },
         { id: 'venue', label: 'מקום האירוע', type: 'text', placeholder: 'בית הכנסת הגדול' },
         { id: 'time', label: 'שעה', type: 'text', placeholder: '18:30' },
       ],
@@ -140,7 +140,7 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
         { id: 'girlName', label: 'שם הבת', type: 'text', placeholder: 'שרה', required: true },
         { id: 'parentsNames', label: 'שמות ההורים', type: 'text', placeholder: 'דוד ורחל לוי' },
         { id: 'hebrewDate', label: 'תאריך עברי', type: 'text', placeholder: "י\"ב ניסן תשפ\"ה" },
-        { id: 'gregorianDate', label: 'תאריך לועזי', type: 'date', placeholder: '10.04.2025' },
+        { id: 'gregorianDate', label: 'תאריך לועזי', type: 'text', placeholder: '10.04.2025' },
         { id: 'venue', label: 'מקום האירוע', type: 'text', placeholder: 'אולם סמדר' },
         { id: 'time', label: 'שעה', type: 'text', placeholder: '19:00' },
       ],
@@ -164,7 +164,7 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
       fields: [
         { id: 'celebrantName', label: 'שם החוגג/ת', type: 'text', placeholder: 'דני', required: true },
         { id: 'age', label: 'גיל', type: 'text', placeholder: '30' },
-        { id: 'date', label: 'תאריך', type: 'date', placeholder: '25.05.2025' },
+        { id: 'date', label: 'תאריך', type: 'text', placeholder: '25.05.2025' },
         { id: 'venue', label: 'מקום האירוע', type: 'text', placeholder: 'הבית' },
         { id: 'time', label: 'שעה', type: 'text', placeholder: '20:00' },
       ],
@@ -187,7 +187,7 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
       fields: [
         { id: 'groomName', label: 'שם החתן', type: 'text', placeholder: 'יוסי', required: true },
         { id: 'brideName', label: 'שם הכלה', type: 'text', placeholder: 'שרה', required: true },
-        { id: 'date', label: 'תאריך', type: 'date', placeholder: '01.06.2025' },
+        { id: 'date', label: 'תאריך', type: 'text', placeholder: '01.06.2025' },
         { id: 'venue', label: 'מקום האירוע', type: 'text', placeholder: 'מסעדת טאבולה' },
         { id: 'time', label: 'שעה', type: 'text', placeholder: '19:30' },
       ],
@@ -229,7 +229,7 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
     fields: [
       { id: 'eventTitle', label: t.designer.form.eventTitle, type: 'text', placeholder: type.nameHe, required: true },
       { id: 'hosts', label: t.designer.form.hosts, type: 'text', placeholder: language === 'he' ? 'משפחת כהן' : 'Cohen Family' },
-      { id: 'date', label: t.designer.form.date, type: 'date', placeholder: '25.05.2025' },
+      { id: 'date', label: t.designer.form.date, type: 'text', placeholder: '25.05.2025' },
       { id: 'venue', label: t.designer.form.venue, type: 'text', placeholder: language === 'he' ? 'אולם אירועים' : 'Event Hall' },
       { id: 'time', label: t.designer.form.time, type: 'text', placeholder: '20:00' },
     ],

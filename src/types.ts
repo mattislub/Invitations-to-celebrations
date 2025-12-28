@@ -48,7 +48,7 @@ export interface VideoBackground {
   previewImage?: string
 }
 
-export type InvitationFieldType = 'text' | 'date' | 'time' | 'location'
+export type InvitationFieldType = 'text'
 
 export interface PositionedField {
   id: string

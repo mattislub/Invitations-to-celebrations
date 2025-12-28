@@ -3,7 +3,7 @@ import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, AlignCenter, Ali
 import { Language, getTranslation } from '../translations'
 import { AdminBackground, VideoBackground } from '../types'
 
-type FieldType = 'text' | 'date' | 'number'
+type FieldType = 'text'
 
 interface TemplateField {
   id: string
@@ -75,7 +75,7 @@ export default function TemplateEditor({
     {
       id: crypto.randomUUID(),
       label: language === 'he' ? 'תאריך אירוע' : 'Event Date',
-      type: 'date',
+      type: 'text',
       required: false,
       position: { x: 50, y: 72, width: 60, align: 'center' }
     }
@@ -97,7 +97,6 @@ export default function TemplateEditor({
     }
   ])
   const [newFieldLabel, setNewFieldLabel] = useState('')
-  const [newFieldType, setNewFieldType] = useState<FieldType>('text')
   const [newTextLine, setNewTextLine] = useState('')
   const [selectedFont, setSelectedFont] = useState<string>('Assistant, sans-serif')
   const [selectedFontSize, setSelectedFontSize] = useState<number>(18)
@@ -272,7 +271,7 @@ export default function TemplateEditor({
         {
           id: crypto.randomUUID(),
           label: newFieldLabel.trim(),
-          type: newFieldType,
+          type: 'text',
           required: false,
           position: {
             x: 50,
@@ -284,7 +283,6 @@ export default function TemplateEditor({
       ]
     })
     setNewFieldLabel('')
-    setNewFieldType('text')
   }
 
   const addTextLine = () => {
@@ -311,10 +309,6 @@ export default function TemplateEditor({
     setFields((prev) =>
       prev.map((field) => (field.id === id ? { ...field, required: !field.required } : field))
     )
-  }
-
-  const updateFieldType = (id: string, type: FieldType) => {
-    setFields((prev) => prev.map((field) => (field.id === id ? { ...field, type } : field)))
   }
 
   const updateFieldPosition = (id: string, key: 'x' | 'y' | 'width', value: number) => {
@@ -746,15 +740,9 @@ export default function TemplateEditor({
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <span className="font-semibold text-gray-800">{field.label}</span>
                     <div className="flex items-center gap-2">
-                      <select
-                        value={field.type}
-                        onChange={(e) => updateFieldType(field.id, e.target.value as FieldType)}
-                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                      >
-                        <option value="text">{t.templateEditor.options.types.text}</option>
-                        <option value="date">{t.templateEditor.options.types.date}</option>
-                        <option value="number">{t.templateEditor.options.types.number}</option>
-                      </select>
+                      <span className="inline-flex items-center rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm font-semibold text-gray-700">
+                        {t.templateEditor.options.types.text}
+                      </span>
                       <label className="flex items-center gap-2 text-sm text-gray-600">
                         <input
                           type="checkbox"
@@ -848,15 +836,9 @@ export default function TemplateEditor({
                 placeholder={t.templateEditor.placeholders.fieldLabel}
                 className="md:col-span-2 w-full border border-gray-300 rounded-lg px-4 py-3 text-right"
               />
-              <select
-                value={newFieldType}
-                onChange={(e) => setNewFieldType(e.target.value as FieldType)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-3 text-right"
-              >
-                <option value="text">{t.templateEditor.options.types.text}</option>
-                <option value="date">{t.templateEditor.options.types.date}</option>
-                <option value="number">{t.templateEditor.options.types.number}</option>
-              </select>
+              <div className="w-full border border-gray-200 rounded-lg px-3 py-3 text-right bg-gray-50 text-sm font-semibold text-gray-700">
+                {t.templateEditor.options.types.text}
+              </div>
             </div>
             <button
               onClick={addField}

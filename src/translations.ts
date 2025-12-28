@@ -242,9 +242,6 @@ export interface Translations {
       previewHint: string
       typeOptions: {
         text: string
-        date: string
-        time: string
-        location: string
       }
       alignmentOptions: {
         left: string
@@ -298,8 +295,6 @@ export interface Translations {
       type: string
       types: {
         text: string
-        date: string
-        number: string
       }
     }
     layout: {
@@ -581,10 +576,7 @@ export const translations: Record<Language, Translations> = {
         notesPlaceholder: 'רשמו הערות לגבי סדר או מיקומי שדות...',
         previewHint: 'ערכו את המיקומים (X/Y) והיישור כדי לראות כיצד השדות יוצגו בכרטיס.',
         typeOptions: {
-          text: 'טקסט',
-          date: 'תאריך',
-          time: 'שעה',
-          location: 'מיקום'
+          text: 'טקסט'
         },
         alignmentOptions: {
           left: 'שמאל',
@@ -637,9 +629,7 @@ export const translations: Record<Language, Translations> = {
         required: 'שדה חובה',
         type: 'סוג שדה',
         types: {
-          text: 'טקסט',
-          date: 'תאריך',
-          number: 'מספר'
+          text: 'טקסט'
         }
       },
       layout: {
@@ -919,10 +909,7 @@ export const translations: Record<Language, Translations> = {
         notesPlaceholder: 'Notes about ordering or positioning...',
         previewHint: 'Adjust X/Y and alignment to reflect how fields appear on the card.',
         typeOptions: {
-          text: 'Text',
-          date: 'Date',
-          time: 'Time',
-          location: 'Location'
+          text: 'Text'
         },
         alignmentOptions: {
           left: 'Left',
@@ -975,9 +962,7 @@ export const translations: Record<Language, Translations> = {
         required: 'Required',
         type: 'Field Type',
         types: {
-          text: 'Text',
-          date: 'Date',
-          number: 'Number'
+          text: 'Text'
         }
       },
       layout: {
