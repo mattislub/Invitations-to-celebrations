@@ -135,11 +135,32 @@ export default function Admin({
   }
 
   const handleAddBackground = () => {
+    console.info('[Admin] Add background clicked', {
+      name: newBackground.name,
+      hasPreview: Boolean(newBackground.preview.trim()),
+      hasFile: Boolean(newBackgroundFile),
+      fileName: newBackgroundFile?.name
+    })
+
     if (!newBackground.name.trim() || !newBackground.preview.trim() || !newBackgroundFile) {
+      console.warn('[Admin] Add background blocked - missing required fields', {
+        hasName: Boolean(newBackground.name.trim()),
+        hasPreview: Boolean(newBackground.preview.trim()),
+        hasFile: Boolean(newBackgroundFile)
+      })
       setStatusMessage(t.admin.messages.uploadError)
       return
     }
-    onBackgroundsChange([...backgrounds, { id: crypto.randomUUID(), ...newBackground, file: newBackgroundFile?.name }])
+
+    const newEntry = { id: crypto.randomUUID(), ...newBackground, file: newBackgroundFile?.name }
+    console.info('[Admin] Adding background to state', {
+      id: newEntry.id,
+      name: newEntry.name,
+      file: newEntry.file,
+      previewLength: newEntry.preview.length
+    })
+
+    onBackgroundsChange([...backgrounds, newEntry])
     setNewBackground({ name: '', preview: '' })
     setNewBackgroundFile(null)
     setStatusMessage('')
@@ -340,9 +361,17 @@ export default function Admin({
 
   const handleBackgroundFileChange = async (file: File | null) => {
     if (!file) return
+
+    console.info('[Admin] Background file selected', {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    })
+
     setNewBackgroundFile(file)
     const url = await handleFileUpload(file, 'background')
     if (url) {
+      console.info('[Admin] Background preview URL received', { url })
       setNewBackground(prev => ({ ...prev, preview: url }))
     }
   }
