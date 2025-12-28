@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ShieldCheck, Type as TypeIcon, Image as ImageIcon, Plus, RefreshCcw, Upload, Trash, Video as VideoIcon, Server, CloudOff, LayoutGrid, Layers, Edit3 } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 import { CustomInvitationType, Invitation, VideoBackground, AdminFont, AdminBackground, InvitationTemplate, SavedInvitationTemplate } from '../types'
+import { getApiBaseUrl } from '../utils/api'
 import TemplateEditor from './TemplateEditor'
 
 const MAX_UPLOAD_BYTES = 900 * 1024
@@ -110,10 +111,7 @@ export default function Admin({
   onSavedTemplatesChange
 }: AdminProps) {
   const t = getTranslation(language)
-  const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
-  const apiBaseUrl = (configuredApiBaseUrl && configuredApiBaseUrl !== '')
-    ? configuredApiBaseUrl.replace(/\/$/, '')
-    : 'https://123.70-60.com/api'
+  const apiBaseUrl = getApiBaseUrl()
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
   const [fonts, setFonts] = useState<AdminFont[]>([
     { id: 'assistant', name: 'Assistant', url: 'https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&display=swap' },

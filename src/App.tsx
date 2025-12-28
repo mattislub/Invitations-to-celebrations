@@ -6,6 +6,7 @@ import Designer from './components/Designer'
 import Admin from './components/Admin'
 import { Language, getTranslation } from './translations'
 import { AdminBackground, CustomInvitationType, Invitation, InvitationTemplate, VideoBackground, SavedInvitationTemplate } from './types'
+import { getApiBaseUrl } from './utils/api'
 
 type Page = 'home' | 'gallery' | 'designer' | 'admin'
 
@@ -43,10 +44,7 @@ function App() {
   const [template, setTemplate] = useState<InvitationTemplate | null>(null)
   const [savedTemplates, setSavedTemplates] = useState<SavedInvitationTemplate[]>([])
 
-  const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
-  const apiBaseUrl = (configuredApiBaseUrl && configuredApiBaseUrl !== '')
-    ? configuredApiBaseUrl.replace(/\/$/, '')
-    : 'https://123.70-60.com/api'
+  const apiBaseUrl = getApiBaseUrl()
 
   const t = getTranslation(language)
   const isRTL = language === 'he'
