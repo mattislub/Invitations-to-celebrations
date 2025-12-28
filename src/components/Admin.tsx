@@ -113,7 +113,7 @@ export default function Admin({
   const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
   const apiBaseUrl = (configuredApiBaseUrl && configuredApiBaseUrl !== '')
     ? configuredApiBaseUrl.replace(/\/$/, '')
-    : '/api'
+    : 'https://123.70-60.com/api'
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
   const [fonts, setFonts] = useState<AdminFont[]>([
     { id: 'assistant', name: 'Assistant', url: 'https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&display=swap' },

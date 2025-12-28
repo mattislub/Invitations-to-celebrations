@@ -104,7 +104,7 @@ export default function TemplateEditor({
   const PX_PER_CM = PX_PER_INCH / CM_PER_INCH
 
   const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
-  const apiBaseUrl = (configuredApiBaseUrl && configuredApiBaseUrl !== '') ? configuredApiBaseUrl.replace(/\/$/, '') : '/api'
+  const apiBaseUrl = (configuredApiBaseUrl && configuredApiBaseUrl !== '') ? configuredApiBaseUrl.replace(/\/$/, '') : 'https://123.70-60.com/api'
 
   const backgroundOptions: BackgroundOption[] = useMemo(() => {
     const uploadedBackgrounds = backgrounds.map<BackgroundOption>((bg) => ({
