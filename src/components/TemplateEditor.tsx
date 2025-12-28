@@ -109,6 +109,9 @@ export default function TemplateEditor({
   const [activePanel, setActivePanel] = useState<PanelKey | null>('background')
   const [selectedBackgroundId, setSelectedBackgroundId] = useState<string>('')
   const previewRef = useRef<HTMLDivElement | null>(null)
+  const PX_PER_INCH = 96
+  const CM_PER_INCH = 2.54
+  const PX_PER_CM = PX_PER_INCH / CM_PER_INCH
 
   const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
   const apiBaseUrl = (configuredApiBaseUrl && configuredApiBaseUrl !== '') ? configuredApiBaseUrl.replace(/\/$/, '') : '/api'
@@ -246,6 +249,11 @@ export default function TemplateEditor({
   )
 
   const clampPercentage = (value: number) => Math.min(100, Math.max(0, value))
+  const clampDimension = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
+  const convertPixelsToCm = (value: number) => value / PX_PER_CM
+  const convertPixelsToInches = (value: number) => value / PX_PER_INCH
+  const convertCmToPixels = (value: number) => value * PX_PER_CM
+  const convertInchesToPixels = (value: number) => value * PX_PER_INCH
 
   const addField = () => {
     if (!newFieldLabel.trim()) return
@@ -524,43 +532,112 @@ export default function TemplateEditor({
 
             <div>
               <h4 className="text-lg font-semibold text-gray-800 mb-3">{t.templateEditor.dimensions.title}</h4>
+              <p className="text-sm text-gray-500 mb-2">{t.templateEditor.dimensions.unitHelper}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className="block">
+                <div className="space-y-2">
                   <span className="text-sm text-gray-700">{t.templateEditor.dimensions.width}</span>
-                  <div className="mt-2 flex items-center gap-2">
-                    <input
-                      type="number"
-                      min={320}
-                      max={2000}
-                      value={templateWidth}
-                      onChange={(e) => {
-                        const value = Number(e.target.value)
-                        if (Number.isNaN(value)) return
-                        setTemplateWidth(Math.min(Math.max(value, 320), 2000))
-                      }}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 text-right"
-                    />
-                    <span className="text-sm text-gray-500">{t.templateEditor.dimensions.unit}</span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <label className="flex items-center gap-2 text-sm text-gray-600 border border-gray-200 rounded-lg px-3 py-2 bg-white">
+                      <input
+                        type="number"
+                        min={320}
+                        max={2000}
+                        value={Math.round(templateWidth)}
+                        onChange={(e) => {
+                          const value = Number(e.target.value)
+                          if (Number.isNaN(value)) return
+                          setTemplateWidth(clampDimension(value, 320, 2000))
+                        }}
+                        className="w-full text-right focus:outline-none"
+                      />
+                      <span>{t.templateEditor.dimensions.pixels}</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-600 border border-gray-200 rounded-lg px-3 py-2 bg-white">
+                      <input
+                        type="number"
+                        min={convertPixelsToCm(320)}
+                        max={convertPixelsToCm(2000)}
+                        step={0.1}
+                        value={Number(convertPixelsToCm(templateWidth).toFixed(2))}
+                        onChange={(e) => {
+                          const value = Number(e.target.value)
+                          if (Number.isNaN(value)) return
+                          setTemplateWidth(clampDimension(convertCmToPixels(value), 320, 2000))
+                        }}
+                        className="w-full text-right focus:outline-none"
+                      />
+                      <span>{t.templateEditor.dimensions.centimeters}</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-600 border border-gray-200 rounded-lg px-3 py-2 bg-white">
+                      <input
+                        type="number"
+                        min={convertPixelsToInches(320)}
+                        max={convertPixelsToInches(2000)}
+                        step={0.1}
+                        value={Number(convertPixelsToInches(templateWidth).toFixed(2))}
+                        onChange={(e) => {
+                          const value = Number(e.target.value)
+                          if (Number.isNaN(value)) return
+                          setTemplateWidth(clampDimension(convertInchesToPixels(value), 320, 2000))
+                        }}
+                        className="w-full text-right focus:outline-none"
+                      />
+                      <span>{t.templateEditor.dimensions.inches}</span>
+                    </label>
                   </div>
-                </label>
-                <label className="block">
+                </div>
+                <div className="space-y-2">
                   <span className="text-sm text-gray-700">{t.templateEditor.dimensions.height}</span>
-                  <div className="mt-2 flex items-center gap-2">
-                    <input
-                      type="number"
-                      min={320}
-                      max={3000}
-                      value={templateHeight}
-                      onChange={(e) => {
-                        const value = Number(e.target.value)
-                        if (Number.isNaN(value)) return
-                        setTemplateHeight(Math.min(Math.max(value, 320), 3000))
-                      }}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2 text-right"
-                    />
-                    <span className="text-sm text-gray-500">{t.templateEditor.dimensions.unit}</span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <label className="flex items-center gap-2 text-sm text-gray-600 border border-gray-200 rounded-lg px-3 py-2 bg-white">
+                      <input
+                        type="number"
+                        min={320}
+                        max={3000}
+                        value={Math.round(templateHeight)}
+                        onChange={(e) => {
+                          const value = Number(e.target.value)
+                          if (Number.isNaN(value)) return
+                          setTemplateHeight(clampDimension(value, 320, 3000))
+                        }}
+                        className="w-full text-right focus:outline-none"
+                      />
+                      <span>{t.templateEditor.dimensions.pixels}</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-600 border border-gray-200 rounded-lg px-3 py-2 bg-white">
+                      <input
+                        type="number"
+                        min={convertPixelsToCm(320)}
+                        max={convertPixelsToCm(3000)}
+                        step={0.1}
+                        value={Number(convertPixelsToCm(templateHeight).toFixed(2))}
+                        onChange={(e) => {
+                          const value = Number(e.target.value)
+                          if (Number.isNaN(value)) return
+                          setTemplateHeight(clampDimension(convertCmToPixels(value), 320, 3000))
+                        }}
+                        className="w-full text-right focus:outline-none"
+                      />
+                      <span>{t.templateEditor.dimensions.centimeters}</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-gray-600 border border-gray-200 rounded-lg px-3 py-2 bg-white">
+                      <input
+                        type="number"
+                        min={convertPixelsToInches(320)}
+                        max={convertPixelsToInches(3000)}
+                        step={0.1}
+                        value={Number(convertPixelsToInches(templateHeight).toFixed(2))}
+                        onChange={(e) => {
+                          const value = Number(e.target.value)
+                          if (Number.isNaN(value)) return
+                          setTemplateHeight(clampDimension(convertInchesToPixels(value), 320, 3000))
+                        }}
+                        className="w-full text-right focus:outline-none"
+                      />
+                      <span>{t.templateEditor.dimensions.inches}</span>
+                    </label>
                   </div>
-                </label>
+                </div>
               </div>
             </div>
             <div className="rounded-xl overflow-hidden border border-gray-200">

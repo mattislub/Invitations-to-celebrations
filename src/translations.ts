@@ -284,6 +284,10 @@ export interface Translations {
       width: string
       height: string
       unit: string
+      pixels: string
+      centimeters: string
+      inches: string
+      unitHelper: string
     }
     placeholders: {
       fieldLabel: string
@@ -616,7 +620,11 @@ export const translations: Record<Language, Translations> = {
         title: 'מידות התבנית',
         width: 'רוחב',
         height: 'גובה',
-        unit: 'פיקסלים'
+        unit: 'פיקסלים',
+        pixels: 'פיקסלים',
+        centimeters: 'סנטימטרים',
+        inches: 'אינץ׳',
+        unitHelper: 'המרה אוטומטית בין פיקסלים, ס״מ ואינץ׳'
       },
       placeholders: {
         fieldLabel: 'כותרת שדה (למשל: שם מלא)',
@@ -947,7 +955,11 @@ export const translations: Record<Language, Translations> = {
         title: 'Template Size',
         width: 'Width',
         height: 'Height',
-        unit: 'pixels'
+        unit: 'pixels',
+        pixels: 'Pixels',
+        centimeters: 'Centimeters',
+        inches: 'Inches',
+        unitHelper: 'Auto-converts between px, cm, and in'
       },
       placeholders: {
         fieldLabel: 'Field label (e.g. Full Name)',
