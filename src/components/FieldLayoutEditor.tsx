@@ -208,12 +208,10 @@ export default function FieldLayoutEditor({
                       <select
                         value={field.type}
                         onChange={(e) => updateField(field.id, { type: e.target.value as InvitationFieldType })}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-100 cursor-not-allowed"
+                        disabled
                       >
                         <option value="text">{t.admin.fieldLayout.typeOptions.text}</option>
-                        <option value="date">{t.admin.fieldLayout.typeOptions.date}</option>
-                        <option value="time">{t.admin.fieldLayout.typeOptions.time}</option>
-                        <option value="location">{t.admin.fieldLayout.typeOptions.location}</option>
                       </select>
                     </div>
                     <div className="space-y-1">
