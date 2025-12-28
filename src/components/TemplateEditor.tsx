@@ -72,15 +72,8 @@ export default function TemplateEditor({
   const [activePanel, setActivePanel] = useState<PanelKey | null>('background')
   const [selectedBackgroundId, setSelectedBackgroundId] = useState<string>('')
 
-  const defaultBackground: AdminBackground = useMemo(
-    () => ({
-      id: 'default-background',
-      name: language === 'he' ? 'רקע ברירת מחדל' : 'Default Background',
-      preview:
-        'https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg?auto=compress&cs=tinysrgb&w=800'
-    }),
-    [language]
-  )
+  const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
+  const apiBaseUrl = (configuredApiBaseUrl && configuredApiBaseUrl !== '') ? configuredApiBaseUrl.replace(/\/$/, '') : '/api'
 
   const backgroundOptions: BackgroundOption[] = useMemo(() => {
     const uploadedBackgrounds = backgrounds.map<BackgroundOption>((bg) => ({
@@ -99,11 +92,10 @@ export default function TemplateEditor({
     }))
 
     return [
-      { id: `image-${defaultBackground.id}`, name: defaultBackground.name, type: 'image', preview: defaultBackground.preview, isDefault: true },
       ...uploadedBackgrounds,
       ...uploadedVideos
     ]
-  }, [backgrounds, defaultBackground, videoBackgrounds])
+  }, [backgrounds, videoBackgrounds])
 
   useEffect(() => {
     if (backgroundOptions.length === 0) return
@@ -117,6 +109,35 @@ export default function TemplateEditor({
     () => backgroundOptions.find((option) => option.id === selectedBackgroundId),
     [backgroundOptions, selectedBackgroundId]
   )
+
+  const readFileAsDataUrl = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+
+  const uploadFileToServer = async (file: File, type: 'background' | 'video') => {
+    try {
+      const dataUrl = await readFileAsDataUrl(file)
+      const response = await fetch(`${apiBaseUrl}/upload`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: dataUrl, name: file.name, type })
+      })
+
+      if (!response.ok) {
+        console.error('[TemplateEditor] Upload failed', { status: response.status })
+        return null
+      }
+
+      const result = await response.json() as { url?: string }
+      return result.url ?? null
+    } catch (error) {
+      console.error('[TemplateEditor] Upload error', error)
+      return null
+    }
+  }
 
   const renderBackgroundMedia = (option?: BackgroundOption, baseOpacity = 1) => {
     if (!option) return null
@@ -150,27 +171,27 @@ export default function TemplateEditor({
 
   const handleImageBackgroundUpload = async (file: File | null) => {
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      const preview = reader.result as string
-      const newBackground: AdminBackground = {
-        id: crypto.randomUUID(),
-        name: file.name,
-        preview
-      }
-      onBackgroundsChange([...backgrounds, newBackground])
-      setSelectedBackgroundId(`image-${newBackground.id}`)
+    const url = await uploadFileToServer(file, 'background')
+    if (!url) return
+
+    const newBackground: AdminBackground = {
+      id: crypto.randomUUID(),
+      name: file.name,
+      preview: url
     }
-    reader.readAsDataURL(file)
+    onBackgroundsChange([...backgrounds, newBackground])
+    setSelectedBackgroundId(`image-${newBackground.id}`)
   }
 
   const handleVideoBackgroundUpload = async (file: File | null) => {
     if (!file) return
-    const videoUrl = URL.createObjectURL(file)
+    const url = await uploadFileToServer(file, 'video')
+    if (!url) return
+
     const newVideo: VideoBackground = {
       id: crypto.randomUUID(),
       name: file.name,
-      url: videoUrl
+      url
     }
     onVideoBackgroundsChange([...videoBackgrounds, newVideo])
     setSelectedBackgroundId(`video-${newVideo.id}`)
@@ -269,38 +290,46 @@ export default function TemplateEditor({
                 <h4 className="text-lg font-semibold text-gray-800">{t.templateEditor.backgrounds.library}</h4>
                 <p className="text-sm text-gray-500">{t.templateEditor.backgrounds.libraryHelper}</p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {backgroundOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => setSelectedBackgroundId(option.id)}
-                    className={`text-right rounded-xl border overflow-hidden transition-all ${
-                      selectedBackgroundId === option.id
-                        ? 'border-amber-400 shadow-lg shadow-amber-100'
-                        : 'border-gray-200 hover:border-amber-200 hover:shadow'
-                    }`}
-                  >
-                    <div className="relative h-24">
-                      {renderBackgroundMedia(option)}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                      <div className="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-semibold bg-white/80 text-gray-700">
-                        {option.type === 'video'
-                          ? t.templateEditor.backgrounds.videoBadge
-                          : t.templateEditor.backgrounds.imageBadge}
+              {backgroundOptions.length === 0 ? (
+                <div className="p-4 rounded-xl bg-gray-50 text-gray-600 text-sm text-right">
+                  {language === 'he'
+                    ? 'אין רקעים זמינים עדיין. העלו רקעים בלשונית רקעים כדי להשתמש בהם כאן.'
+                    : 'No backgrounds available yet. Upload backgrounds in the backgrounds tab to use them here.'}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {backgroundOptions.map((option) => (
+                    <button
+                      key={option.id}
+                      onClick={() => setSelectedBackgroundId(option.id)}
+                      className={`text-right rounded-xl border overflow-hidden transition-all ${
+                        selectedBackgroundId === option.id
+                          ? 'border-amber-400 shadow-lg shadow-amber-100'
+                          : 'border-gray-200 hover:border-amber-200 hover:shadow'
+                      }`}
+                    >
+                      <div className="relative h-24">
+                        {renderBackgroundMedia(option)}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                        <div className="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-semibold bg-white/80 text-gray-700">
+                          {option.type === 'video'
+                            ? t.templateEditor.backgrounds.videoBadge
+                            : t.templateEditor.backgrounds.imageBadge}
+                        </div>
+                        {selectedBackgroundId === option.id && (
+                          <div className="absolute inset-0 border-2 border-amber-400 rounded-xl pointer-events-none" />
+                        )}
                       </div>
-                      {selectedBackgroundId === option.id && (
-                        <div className="absolute inset-0 border-2 border-amber-400 rounded-xl pointer-events-none" />
-                      )}
-                    </div>
-                    <div className="px-3 py-2">
-                      <p className="font-semibold text-gray-800 line-clamp-1">{option.name}</p>
-                      {option.isDefault && (
-                        <p className="text-xs text-gray-500">{t.templateEditor.backgrounds.defaultLabel}</p>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
+                      <div className="px-3 py-2">
+                        <p className="font-semibold text-gray-800 line-clamp-1">{option.name}</p>
+                        {option.isDefault && (
+                          <p className="text-xs text-gray-500">{t.templateEditor.backgrounds.defaultLabel}</p>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="space-y-3">

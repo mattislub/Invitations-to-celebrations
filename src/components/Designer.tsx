@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Heart, Users, Gift, Cake, PartyPopper, User, ChevronRight, Wand2, Layers, Sparkles, BookOpen, Video } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 import { AdminBackground, CustomInvitationType, VideoBackground } from '../types'
@@ -68,7 +68,7 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(null)
   const [designStyle, setDesignStyle] = useState<DesignStyle>('modern')
   const [formData, setFormData] = useState<{ [key: string]: string }>({})
-  const [selectedBackground, setSelectedBackground] = useState<string>('elegant')
+  const [selectedBackground, setSelectedBackground] = useState<string>('')
   const [selectedColorScheme, setSelectedColorScheme] = useState<string>('amber')
   const [selectedAnimation, setSelectedAnimation] = useState<string>('fadeIn')
   const [animationKey, setAnimationKey] = useState<number>(0)
@@ -248,75 +248,7 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
     [eventTemplates, customTemplates]
   )
 
-  const baseBackgrounds: BackgroundOption[] = useMemo(() => ([
-    {
-      id: 'elegant',
-      name: 'אלגנטי',
-      images: [
-        'https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1670723/pexels-photo-1670723.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      style: ['modern'],
-      type: 'image'
-    },
-    {
-      id: 'sleek',
-      name: 'מודרני אלגנטי',
-      images: [
-        'https://images.pexels.com/photos/1702238/pexels-photo-1702238.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1444416/pexels-photo-1444416.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      style: ['modern'],
-      type: 'image'
-    },
-    {
-      id: 'modern',
-      name: 'מודרני',
-      images: [
-        'https://images.pexels.com/photos/1279813/pexels-photo-1279813.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1762851/pexels-photo-1762851.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      style: ['modern'],
-      type: 'image'
-    },
-    {
-      id: 'festive',
-      name: 'חגיגי',
-      images: [
-        'https://images.pexels.com/photos/1387037/pexels-photo-1387037.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1729797/pexels-photo-1729797.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      style: ['modern'],
-      type: 'image'
-    },
-    {
-      id: 'traditional-gold',
-      name: 'זהב מסורתי',
-      images: [
-        'https://images.pexels.com/photos/1939485/pexels-photo-1939485.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      style: ['religious'],
-      type: 'image'
-    },
-    {
-      id: 'traditional-simple',
-      name: 'פשוט ומכובד',
-      images: [
-        'https://images.pexels.com/photos/1939487/pexels-photo-1939487.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      style: ['religious'],
-      type: 'image'
-    },
-    {
-      id: 'traditional-classic',
-      name: 'קלאסי',
-      images: [
-        'https://images.pexels.com/photos/1939477/pexels-photo-1939477.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ],
-      style: ['religious'],
-      type: 'image'
-    }
-  ]), [])
+  const baseBackgrounds: BackgroundOption[] = useMemo(() => ([]), [])
 
   const uploadedBackgroundOptions = useMemo<BackgroundOption[]>(() => imageBackgrounds.map((bg) => ({
     id: `uploaded-${bg.id}`,
@@ -338,6 +270,10 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
     () => [...uploadedBackgroundOptions, ...baseBackgrounds, ...videoBackgroundOptions],
     [baseBackgrounds, uploadedBackgroundOptions, videoBackgroundOptions]
   )
+
+  useEffect(() => {
+    setSelectedBackground((current) => current || backgrounds[0]?.id || '')
+  }, [backgrounds])
 
   const colorSchemes: ColorScheme[] = [
     {
@@ -438,13 +374,9 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
 
   const handleStyleSelect = (style: DesignStyle) => {
     setDesignStyle(style)
-    if (style === 'religious') {
-      setSelectedBackground('traditional-gold')
-      setSelectedColorScheme('navy-gold')
-    } else {
-      setSelectedBackground('elegant')
-      setSelectedColorScheme('amber')
-    }
+    const matchingBackground = backgrounds.find(bg => !bg.style || bg.style.includes(style))
+    setSelectedBackground(matchingBackground?.id ?? backgrounds[0]?.id ?? '')
+    setSelectedColorScheme(style === 'religious' ? 'navy-gold' : 'amber')
     setStep('design')
   }
 
@@ -977,54 +909,62 @@ export default function Designer({ language, customTypes, imageBackgrounds, vide
                   <Layers className="w-6 h-6 text-amber-500 ml-2" />
                   <h3 className="text-2xl font-bold text-gray-800">בחרו רקע</h3>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  {filteredBackgrounds.map((bg) => (
-                    <button
-                      key={bg.id}
-                      onClick={() => setSelectedBackground(bg.id)}
-                      className={`relative rounded-xl overflow-hidden h-32 transition-all duration-300 ${
-                        selectedBackground === bg.id
-                          ? 'ring-4 ring-amber-500 scale-105'
-                          : 'ring-2 ring-gray-200 hover:ring-amber-300'
-                      }`}
-                    >
-                      <div className="absolute inset-0">
-                        {bg.type === 'video' && bg.videoUrl ? (
-                          <video
-                            className="w-full h-full object-cover"
-                            src={bg.videoUrl}
-                            autoPlay
-                            muted
-                            loop
-                            playsInline
-                            poster={bg.previewImage}
-                            style={{ opacity: 0.6 }}
-                          />
-                        ) : (
-                          bg.images.map((image, index) => (
-                            <div
-                              key={index}
-                              className="absolute inset-0 bg-cover bg-center"
-                              style={{
-                                backgroundImage: `url(${image})`,
-                                opacity: index === 0 ? 0.6 : 0.4,
-                              }}
+                {filteredBackgrounds.length === 0 ? (
+                  <div className="p-4 rounded-xl bg-gray-50 text-gray-600 text-sm text-right">
+                    {language === 'he'
+                      ? 'עדיין אין רקעים שהועלו. הוסיפו רקעים בלשונית הניהול כדי לבחור אותם כאן.'
+                      : 'No uploaded backgrounds yet. Add backgrounds in the admin panel to select them here.'}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    {filteredBackgrounds.map((bg) => (
+                      <button
+                        key={bg.id}
+                        onClick={() => setSelectedBackground(bg.id)}
+                        className={`relative rounded-xl overflow-hidden h-32 transition-all duration-300 ${
+                          selectedBackground === bg.id
+                            ? 'ring-4 ring-amber-500 scale-105'
+                            : 'ring-2 ring-gray-200 hover:ring-amber-300'
+                        }`}
+                      >
+                        <div className="absolute inset-0">
+                          {bg.type === 'video' && bg.videoUrl ? (
+                            <video
+                              className="w-full h-full object-cover"
+                              src={bg.videoUrl}
+                              autoPlay
+                              muted
+                              loop
+                              playsInline
+                              poster={bg.previewImage}
+                              style={{ opacity: 0.6 }}
                             />
-                          ))
-                        )}
-                      </div>
-                      {selectedBackground === bg.id && (
-                        <div className="absolute inset-0 bg-black/10" />
-                      )}
-                      {bg.type === 'video' && (
-                        <div className="absolute bottom-2 right-2 bg-black/50 text-white px-3 py-1 rounded-full flex items-center gap-1 text-xs font-semibold">
-                          <Video className="w-3 h-3" />
-                          <span>{language === 'he' ? 'וידאו' : 'Video'}</span>
+                          ) : (
+                            bg.images.map((image, index) => (
+                              <div
+                                key={index}
+                                className="absolute inset-0 bg-cover bg-center"
+                                style={{
+                                  backgroundImage: `url(${image})`,
+                                  opacity: index === 0 ? 0.6 : 0.4,
+                                }}
+                              />
+                            ))
+                          )}
                         </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
+                        {selectedBackground === bg.id && (
+                          <div className="absolute inset-0 bg-black/10" />
+                        )}
+                        {bg.type === 'video' && (
+                          <div className="absolute bottom-2 right-2 bg-black/50 text-white px-3 py-1 rounded-full flex items-center gap-1 text-xs font-semibold">
+                            <Video className="w-3 h-3" />
+                            <span>{language === 'he' ? 'וידאו' : 'Video'}</span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="bg-white rounded-2xl shadow-xl p-8">
