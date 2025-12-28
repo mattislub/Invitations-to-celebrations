@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw, Upload, Trash, Video as VideoIcon, Server, CloudOff, LayoutGrid, Layers, Edit3 } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
-import { CustomInvitationType, Invitation, VideoBackground, DesignStyle, AdminFont, AdminBackground, AdminDimensions } from '../types'
+import { CustomInvitationType, Invitation, VideoBackground, DesignStyle, AdminFont, AdminBackground, AdminDimensions, InvitationFieldLayout } from '../types'
 import TemplateEditor from './TemplateEditor'
+import FieldLayoutEditor from './FieldLayoutEditor'
 
 interface AdminProps {
   language: Language
@@ -22,6 +23,7 @@ interface SyncPayload {
   fonts: AdminFont[]
   backgrounds: AdminBackground[]
   dimensions: AdminDimensions
+  fieldLayouts: InvitationFieldLayout[]
 }
 
 type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'disabled'
@@ -74,7 +76,8 @@ export default function Admin({
   const [newInvitationFile, setNewInvitationFile] = useState<File | null>(null)
   const [statusMessage, setStatusMessage] = useState('')
   const [, setUploading] = useState(false)
-  const [activeTab, setActiveTab] = useState<'overview' | 'gallery' | 'types' | 'styles' | 'backgrounds' | 'videos' | 'fonts' | 'dimensions' | 'templates'>('overview')
+  const [fieldLayouts, setFieldLayouts] = useState<InvitationFieldLayout[]>([])
+  const [activeTab, setActiveTab] = useState<'overview' | 'gallery' | 'types' | 'fields' | 'styles' | 'backgrounds' | 'videos' | 'fonts' | 'dimensions' | 'templates'>('overview')
 
   const getCategoryLabel = (category: Invitation['category']) => {
     const categoryMap: Record<Invitation['category'], string> = {
@@ -101,6 +104,7 @@ export default function Admin({
     { id: 'overview' as const, label: t.admin.title, description: t.admin.subtitle, icon: ShieldCheck },
     { id: 'gallery' as const, label: t.admin.sections.galleryInvitations.title, description: t.admin.sections.galleryInvitations.description, icon: ImageIcon },
     { id: 'types' as const, label: t.admin.sections.invitationTypes.title, description: t.admin.sections.invitationTypes.description, icon: TypeIcon },
+    { id: 'fields' as const, label: t.admin.sections.fieldLayout.title, description: t.admin.sections.fieldLayout.description, icon: LayoutGrid },
     { id: 'styles' as const, label: t.admin.sections.styles.title, description: t.admin.sections.styles.description, icon: Palette },
     { id: 'backgrounds' as const, label: t.admin.sections.backgrounds.title, description: t.admin.sections.backgrounds.description, icon: ImageIcon },
     { id: 'videos' as const, label: t.admin.sections.videoBackgrounds.title, description: t.admin.sections.videoBackgrounds.description, icon: VideoIcon },
@@ -197,6 +201,7 @@ export default function Admin({
     setDesignStyles([])
     setFonts([])
     setBackgrounds([])
+    setFieldLayouts([])
     setStatusMessage('')
   }
 
@@ -257,7 +262,8 @@ export default function Admin({
       designStyles,
       fonts,
       backgrounds,
-      dimensions
+      dimensions,
+      fieldLayouts
     }
 
     setSyncStatus('syncing')
@@ -278,7 +284,7 @@ export default function Admin({
       console.error('Sync error', error)
       setSyncStatus('error')
     }
-  }, [apiBaseUrl, backgrounds, customTypes, designStyles, dimensions, fonts, invitations, videoBackgrounds])
+  }, [apiBaseUrl, backgrounds, customTypes, designStyles, dimensions, fieldLayouts, fonts, invitations, videoBackgrounds])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -302,6 +308,7 @@ export default function Admin({
         if (payload.invitations) onInvitationsChange(payload.invitations)
         if (payload.videoBackgrounds) onVideoBackgroundsChange(payload.videoBackgrounds)
         if (payload.dimensions) setDimensions(payload.dimensions)
+        if (payload.fieldLayouts) setFieldLayouts(payload.fieldLayouts)
 
         setSyncStatus('success')
       } catch (error) {
@@ -577,6 +584,17 @@ export default function Admin({
           {activeTab === 'templates' && (
             <div className="bg-white rounded-2xl shadow-xl p-2 border border-gray-100">
               <TemplateEditor language={language} />
+            </div>
+          )}
+
+          {activeTab === 'fields' && (
+            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+              <FieldLayoutEditor
+                language={language}
+                customTypes={customTypes}
+                layouts={fieldLayouts}
+                onLayoutsChange={setFieldLayouts}
+              />
             </div>
           )}
 
