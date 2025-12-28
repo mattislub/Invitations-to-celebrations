@@ -619,7 +619,13 @@ export default function Admin({
 
           {activeTab === 'templates' && (
             <div className="bg-white rounded-2xl shadow-xl p-2 border border-gray-100">
-              <TemplateEditor language={language} />
+              <TemplateEditor
+                language={language}
+                backgrounds={backgrounds}
+                onBackgroundsChange={onBackgroundsChange}
+                videoBackgrounds={videoBackgrounds}
+                onVideoBackgroundsChange={onVideoBackgroundsChange}
+              />
             </div>
           )}
 
