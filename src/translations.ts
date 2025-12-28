@@ -168,6 +168,10 @@ export interface Translations {
         title: string
         description: string
       }
+      fieldLayout: {
+        title: string
+        description: string
+      }
       styles: {
         title: string
         description: string
@@ -208,6 +212,14 @@ export interface Translations {
       hosts: string
       eventDate: string
       videoUrl: string
+      layoutNotes: string
+      alignment: string
+      positionX: string
+      positionY: string
+      fieldType: string
+      required: string
+      labelHe: string
+      labelEn: string
     }
     buttons: {
       add: string
@@ -220,6 +232,24 @@ export interface Translations {
       saved: string
       uploading: string
       uploadError: string
+    }
+    fieldLayout: {
+      selectType: string
+      empty: string
+      addField: string
+      notesPlaceholder: string
+      previewHint: string
+      typeOptions: {
+        text: string
+        date: string
+        time: string
+        location: string
+      }
+      alignmentOptions: {
+        left: string
+        center: string
+        right: string
+      }
     }
   }
   templateEditor: {
@@ -447,6 +477,10 @@ export const translations: Record<Language, Translations> = {
           title: 'ניהול סוגי הזמנות',
           description: 'הוסיפו שמות סוגים בעברית, יידיש ואנגלית כדי להשתמש בהם בעורך.'
         },
+        fieldLayout: {
+          title: 'שדות ומיקומים לפי סוג הזמנה',
+          description: 'קבעו איזה שדות מופיעים בכל סוג הזמנה והיכן הם ממוקמים בכרטיס.'
+        },
         styles: {
           title: 'הוספת סגנונות עיצוב',
           description: 'נהלו קטלוג של סגנונות עיצוב והוסיפו כותרות ותיאורים חדשים.'
@@ -486,7 +520,15 @@ export const translations: Record<Language, Translations> = {
         imageUrl: 'תמונת אירוע שהועלתה',
         hosts: 'מארחים',
         eventDate: 'תאריך אירוע',
-        videoUrl: 'וידאו שהועלה'
+        videoUrl: 'וידאו שהועלה',
+        layoutNotes: 'הערות כלליות',
+        alignment: 'יישור',
+        positionX: 'מיקום X',
+        positionY: 'מיקום Y',
+        fieldType: 'סוג שדה',
+        required: 'חובה',
+        labelHe: 'תווית בעברית',
+        labelEn: 'תווית באנגלית'
       },
       buttons: {
         add: 'הוספה',
@@ -499,6 +541,24 @@ export const translations: Record<Language, Translations> = {
         saved: 'ההגדרות נשמרו',
         uploading: 'מעלה קובץ...',
         uploadError: 'העלאה נכשלה, נסו שוב'
+      },
+      fieldLayout: {
+        selectType: 'בחרו סוג הזמנה לעריכה',
+        empty: 'אין שדות עדיין לסוג זה',
+        addField: 'הוספת שדה חדש',
+        notesPlaceholder: 'רשמו הערות לגבי סדר או מיקומי שדות...',
+        previewHint: 'ערכו את המיקומים (X/Y) והיישור כדי לראות כיצד השדות יוצגו בכרטיס.',
+        typeOptions: {
+          text: 'טקסט',
+          date: 'תאריך',
+          time: 'שעה',
+          location: 'מיקום'
+        },
+        alignmentOptions: {
+          left: 'שמאל',
+          center: 'מרכז',
+          right: 'ימין'
+        }
       }
     },
     templateEditor: {
@@ -724,6 +784,10 @@ export const translations: Record<Language, Translations> = {
           title: 'Invitation Types',
           description: 'Add invitation type names in Hebrew, Yiddish, and English for the designer.'
         },
+        fieldLayout: {
+          title: 'Fields & Placement per Invitation Type',
+          description: 'Choose which fields appear for each type and where they sit on the card.'
+        },
         styles: {
           title: 'Add Design Styles',
           description: 'Maintain your catalog of styles with titles and descriptions.'
@@ -763,7 +827,15 @@ export const translations: Record<Language, Translations> = {
         imageUrl: 'Uploaded image',
         hosts: 'Hosts',
         eventDate: 'Event Date',
-        videoUrl: 'Uploaded video'
+        videoUrl: 'Uploaded video',
+        layoutNotes: 'Global notes',
+        alignment: 'Alignment',
+        positionX: 'X position',
+        positionY: 'Y position',
+        fieldType: 'Field type',
+        required: 'Required',
+        labelHe: 'Hebrew label',
+        labelEn: 'English label'
       },
       buttons: {
         add: 'Add',
@@ -776,6 +848,24 @@ export const translations: Record<Language, Translations> = {
         saved: 'Settings saved',
         uploading: 'Uploading file...',
         uploadError: 'Upload failed, please try again.'
+      },
+      fieldLayout: {
+        selectType: 'Pick an invitation type to edit',
+        empty: 'No fields yet for this type',
+        addField: 'Add new field',
+        notesPlaceholder: 'Notes about ordering or positioning...',
+        previewHint: 'Adjust X/Y and alignment to reflect how fields appear on the card.',
+        typeOptions: {
+          text: 'Text',
+          date: 'Date',
+          time: 'Time',
+          location: 'Location'
+        },
+        alignmentOptions: {
+          left: 'Left',
+          center: 'Center',
+          right: 'Right'
+        }
       }
     },
     templateEditor: {

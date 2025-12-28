@@ -47,3 +47,25 @@ export interface VideoBackground {
   url: string
   previewImage?: string
 }
+
+export type InvitationFieldType = 'text' | 'date' | 'time' | 'location'
+
+export interface PositionedField {
+  id: string
+  labelHe: string
+  labelEn: string
+  type: InvitationFieldType
+  required: boolean
+  position: {
+    x: number
+    y: number
+    width: number
+    align: 'left' | 'center' | 'right'
+  }
+}
+
+export interface InvitationFieldLayout {
+  typeId: string
+  fields: PositionedField[]
+  notes?: string
+}
