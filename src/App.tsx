@@ -46,7 +46,7 @@ function App() {
   const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
   const apiBaseUrl = (configuredApiBaseUrl && configuredApiBaseUrl !== '')
     ? configuredApiBaseUrl.replace(/\/$/, '')
-    : '/api'
+    : 'https://123.70-60.com/api'
 
   const t = getTranslation(language)
   const isRTL = language === 'he'
