@@ -105,3 +105,10 @@ export interface InvitationTemplate {
     height: number
   }
 }
+
+export interface SavedInvitationTemplate {
+  id: string
+  name: string
+  template: InvitationTemplate
+  updatedAt?: string
+}

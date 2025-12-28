@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ShieldCheck, Type as TypeIcon, Image as ImageIcon, Plus, RefreshCcw, Upload, Trash, Video as VideoIcon, Server, CloudOff, LayoutGrid, Layers, Edit3 } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
-import { CustomInvitationType, Invitation, VideoBackground, AdminFont, AdminBackground, InvitationTemplate } from '../types'
+import { CustomInvitationType, Invitation, VideoBackground, AdminFont, AdminBackground, InvitationTemplate, SavedInvitationTemplate } from '../types'
 import TemplateEditor from './TemplateEditor'
 
 const MAX_UPLOAD_BYTES = 900 * 1024
@@ -65,6 +65,8 @@ interface AdminProps {
   onVideoBackgroundsChange: (backgrounds: VideoBackground[]) => void
   template?: InvitationTemplate | null
   onTemplateChange?: (template: InvitationTemplate | null) => void
+  savedTemplates?: SavedInvitationTemplate[]
+  onSavedTemplatesChange?: (templates: SavedInvitationTemplate[]) => void
 }
 
 interface SyncPayload {
@@ -74,6 +76,7 @@ interface SyncPayload {
   fonts: AdminFont[]
   backgrounds: AdminBackground[]
   template?: InvitationTemplate | null
+  savedTemplates?: SavedInvitationTemplate[]
 }
 
 type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'disabled'
@@ -89,7 +92,9 @@ export default function Admin({
   videoBackgrounds,
   onVideoBackgroundsChange,
   template,
-  onTemplateChange
+  onTemplateChange,
+  savedTemplates = [],
+  onSavedTemplatesChange
 }: AdminProps) {
   const t = getTranslation(language)
   const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
@@ -142,8 +147,9 @@ export default function Admin({
     { label: t.admin.stats.invitations, value: invitations.length, icon: ImageIcon, accent: 'from-amber-600 to-orange-500' },
     { label: t.admin.stats.fonts, value: fonts.length, icon: TypeIcon, accent: 'from-blue-500 to-indigo-500' },
     { label: t.admin.stats.backgrounds, value: backgrounds.length, icon: ImageIcon, accent: 'from-emerald-500 to-teal-500' },
-    { label: t.admin.stats.videoBackgrounds, value: videoBackgrounds.length, icon: VideoIcon, accent: 'from-purple-500 to-indigo-500' }
-  ]), [fonts.length, backgrounds.length, videoBackgrounds.length, invitations.length, t])
+    { label: t.admin.stats.videoBackgrounds, value: videoBackgrounds.length, icon: VideoIcon, accent: 'from-purple-500 to-indigo-500' },
+    { label: t.admin.stats.templates, value: savedTemplates.length, icon: Edit3, accent: 'from-amber-500 to-yellow-500' }
+  ]), [fonts.length, backgrounds.length, savedTemplates.length, videoBackgrounds.length, invitations.length, t])
 
   const adminTabs = useMemo(() => ([
     { id: 'overview' as const, label: t.admin.title, description: t.admin.subtitle, icon: ShieldCheck },
@@ -338,7 +344,8 @@ export default function Admin({
       videoBackgrounds,
       fonts,
       backgrounds,
-      template: template ?? null
+      template: template ?? null,
+      savedTemplates
     }
 
     setSyncStatus('syncing')
@@ -380,6 +387,7 @@ export default function Admin({
         if (payload.invitations) onInvitationsChange(payload.invitations)
         if (payload.videoBackgrounds) onVideoBackgroundsChange(payload.videoBackgrounds)
         if ('template' in payload && onTemplateChange) onTemplateChange(payload.template ?? null)
+        if (payload.savedTemplates && onSavedTemplatesChange) onSavedTemplatesChange(payload.savedTemplates)
 
         console.info('[Admin] Admin state fetched', {
           fonts: payload.fonts?.length ?? 0,
@@ -682,6 +690,8 @@ export default function Admin({
                 videoBackgrounds={videoBackgrounds}
                 onVideoBackgroundsChange={onVideoBackgroundsChange}
                 template={template}
+                savedTemplates={savedTemplates}
+                onSavedTemplatesChange={onSavedTemplatesChange}
                 onTemplateSave={(nextTemplate) => {
                   onTemplateChange?.(nextTemplate)
                   setStatusMessage(t.templateEditor.actions.saveTemplateSuccess)
