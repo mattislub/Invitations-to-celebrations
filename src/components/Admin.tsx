@@ -114,34 +114,13 @@ export default function Admin({
   const [newVideoFile, setNewVideoFile] = useState<File | null>(null)
   const [newVideoPreviewFile, setNewVideoPreviewFile] = useState<File | null>(null)
   const [newInvitationType, setNewInvitationType] = useState({ nameHe: '', nameYi: '', nameEn: '' })
-  const [newInvitation, setNewInvitation] = useState({
-    titleHe: '',
-    titleEn: '',
-    category: 'wedding' as Invitation['category'],
-    imageUrl: '',
-    hosts: '',
-    eventDate: ''
-  })
-  const [newInvitationFile, setNewInvitationFile] = useState<File | null>(null)
   const [statusMessage, setStatusMessage] = useState('')
   const [, setUploading] = useState(false)
-  const [activeTab, setActiveTab] = useState<'overview' | 'gallery' | 'types' | 'backgrounds' | 'videos' | 'fonts' | 'templates'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'types' | 'backgrounds' | 'videos' | 'fonts' | 'templates'>('overview')
 
   useEffect(() => {
     console.info('[Admin] Using API base URL:', apiBaseUrl)
   }, [apiBaseUrl])
-
-  const getCategoryLabel = (category: Invitation['category']) => {
-    const categoryMap: Record<Invitation['category'], string> = {
-      wedding: t.gallery.categories.wedding,
-      barMitzvah: t.gallery.categories.barMitzvah,
-      batMitzvah: t.gallery.categories.batMitzvah,
-      birthday: t.gallery.categories.birthday,
-      engagement: t.gallery.categories.engagement,
-      thankYou: language === 'he' ? 'כרטיסי תודה' : 'Thank You Cards'
-    }
-    return categoryMap[category] || category
-  }
 
   const stats = useMemo(() => ([
     { label: t.admin.stats.invitations, value: invitations.length, icon: ImageIcon, accent: 'from-amber-600 to-orange-500' },
@@ -153,7 +132,6 @@ export default function Admin({
 
   const adminTabs = useMemo(() => ([
     { id: 'overview' as const, label: t.admin.title, description: t.admin.subtitle, icon: ShieldCheck },
-    { id: 'gallery' as const, label: t.admin.sections.galleryInvitations.title, description: t.admin.sections.galleryInvitations.description, icon: ImageIcon },
     { id: 'types' as const, label: t.admin.sections.invitationTypes.title, description: t.admin.sections.invitationTypes.description, icon: TypeIcon },
     { id: 'backgrounds' as const, label: t.admin.sections.backgrounds.title, description: t.admin.sections.backgrounds.description, icon: ImageIcon },
     { id: 'videos' as const, label: t.admin.sections.videoBackgrounds.title, description: t.admin.sections.videoBackgrounds.description, icon: VideoIcon },
@@ -224,32 +202,6 @@ export default function Admin({
     const updatedTypes = [...customTypes, { id: crypto.randomUUID(), ...newInvitationType }]
     onCustomTypesChange(updatedTypes)
     setNewInvitationType({ nameHe: '', nameYi: '', nameEn: '' })
-  }
-
-  const handleAddInvitation = () => {
-    if (!newInvitation.titleHe.trim() || !newInvitation.titleEn.trim() || !newInvitation.imageUrl.trim() || !newInvitationFile) {
-      setStatusMessage(t.admin.messages.uploadError)
-      return
-    }
-    const newItem: Invitation = {
-      id: crypto.randomUUID(),
-      ...newInvitation,
-    }
-    onInvitationsChange([newItem, ...invitations])
-    setNewInvitation({
-      titleHe: '',
-      titleEn: '',
-      category: 'wedding',
-      imageUrl: '',
-      hosts: '',
-      eventDate: ''
-    })
-    setNewInvitationFile(null)
-    setStatusMessage('')
-  }
-
-  const handleRemoveInvitation = (id: string) => {
-    onInvitationsChange(invitations.filter(invitation => invitation.id !== id))
   }
 
   const handleRemoveInvitationType = (id: string) => {
@@ -452,15 +404,6 @@ export default function Admin({
     }
   }
 
-  const handleInvitationImageFileChange = async (file: File | null) => {
-    if (!file) return
-    setNewInvitationFile(file)
-    const url = await handleFileUpload(file, 'image')
-    if (url) {
-      setNewInvitation(prev => ({ ...prev, imageUrl: url }))
-    }
-  }
-
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div className="flex items-center gap-3 mb-10">
@@ -564,119 +507,6 @@ export default function Admin({
                   <RefreshCcw className="w-4 h-4" />
                   {t.admin.buttons.save}
                 </button>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'gallery' && (
-            <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-              <div className="flex items-center gap-3 mb-6">
-                <ImageIcon className="w-6 h-6 text-amber-600" />
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800">{t.admin.sections.galleryInvitations.title}</h2>
-                  <p className="text-gray-600 text-sm">{t.admin.sections.galleryInvitations.description}</p>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                <input
-                  type="text"
-                  value={newInvitation.titleHe}
-                  onChange={(e) => setNewInvitation(prev => ({ ...prev, titleHe: e.target.value }))}
-                  placeholder={t.admin.fields.name}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-600"
-                />
-                <input
-                  type="text"
-                  value={newInvitation.titleEn}
-                  onChange={(e) => setNewInvitation(prev => ({ ...prev, titleEn: e.target.value }))}
-                  placeholder={t.admin.fields.englishName}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-600"
-                />
-                <select
-                  value={newInvitation.category}
-                  onChange={(e) => setNewInvitation(prev => ({ ...prev, category: e.target.value as Invitation['category'] }))}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-600 bg-white"
-                >
-                  <option value="wedding">{t.gallery.categories.wedding}</option>
-                  <option value="barMitzvah">{t.gallery.categories.barMitzvah}</option>
-                  <option value="batMitzvah">{t.gallery.categories.batMitzvah}</option>
-                  <option value="birthday">{t.gallery.categories.birthday}</option>
-                  <option value="engagement">{t.gallery.categories.engagement}</option>
-                  <option value="thankYou">{language === 'he' ? 'כרטיסי תודה' : 'Thank You'}</option>
-                </select>
-                <label className="block">
-                  <span className="text-sm font-medium text-gray-700">{t.admin.fields.file}</span>
-                  <div className="mt-2">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleInvitationImageFileChange(e.target.files?.[0] || null)}
-                      className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
-                    />
-                    {newInvitationFile && (
-                      <p className="text-xs text-gray-500 mt-1">{newInvitationFile.name}</p>
-                    )}
-                    <input
-                      type="text"
-                      value={newInvitation.imageUrl}
-                      placeholder={t.admin.fields.imageUrl}
-                      readOnly
-                      className="mt-2 w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600"
-                    />
-                  </div>
-                </label>
-                <input
-                  type="text"
-                  value={newInvitation.hosts}
-                  onChange={(e) => setNewInvitation(prev => ({ ...prev, hosts: e.target.value }))}
-                  placeholder={t.admin.fields.hosts}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-600"
-                />
-                <input
-                  type="text"
-                  value={newInvitation.eventDate}
-                  onChange={(e) => setNewInvitation(prev => ({ ...prev, eventDate: e.target.value }))}
-                  placeholder={t.admin.fields.eventDate}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-600"
-                />
-              </div>
-
-              <button
-                onClick={handleAddInvitation}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-500 text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl"
-              >
-                <Plus className="w-4 h-4" />
-                {t.admin.buttons.add}
-              </button>
-
-              <div className="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {invitations.length === 0 && (
-                  <p className="text-gray-500 text-sm text-center py-6 md:col-span-3">{t.admin.messages.empty}</p>
-                )}
-                {invitations.map((invitation) => (
-                  <div key={invitation.id} className="p-4 rounded-xl border border-gray-200 bg-gray-50 relative">
-                    <div
-                      className="h-32 rounded-lg bg-cover bg-center mb-3"
-                      style={{ backgroundImage: `url(${invitation.imageUrl})` }}
-                    />
-                    <h3 className="font-semibold text-gray-800">{language === 'he' ? invitation.titleHe : invitation.titleEn}</h3>
-                    <p className="text-sm text-gray-600">{invitation.hosts || t.admin.fields.hosts}</p>
-                    {invitation.eventDate && (
-                      <p className="text-xs text-gray-500 mt-1">{invitation.eventDate}</p>
-                    )}
-                    <div className="mt-2 flex items-center justify-between text-sm text-gray-500">
-                      <span>{getCategoryLabel(invitation.category)}</span>
-                      <button
-                        onClick={() => handleRemoveInvitation(invitation.id)}
-                        className="text-gray-400 hover:text-red-600 transition-colors"
-                        title={t.admin.buttons.delete}
-                      >
-                        <Trash className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           )}
