@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Heart, Users, Gift, Cake, PartyPopper, User, ChevronRight, Wand2, Layers, Sparkles, BookOpen, Video } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
-import { CustomInvitationType, VideoBackground } from '../types'
+import { AdminBackground, CustomInvitationType, VideoBackground } from '../types'
 
 type EventType = 'wedding' | 'bar-mitzvah' | 'bat-mitzvah' | 'birthday' | 'engagement' | 'thank-you' | `custom-${string}`
 type DesignStyle = 'modern' | 'religious'
@@ -15,6 +15,7 @@ interface LocalizedName {
 interface DesignerProps {
   language: Language
   customTypes: CustomInvitationType[]
+  imageBackgrounds: AdminBackground[]
   videoBackgrounds: VideoBackground[]
 }
 
@@ -61,7 +62,7 @@ interface Animation {
   class: string
 }
 
-export default function Designer({ language, customTypes, videoBackgrounds }: DesignerProps) {
+export default function Designer({ language, customTypes, imageBackgrounds, videoBackgrounds }: DesignerProps) {
   const t = getTranslation(language)
   const [step, setStep] = useState<'type' | 'details' | 'style' | 'design'>('type')
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(null)
@@ -317,6 +318,13 @@ export default function Designer({ language, customTypes, videoBackgrounds }: De
     }
   ]), [])
 
+  const uploadedBackgroundOptions = useMemo<BackgroundOption[]>(() => imageBackgrounds.map((bg) => ({
+    id: `uploaded-${bg.id}`,
+    name: bg.name,
+    images: bg.preview ? [bg.preview] : [],
+    type: 'image'
+  })), [imageBackgrounds])
+
   const videoBackgroundOptions = useMemo<BackgroundOption[]>(() => videoBackgrounds.map((bg) => ({
     id: `video-${bg.id}`,
     name: bg.name,
@@ -327,8 +335,8 @@ export default function Designer({ language, customTypes, videoBackgrounds }: De
   })), [videoBackgrounds])
 
   const backgrounds = useMemo(
-    () => [...baseBackgrounds, ...videoBackgroundOptions],
-    [baseBackgrounds, videoBackgroundOptions]
+    () => [...uploadedBackgroundOptions, ...baseBackgrounds, ...videoBackgroundOptions],
+    [baseBackgrounds, uploadedBackgroundOptions, videoBackgroundOptions]
   )
 
   const colorSchemes: ColorScheme[] = [
