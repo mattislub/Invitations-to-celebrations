@@ -645,13 +645,16 @@ export default function Admin({
                   placeholder={t.admin.fields.name}
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
-                <input
-                  type="text"
-                  value={newBackground.preview}
-                  readOnly
-                  placeholder={t.admin.fields.url}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-600"
-                />
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700">{t.admin.fields.preview}</p>
+                  <div className="w-full h-[140px] rounded-xl border border-dashed border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden">
+                    {newBackground.preview ? (
+                      <img src={newBackground.preview} alt={newBackground.name || t.admin.fields.preview} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xs text-gray-500">{t.admin.fields.url}</span>
+                    )}
+                  </div>
+                </div>
                 <label className="block">
                   <span className="text-sm font-medium text-gray-700">{t.admin.fields.file}</span>
                   <div className="mt-2">
@@ -682,14 +685,18 @@ export default function Admin({
                 )}
                 {backgrounds.map(bg => (
                   <div key={bg.id} className="p-4 rounded-xl border border-gray-200 bg-gray-50">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div
-                        className="w-14 h-14 rounded-lg bg-cover bg-center"
-                        style={{ backgroundImage: `url(${bg.preview})` }}
-                      />
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-20 h-20 rounded-lg overflow-hidden border border-gray-200 bg-white">
+                        {bg.preview ? (
+                          <img src={bg.preview} alt={bg.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-500">
+                            {t.admin.fields.preview}
+                          </div>
+                        )}
+                      </div>
                       <div>
                         <h3 className="font-semibold text-gray-800">{bg.name}</h3>
-                        <p className="text-xs text-gray-500 truncate">{bg.preview}</p>
                         {bg.file && (
                           <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
                             <Upload className="w-3 h-3" />

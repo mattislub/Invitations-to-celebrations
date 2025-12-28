@@ -41,6 +41,14 @@ export interface Translations {
     title: string
     subtitle: string
     realInvitation: string
+    templates: {
+      title: string
+      subtitle: string
+      badge: string
+      customizeText: string
+      description: string
+      missingPreview: string
+    }
     categories: {
       all: string
       wedding: string
@@ -412,6 +420,14 @@ export const translations: Record<Language, Translations> = {
       title: 'גלריית הזמנות אמיתיות',
       subtitle: 'השראה ודוגמאות להזמנות אמיתיות שעוצבו במערכת שלנו',
       realInvitation: 'הזמנה אמיתית',
+      templates: {
+        title: 'תבניות עיצוב מוכנות',
+        subtitle: 'בחרו עיצוב שמור והלקוחות יעדכנו רק את הטקסטים',
+        badge: 'תבנית מוכנה',
+        customizeText: 'התאם טקסט',
+        description: 'תצוגת תבניות מתוך הניהול. בחרו רקע ועיצוב, ואפשרו ללקוחות להחליף את המילים.',
+        missingPreview: 'תצוגה מקדימה תופיע כאן'
+      },
       categories: {
         all: 'הכל',
         wedding: 'חתונות',
@@ -781,6 +797,14 @@ export const translations: Record<Language, Translations> = {
       title: 'Real Invitation Gallery',
       subtitle: 'Inspiration and examples from real invitations designed in our system',
       realInvitation: 'Real invitation',
+      templates: {
+        title: 'Design Templates',
+        subtitle: 'Load a saved design and let clients update only the text',
+        badge: 'Template',
+        customizeText: 'Customize Text',
+        description: 'Templates saved from the admin area. Keep the background and layout while clients change the wording.',
+        missingPreview: 'Preview will appear here'
+      },
       categories: {
         all: 'All',
         wedding: 'Weddings',

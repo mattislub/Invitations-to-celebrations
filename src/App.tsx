@@ -43,6 +43,7 @@ function App() {
   const [videoBackgrounds, setVideoBackgrounds] = useState<VideoBackground[]>([])
   const [template, setTemplate] = useState<InvitationTemplate | null>(null)
   const [savedTemplates, setSavedTemplates] = useState<SavedInvitationTemplate[]>([])
+  const [selectedSavedTemplateId, setSelectedSavedTemplateId] = useState<string>('')
 
   const apiBaseUrl = getApiBaseUrl()
 
@@ -51,6 +52,11 @@ function App() {
 
   const toggleLanguage = () => {
     setLanguage(prev => prev === 'he' ? 'en' : 'he')
+  }
+
+  const handleCustomizeTemplate = (templateId: string) => {
+    setSelectedSavedTemplateId(templateId)
+    setCurrentPage('designer')
   }
 
   useEffect(() => {
@@ -151,7 +157,16 @@ function App() {
 
       <main>
         {currentPage === 'home' && <Home onStartDesigning={() => setCurrentPage('designer')} language={language} />}
-        {currentPage === 'gallery' && <Gallery language={language} invitations={invitations} />}
+        {currentPage === 'gallery' && (
+          <Gallery
+            language={language}
+            invitations={invitations}
+            savedTemplates={savedTemplates}
+            backgrounds={imageBackgrounds}
+            videoBackgrounds={videoBackgrounds}
+            onCustomizeTemplate={handleCustomizeTemplate}
+          />
+        )}
         {currentPage === 'designer' && (
           <Designer
             language={language}
@@ -159,6 +174,7 @@ function App() {
             imageBackgrounds={imageBackgrounds}
             videoBackgrounds={videoBackgrounds}
             savedTemplates={savedTemplates}
+            initialSavedTemplateId={selectedSavedTemplateId}
           />
         )}
         {currentPage === 'admin' && (
