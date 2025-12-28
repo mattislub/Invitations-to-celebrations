@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ShieldCheck, Palette, Type as TypeIcon, Image as ImageIcon, Ruler, Plus, Save, RefreshCcw, Upload, Trash, Video as VideoIcon, Server, CloudOff, LayoutGrid, Layers, Edit3 } from 'lucide-react'
+import { ShieldCheck, Type as TypeIcon, Image as ImageIcon, Plus, RefreshCcw, Upload, Trash, Video as VideoIcon, Server, CloudOff, LayoutGrid, Layers, Edit3 } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
-import { CustomInvitationType, Invitation, VideoBackground, DesignStyle, AdminFont, AdminBackground, AdminDimensions, InvitationFieldLayout } from '../types'
+import { CustomInvitationType, Invitation, VideoBackground, AdminFont, AdminBackground } from '../types'
 import TemplateEditor from './TemplateEditor'
-import FieldLayoutEditor from './FieldLayoutEditor'
 
 const MAX_UPLOAD_BYTES = 900 * 1024
 const MAX_IMAGE_DIMENSION = 1920
@@ -70,11 +69,8 @@ interface SyncPayload {
   customTypes: CustomInvitationType[]
   invitations: Invitation[]
   videoBackgrounds: VideoBackground[]
-  designStyles: DesignStyle[]
   fonts: AdminFont[]
   backgrounds: AdminBackground[]
-  dimensions: AdminDimensions
-  fieldLayouts: InvitationFieldLayout[]
 }
 
 type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'disabled'
@@ -96,16 +92,10 @@ export default function Admin({
     ? configuredApiBaseUrl.replace(/\/$/, '')
     : '/api'
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
-  const [designStyles, setDesignStyles] = useState<DesignStyle[]>([
-    { id: 'modern-elegant', name: 'Modern Elegant', description: 'Minimal lines with warm gradients' },
-    { id: 'heritage-gold', name: 'Heritage Gold', description: 'Traditional framing with golden ornaments' }
-  ])
   const [fonts, setFonts] = useState<AdminFont[]>([
     { id: 'assistant', name: 'Assistant', url: 'https://fonts.googleapis.com/css2?family=Assistant:wght@400;700&display=swap' },
     { id: 'playfair', name: 'Playfair Display', url: 'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap' }
   ])
-  const [dimensions, setDimensions] = useState<AdminDimensions>({ width: 1080, height: 1920, unit: 'px' })
-  const [newStyle, setNewStyle] = useState({ name: '', description: '' })
   const [newFont, setNewFont] = useState({ name: '', url: '' })
   const [newFontFile, setNewFontFile] = useState<File | null>(null)
   const [newBackground, setNewBackground] = useState({ name: '', preview: '' })
@@ -125,8 +115,7 @@ export default function Admin({
   const [newInvitationFile, setNewInvitationFile] = useState<File | null>(null)
   const [statusMessage, setStatusMessage] = useState('')
   const [, setUploading] = useState(false)
-  const [fieldLayouts, setFieldLayouts] = useState<InvitationFieldLayout[]>([])
-  const [activeTab, setActiveTab] = useState<'overview' | 'gallery' | 'types' | 'fields' | 'styles' | 'backgrounds' | 'videos' | 'fonts' | 'dimensions' | 'templates'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'gallery' | 'types' | 'backgrounds' | 'videos' | 'fonts' | 'templates'>('overview')
 
   useEffect(() => {
     console.info('[Admin] Using API base URL:', apiBaseUrl)
@@ -146,31 +135,20 @@ export default function Admin({
 
   const stats = useMemo(() => ([
     { label: t.admin.stats.invitations, value: invitations.length, icon: ImageIcon, accent: 'from-amber-600 to-orange-500' },
-    { label: t.admin.stats.styles, value: designStyles.length, icon: Palette, accent: 'from-amber-500 to-orange-400' },
     { label: t.admin.stats.fonts, value: fonts.length, icon: TypeIcon, accent: 'from-blue-500 to-indigo-500' },
     { label: t.admin.stats.backgrounds, value: backgrounds.length, icon: ImageIcon, accent: 'from-emerald-500 to-teal-500' },
-    { label: t.admin.stats.videoBackgrounds, value: videoBackgrounds.length, icon: VideoIcon, accent: 'from-purple-500 to-indigo-500' },
-    { label: t.admin.stats.dimensions, value: `${dimensions.width}×${dimensions.height}${dimensions.unit}`, icon: Ruler, accent: 'from-gray-700 to-gray-500' }
-  ]), [designStyles.length, fonts.length, backgrounds.length, videoBackgrounds.length, dimensions, invitations.length, t])
+    { label: t.admin.stats.videoBackgrounds, value: videoBackgrounds.length, icon: VideoIcon, accent: 'from-purple-500 to-indigo-500' }
+  ]), [fonts.length, backgrounds.length, videoBackgrounds.length, invitations.length, t])
 
   const adminTabs = useMemo(() => ([
     { id: 'overview' as const, label: t.admin.title, description: t.admin.subtitle, icon: ShieldCheck },
     { id: 'gallery' as const, label: t.admin.sections.galleryInvitations.title, description: t.admin.sections.galleryInvitations.description, icon: ImageIcon },
     { id: 'types' as const, label: t.admin.sections.invitationTypes.title, description: t.admin.sections.invitationTypes.description, icon: TypeIcon },
-    { id: 'fields' as const, label: t.admin.sections.fieldLayout.title, description: t.admin.sections.fieldLayout.description, icon: LayoutGrid },
-    { id: 'styles' as const, label: t.admin.sections.styles.title, description: t.admin.sections.styles.description, icon: Palette },
     { id: 'backgrounds' as const, label: t.admin.sections.backgrounds.title, description: t.admin.sections.backgrounds.description, icon: ImageIcon },
     { id: 'videos' as const, label: t.admin.sections.videoBackgrounds.title, description: t.admin.sections.videoBackgrounds.description, icon: VideoIcon },
     { id: 'fonts' as const, label: t.admin.sections.fonts.title, description: t.admin.sections.fonts.description, icon: TypeIcon },
-    { id: 'dimensions' as const, label: t.admin.sections.dimensions.title, description: t.admin.sections.dimensions.description, icon: Ruler },
     { id: 'templates' as const, label: t.templateEditor.title, description: t.templateEditor.subtitle, icon: Edit3 }
   ]), [t])
-
-  const handleAddStyle = () => {
-    if (!newStyle.name.trim()) return
-    setDesignStyles(prev => [...prev, { id: crypto.randomUUID(), ...newStyle }])
-    setNewStyle({ name: '', description: '' })
-  }
 
   const handleAddFont = () => {
     if (!newFont.name.trim() || !newFont.url.trim() || !newFontFile) {
@@ -271,19 +249,6 @@ export default function Admin({
     onVideoBackgroundsChange(videoBackgrounds.filter(bg => bg.id !== id))
   }
 
-  const handleReset = () => {
-    setDesignStyles([])
-    setFonts([])
-    onBackgroundsChange([])
-    setFieldLayouts([])
-    setStatusMessage('')
-  }
-
-  const handleSaveDimensions = () => {
-    setStatusMessage(t.admin.messages.saved)
-    setTimeout(() => setStatusMessage(''), 3000)
-  }
-
   const handleFileUpload = async (file: File, type: 'font' | 'background' | 'video' | 'image' | 'preview'): Promise<string | null> => {
     setUploading(true)
     setStatusMessage(t.admin.messages.uploading)
@@ -366,11 +331,8 @@ export default function Admin({
       customTypes,
       invitations,
       videoBackgrounds,
-      designStyles,
       fonts,
-      backgrounds,
-      dimensions,
-      fieldLayouts
+      backgrounds
     }
 
     setSyncStatus('syncing')
@@ -393,7 +355,7 @@ export default function Admin({
       console.error('[Admin] Sync error', error)
       setSyncStatus('error')
     }
-  }, [apiBaseUrl, backgrounds, customTypes, designStyles, dimensions, fieldLayouts, fonts, invitations, videoBackgrounds])
+  }, [apiBaseUrl, backgrounds, customTypes, fonts, invitations, videoBackgrounds])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -406,17 +368,13 @@ export default function Admin({
         }
 
         const payload = await response.json() as Partial<SyncPayload>
-        if (payload.designStyles) setDesignStyles(payload.designStyles)
         if (payload.fonts) setFonts(payload.fonts)
         if (payload.backgrounds) onBackgroundsChange(payload.backgrounds)
         if (payload.customTypes) onCustomTypesChange(payload.customTypes)
         if (payload.invitations) onInvitationsChange(payload.invitations)
         if (payload.videoBackgrounds) onVideoBackgroundsChange(payload.videoBackgrounds)
-        if (payload.dimensions) setDimensions(payload.dimensions)
-        if (payload.fieldLayouts) setFieldLayouts(payload.fieldLayouts)
 
         console.info('[Admin] Admin state fetched', {
-          designStyles: payload.designStyles?.length ?? 0,
           fonts: payload.fonts?.length ?? 0,
           backgrounds: payload.backgrounds?.length ?? 0,
           invitations: payload.invitations?.length ?? 0
@@ -497,6 +455,12 @@ export default function Admin({
           <p className="text-lg text-gray-600 mt-1">{t.admin.subtitle}</p>
         </div>
       </div>
+
+      {statusMessage && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-800">
+          {statusMessage}
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-[280px_1fr] gap-8 items-start">
         <aside className="bg-white rounded-2xl shadow-xl border border-gray-100 sticky top-24">
@@ -712,17 +676,6 @@ export default function Admin({
             </div>
           )}
 
-          {activeTab === 'fields' && (
-            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-              <FieldLayoutEditor
-                language={language}
-                customTypes={customTypes}
-                layouts={fieldLayouts}
-                onLayoutsChange={setFieldLayouts}
-              />
-            </div>
-          )}
-
           {activeTab === 'types' && (
             <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
               <div className="flex items-center gap-3 mb-6">
@@ -783,55 +736,6 @@ export default function Admin({
                     >
                       <Trash className="w-4 h-4" />
                     </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'styles' && (
-            <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-              <div className="flex items-center gap-3 mb-6">
-                <Palette className="w-6 h-6 text-amber-500" />
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800">{t.admin.sections.styles.title}</h2>
-                  <p className="text-gray-600 text-sm">{t.admin.sections.styles.description}</p>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4 mb-4">
-                <input
-                  type="text"
-                  value={newStyle.name}
-                  onChange={(e) => setNewStyle(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder={t.admin.fields.name}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-                <input
-                  type="text"
-                  value={newStyle.description}
-                  onChange={(e) => setNewStyle(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder={t.admin.fields.description}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-              </div>
-
-              <button
-                onClick={handleAddStyle}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-gray-700 to-amber-500 text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl"
-              >
-                <Plus className="w-4 h-4" />
-                {t.admin.buttons.add}
-              </button>
-
-              <div className="mt-6 space-y-3 max-h-60 overflow-y-auto">
-                {designStyles.length === 0 && (
-                  <p className="text-gray-500 text-sm text-center py-6">{t.admin.messages.empty}</p>
-                )}
-                {designStyles.map(style => (
-                  <div key={style.id} className="p-4 rounded-xl border border-gray-200 bg-gray-50">
-                    <h3 className="font-semibold text-gray-800">{style.name}</h3>
-                    <p className="text-sm text-gray-600">{style.description}</p>
                   </div>
                 ))}
               </div>
@@ -1096,69 +1000,6 @@ export default function Admin({
             </div>
           )}
 
-          {activeTab === 'dimensions' && (
-            <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-              <div className="flex items-center gap-3 mb-6">
-                <Ruler className="w-6 h-6 text-gray-700" />
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800">{t.admin.sections.dimensions.title}</h2>
-                  <p className="text-gray-600 text-sm">{t.admin.sections.dimensions.description}</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.admin.fields.width}</label>
-                  <input
-                    type="number"
-                    value={dimensions.width}
-                    onChange={(e) => setDimensions(prev => ({ ...prev, width: Number(e.target.value) }))}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{t.admin.fields.height}</label>
-                  <input
-                    type="number"
-                    value={dimensions.height}
-                    onChange={(e) => setDimensions(prev => ({ ...prev, height: Number(e.target.value) }))}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 mb-6">
-                <label className="text-sm font-medium text-gray-700">{t.admin.fields.unit}</label>
-                <select
-                  value={dimensions.unit}
-                  onChange={(e) => setDimensions(prev => ({ ...prev, unit: e.target.value as AdminDimensions['unit'] }))}
-                  className="px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700"
-                >
-                  <option value="px">px</option>
-                  <option value="cm">cm</option>
-                </select>
-                <span className="text-sm text-gray-600">{dimensions.width} × {dimensions.height} {dimensions.unit}</span>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={handleSaveDimensions}
-                  className="inline-flex items-center gap-2 bg-gray-900 text-white px-4 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl"
-                >
-                  <Save className="w-4 h-4" />
-                  {t.admin.buttons.save}
-                </button>
-                <button
-                  onClick={handleReset}
-                  className="inline-flex items-center gap-2 bg-white text-gray-700 px-4 py-3 rounded-xl font-semibold shadow border border-gray-200 hover:border-gray-300"
-                >
-                  <RefreshCcw className="w-4 h-4" />
-                  {t.admin.buttons.reset}
-                </button>
-                {statusMessage && <span className="text-sm text-emerald-600 font-semibold">{statusMessage}</span>}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </section>
