@@ -225,17 +225,14 @@ export interface Translations {
   templateEditor: {
     title: string
     subtitle: string
-    fields: string
-    textLines: string
+    textBoxes: string
+    instructions: string
     background: string
-    addField: string
-    addText: string
-    dragHint: string
-    previewFieldHint: string
-    font: string
-    fontSize: string
+    addTextBox: string
     backgroundUrl: string
     preview: string
+    selectionHint: string
+    clickToPlace: string
     dimensions: {
       title: string
       width: string
@@ -243,17 +240,15 @@ export interface Translations {
       unit: string
     }
     placeholders: {
-      fieldLabel: string
-      textLine: string
+      text: string
     }
-    options: {
-      required: string
-      type: string
-      types: {
-        text: string
-        date: string
-        number: string
-      }
+    typography: {
+      font: string
+      fontSize: string
+    }
+    position: {
+      x: string
+      y: string
     }
   }
 }
@@ -503,18 +498,15 @@ export const translations: Record<Language, Translations> = {
     },
     templateEditor: {
       title: 'עורך תבנית הזמנה',
-      subtitle: 'קבעו שדות, טקסטים ורקע לתבנית ההזמנה',
-      fields: 'שדות דינמיים',
-      textLines: 'שורות טקסט',
+      subtitle: 'מקמו תיבות טקסט חופשיות על גבי התבנית',
+      textBoxes: 'תיבת טקסט',
+      instructions: 'לחצו על התצוגה המקדימה כדי למקם תיבת טקסט בכל מקום',
       background: 'רקע',
-      addField: 'הוספת שדה',
-      addText: 'הוספת שורת טקסט',
-      dragHint: 'גררו ושחררו לסידור',
-      previewFieldHint: 'גררו שדה כדי למקם אותו מחדש בתצוגה',
-      font: 'פונט',
-      fontSize: 'גודל פונט',
+      addTextBox: 'הוספת תיבת טקסט',
       backgroundUrl: 'קישור לרקע',
       preview: 'תצוגה מקדימה',
+      selectionHint: 'בחרו תיבה ולחצו בתצוגה כדי למקם אותה',
+      clickToPlace: 'לחצו בתצוגה כדי להציב את התיבה הנבחרת',
       dimensions: {
         title: 'מידות התבנית',
         width: 'רוחב',
@@ -522,17 +514,15 @@ export const translations: Record<Language, Translations> = {
         unit: 'פיקסלים'
       },
       placeholders: {
-        fieldLabel: 'כותרת שדה (למשל: שם מלא)',
-        textLine: 'הקלידו שורת טקסט'
+        text: 'הקלידו טקסט להזמנה'
       },
-      options: {
-        required: 'שדה חובה',
-        type: 'סוג שדה',
-        types: {
-          text: 'טקסט',
-          date: 'תאריך',
-          number: 'מספר'
-        }
+      typography: {
+        font: 'פונט',
+        fontSize: 'גודל פונט'
+      },
+      position: {
+        x: 'מיקום אופקי',
+        y: 'מיקום אנכי'
       }
     }
   },
@@ -780,18 +770,15 @@ export const translations: Record<Language, Translations> = {
     },
     templateEditor: {
       title: 'Invitation Template Editor',
-      subtitle: 'Configure fields, text lines, fonts and backgrounds for the template',
-      fields: 'Fields',
-      textLines: 'Text Lines',
+      subtitle: 'Place free-floating text boxes anywhere on your template',
+      textBoxes: 'Text Box',
+      instructions: 'Click the preview to position any text box exactly where you want it',
       background: 'Background',
-      addField: 'Add Field',
-      addText: 'Add Text Line',
-      dragHint: 'Drag & drop to reorder',
-      previewFieldHint: 'Drag fields to reposition them as text in the preview',
-      font: 'Font',
-      fontSize: 'Font Size',
+      addTextBox: 'Add Text Box',
       backgroundUrl: 'Background URL',
       preview: 'Preview',
+      selectionHint: 'Select a box, then click the preview to place it',
+      clickToPlace: 'Click the preview to place the selected box',
       dimensions: {
         title: 'Template Size',
         width: 'Width',
@@ -799,17 +786,15 @@ export const translations: Record<Language, Translations> = {
         unit: 'pixels'
       },
       placeholders: {
-        fieldLabel: 'Field label (e.g. Full Name)',
-        textLine: 'Enter a text line'
+        text: 'Enter invitation text'
       },
-      options: {
-        required: 'Required',
-        type: 'Field Type',
-        types: {
-          text: 'Text',
-          date: 'Date',
-          number: 'Number'
-        }
+      typography: {
+        font: 'Font',
+        fontSize: 'Font Size'
+      },
+      position: {
+        x: 'Horizontal Position',
+        y: 'Vertical Position'
       }
     }
   }
