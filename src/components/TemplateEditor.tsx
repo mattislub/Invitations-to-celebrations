@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, X, Upload, Film, Move, Save, RefreshCcw } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 import { AdminBackground, InvitationTemplate, TemplateField, TemplateTextLine, VideoBackground, SavedInvitationTemplate } from '../types'
+import { getApiBaseUrl } from '../utils/api'
 
 interface FontOption {
   id: string
@@ -103,8 +104,7 @@ export default function TemplateEditor({
   const CM_PER_INCH = 2.54
   const PX_PER_CM = PX_PER_INCH / CM_PER_INCH
 
-  const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
-  const apiBaseUrl = (configuredApiBaseUrl && configuredApiBaseUrl !== '') ? configuredApiBaseUrl.replace(/\/$/, '') : 'https://123.70-60.com/api'
+  const apiBaseUrl = getApiBaseUrl()
 
   const backgroundOptions: BackgroundOption[] = useMemo(() => {
     const uploadedBackgrounds = backgrounds.map<BackgroundOption>((bg) => ({
