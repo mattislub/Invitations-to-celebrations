@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Sparkles, Languages, Shield } from 'lucide-react'
 import Home from './components/Home'
 import Gallery from './components/Gallery'
@@ -18,18 +18,7 @@ function App() {
     nameYi: 'משפוחה שמחה',
     nameEn: 'Family Celebration',
   }])
-  const [imageBackgrounds, setImageBackgrounds] = useState<AdminBackground[]>([
-    {
-      id: 'soft-blush',
-      name: 'Soft Blush',
-      preview: 'https://images.pexels.com/photos/2043997/pexels-photo-2043997.jpeg?auto=compress&cs=tinysrgb&w=800'
-    },
-    {
-      id: 'royal-blue',
-      name: 'Royal Blue',
-      preview: 'https://images.pexels.com/photos/1762851/pexels-photo-1762851.jpeg?auto=compress&cs=tinysrgb&w=800'
-    }
-  ])
+  const [imageBackgrounds, setImageBackgrounds] = useState<AdminBackground[]>([])
   const [invitations, setInvitations] = useState<Invitation[]>([
     {
       id: 'wedding-1',
@@ -50,14 +39,12 @@ function App() {
       eventDate: '10.03.2025',
     }
   ])
-  const [videoBackgrounds, setVideoBackgrounds] = useState<VideoBackground[]>([
-    {
-      id: 'golden-lights',
-      name: language === 'he' ? 'ניצוצות מוזהבים' : 'Golden Sparks',
-      url: 'https://videos.pexels.com/video-files/3129671/3129671-uhd_2560_1440_25fps.mp4',
-      previewImage: 'https://images.pexels.com/photos/196652/pexels-photo-196652.jpeg?auto=compress&cs=tinysrgb&w=600'
-    }
-  ])
+  const [videoBackgrounds, setVideoBackgrounds] = useState<VideoBackground[]>([])
+
+  const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
+  const apiBaseUrl = (configuredApiBaseUrl && configuredApiBaseUrl !== '')
+    ? configuredApiBaseUrl.replace(/\/$/, '')
+    : '/api'
 
   const t = getTranslation(language)
   const isRTL = language === 'he'
@@ -65,6 +52,27 @@ function App() {
   const toggleLanguage = () => {
     setLanguage(prev => prev === 'he' ? 'en' : 'he')
   }
+
+  useEffect(() => {
+    const fetchBackgrounds = async () => {
+      try {
+        const response = await fetch(`${apiBaseUrl}/admin/state`)
+        if (!response.ok) return
+
+        const payload = await response.json() as Partial<{
+          backgrounds: AdminBackground[]
+          videoBackgrounds: VideoBackground[]
+        }>
+
+        if (payload.backgrounds) setImageBackgrounds(payload.backgrounds)
+        if (payload.videoBackgrounds) setVideoBackgrounds(payload.videoBackgrounds)
+      } catch (error) {
+        console.error('[App] Failed to load backgrounds', error)
+      }
+    }
+
+    void fetchBackgrounds()
+  }, [apiBaseUrl])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-amber-50" dir={isRTL ? 'rtl' : 'ltr'}>
