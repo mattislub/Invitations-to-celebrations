@@ -74,6 +74,18 @@ export interface Translations {
       religious: string
       classic: string
     }
+    savedTemplates: {
+      title: string
+      subtitle: string
+      useHint: string
+      clear: string
+      empty: string
+      fieldsTitle: string
+      fieldsHelper: string
+      textLinesTitle: string
+      textLinesHelper: string
+      backgroundLocked: string
+    }
     backgrounds: {
       title: string
     }
@@ -424,6 +436,18 @@ export const translations: Record<Language, Translations> = {
         religious: 'דתי',
         classic: 'קלאסי'
       },
+      savedTemplates: {
+        title: 'תבניות מהניהול',
+        subtitle: 'בחרו תבנית מוכנה והלקוחות ישנו רק את הטקסטים',
+        useHint: 'טענו את התבנית לתצוגה המקדימה',
+        clear: 'ביטול תבנית',
+        empty: 'לא נשמרו תבניות עדיין',
+        fieldsTitle: 'שדות למילוי',
+        fieldsHelper: 'כתבו את הטקסטים שהלקוחות צריכים לראות בכל שדה.',
+        textLinesTitle: 'שורות טקסט',
+        textLinesHelper: 'עדכנו רק את המילים, ללא שינוי מיקומים או רקע.',
+        backgroundLocked: 'תבנית זו מגיעה עם רקע מובנה. ניתן לשנות רק את הטקסטים.'
+      },
       backgrounds: {
         title: 'בחרו רקע'
       },
@@ -771,6 +795,18 @@ export const translations: Record<Language, Translations> = {
         modern: 'Modern',
         religious: 'Religious',
         classic: 'Classic'
+      },
+      savedTemplates: {
+        title: 'Saved Templates',
+        subtitle: 'Pick an admin template—customers can only change text',
+        useHint: 'Load this template in the preview',
+        clear: 'Clear template',
+        empty: 'No templates saved yet',
+        fieldsTitle: 'Fillable fields',
+        fieldsHelper: 'Write the text customers should see in each field.',
+        textLinesTitle: 'Static text lines',
+        textLinesHelper: 'Adjust wording only—layout and backgrounds stay locked.',
+        backgroundLocked: 'This template ships with a background. Only text can change.'
       },
       backgrounds: {
         title: 'Choose Background'

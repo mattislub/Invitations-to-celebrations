@@ -155,30 +155,31 @@ function App() {
         {currentPage === 'home' && <Home onStartDesigning={() => setCurrentPage('designer')} language={language} />}
         {currentPage === 'gallery' && <Gallery language={language} invitations={invitations} />}
         {currentPage === 'designer' && (
-        <Designer
-          language={language}
-          customTypes={customInvitationTypes}
-          imageBackgrounds={imageBackgrounds}
-          videoBackgrounds={videoBackgrounds}
-        />
-      )}
-      {currentPage === 'admin' && (
-        <Admin
-          language={language}
-          customTypes={customInvitationTypes}
-          onCustomTypesChange={setCustomInvitationTypes}
-          invitations={invitations}
-          onInvitationsChange={setInvitations}
-          backgrounds={imageBackgrounds}
-          onBackgroundsChange={setImageBackgrounds}
-          videoBackgrounds={videoBackgrounds}
-          onVideoBackgroundsChange={setVideoBackgrounds}
-          template={template}
-          onTemplateChange={setTemplate}
-          savedTemplates={savedTemplates}
-          onSavedTemplatesChange={setSavedTemplates}
-        />
-      )}
+          <Designer
+            language={language}
+            customTypes={customInvitationTypes}
+            imageBackgrounds={imageBackgrounds}
+            videoBackgrounds={videoBackgrounds}
+            savedTemplates={savedTemplates}
+          />
+        )}
+        {currentPage === 'admin' && (
+          <Admin
+            language={language}
+            customTypes={customInvitationTypes}
+            onCustomTypesChange={setCustomInvitationTypes}
+            invitations={invitations}
+            onInvitationsChange={setInvitations}
+            backgrounds={imageBackgrounds}
+            onBackgroundsChange={setImageBackgrounds}
+            videoBackgrounds={videoBackgrounds}
+            onVideoBackgroundsChange={setVideoBackgrounds}
+            template={template}
+            onTemplateChange={setTemplate}
+            savedTemplates={savedTemplates}
+            onSavedTemplatesChange={setSavedTemplates}
+          />
+        )}
       </main>
 
       <footer className="bg-gray-900 text-white py-12 mt-20">
