@@ -76,7 +76,7 @@ export default function TemplateEditor({
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null)
   const [draggingTextId, setDraggingTextId] = useState<string | null>(null)
   const [draggingElementId, setDraggingElementId] = useState<string | null>(null)
-  const [activePanel, setActivePanel] = useState<PanelKey | null>('background')
+  const [activePanel, setActivePanel] = useState<PanelKey>('background')
   const [selectedBackgroundId, setSelectedBackgroundId] = useState<string>('')
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState('')
@@ -505,7 +505,7 @@ export default function TemplateEditor({
     background: { icon: ImageIcon, label: t.templateEditor.background },
     text: { icon: List, label: t.templateEditor.textLines, helper: t.templateEditor.dragHint }
   }
-  const activePanelConfig = activePanel ? panelConfig[activePanel] : null
+  const activePanelConfig = panelConfig[activePanel]
 
   const handleSaveTemplate = (mode: 'update' | 'createNew' = 'update') => {
     if (!templateName.trim()) {
@@ -1011,47 +1011,85 @@ export default function TemplateEditor({
       </div>
 
       <div className="bg-white rounded-3xl shadow-xl border border-amber-50 p-6 lg:p-8 mb-10">
-        <div className="grid md:grid-cols-[1.2fr_1fr] gap-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <label className="block text-sm font-semibold text-gray-800">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 pb-5 mb-6">
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-amber-700 uppercase tracking-wide">{t.templateEditor.preview}</p>
+            <h3 className="text-2xl font-bold text-gray-900">{t.templateEditor.layout.dragAnywhere}</h3>
+            <p className="text-sm text-gray-500">{t.templateEditor.dragHint}</p>
+          </div>
+          <div className="flex flex-wrap gap-2 items-center justify-end">
+            <button
+              type="button"
+              onClick={resetTemplateState}
+              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-amber-300 hover:text-amber-700 transition-colors"
+            >
+              <RefreshCcw className="w-4 h-4" />
+              {t.templateEditor.actions.startNewTemplate}
+            </button>
+            <button
+              onClick={() => handleSaveTemplate('createNew')}
+              className="inline-flex items-center gap-2 border border-amber-200 bg-white text-amber-700 px-4 py-2 rounded-full font-semibold shadow-sm hover:shadow transition-colors"
+              type="button"
+            >
+              <Save className="w-4 h-4" />
+              {t.templateEditor.actions.saveAsNew}
+            </button>
+            <button
+              onClick={() => handleSaveTemplate('update')}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-500 text-white px-4 py-2 rounded-full font-semibold shadow hover:shadow-lg transition-colors"
+              type="button"
+            >
+              <Save className="w-4 h-4" />
+              {t.templateEditor.actions.saveTemplate}
+            </button>
+            {saveMessage && (
+              <span className="inline-flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-full">
+                {saveMessage}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-[360px_1fr] gap-6 items-start">
+          <div className="space-y-5">
+            <div className="rounded-2xl border border-gray-100 bg-gray-50/60 p-5 shadow-sm">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
                 {t.templateEditor.savedTemplates.nameLabel}
               </label>
-              <button
-                type="button"
-                onClick={resetTemplateState}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-700 hover:border-amber-300 hover:text-amber-700 transition-colors"
-              >
-                <RefreshCcw className="w-4 h-4" />
-                {t.templateEditor.actions.startNewTemplate}
-              </button>
+              <input
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                placeholder={t.templateEditor.savedTemplates.namePlaceholder}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-right bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+              <p className="text-xs text-gray-500 mt-2">{t.templateEditor.savedTemplates.nameHelper}</p>
             </div>
-            <input
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
-              placeholder={t.templateEditor.savedTemplates.namePlaceholder}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-right focus:outline-none focus:ring-2 focus:ring-amber-500"
-            />
-            <p className="text-xs text-gray-500">{t.templateEditor.savedTemplates.nameHelper}</p>
-          </div>
-          <div className="space-y-3">
-            <p className="text-sm font-semibold text-gray-800">{t.templateEditor.savedTemplates.title}</p>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 md:grid-cols-2 gap-3">
-              {savedTemplates.length === 0 && (
-                <p className="text-gray-500 text-sm col-span-full">{t.templateEditor.savedTemplates.empty}</p>
-              )}
-              {savedTemplates.map((saved) => (
-                <div
-                  key={saved.id}
-                  className={`border rounded-xl p-3 space-y-1 ${selectedSavedId === saved.id ? 'border-amber-400 bg-amber-50' : 'border-gray-200 bg-gray-50'}`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <button
-                      onClick={() => handleLoadSavedTemplate(saved.id)}
-                      className="text-right text-sm font-semibold text-gray-800 hover:text-amber-700 transition-colors"
-                    >
-                      {saved.name}
-                    </button>
+
+            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-gray-800">{t.templateEditor.savedTemplates.title}</p>
+                <div className="text-xs text-gray-500">{t.templateEditor.actions.saveTemplateHelper}</div>
+              </div>
+              <div className="space-y-2">
+                {savedTemplates.length === 0 && (
+                  <p className="text-gray-500 text-sm">{t.templateEditor.savedTemplates.empty}</p>
+                )}
+                {savedTemplates.map((saved) => (
+                  <div
+                    key={saved.id}
+                    className={`flex items-center justify-between gap-2 rounded-xl border px-3 py-2 ${selectedSavedId === saved.id ? 'border-amber-400 bg-amber-50/80' : 'border-gray-200 bg-gray-50'}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <button
+                        onClick={() => handleLoadSavedTemplate(saved.id)}
+                        className="text-right text-sm font-semibold text-gray-800 hover:text-amber-700 transition-colors truncate"
+                      >
+                        {saved.name}
+                      </button>
+                      {saved.updatedAt && (
+                        <p className="text-[11px] text-gray-500">{new Date(saved.updatedAt).toLocaleString()}</p>
+                      )}
+                    </div>
                     <button
                       onClick={() => handleDeleteSavedTemplate(saved.id)}
                       className="text-gray-400 hover:text-red-600 transition-colors"
@@ -1061,158 +1099,92 @@ export default function TemplateEditor({
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  {saved.updatedAt && (
-                    <p className="text-[11px] text-gray-500">
-                      {new Date(saved.updatedAt).toLocaleString()}
-                    </p>
-                  )}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="relative">
-        <div className="bg-white rounded-3xl shadow-2xl p-6 lg:p-10 border border-amber-50">
-            <div className="flex items-center justify-between gap-4 flex-wrap mb-6">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-800">{t.templateEditor.preview}</h3>
-                <p className="text-sm text-gray-500">{t.templateEditor.layout.dragAnywhere}</p>
-              </div>
-              <div className="flex items-center gap-3 flex-wrap justify-end">
-                <div className="text-sm text-gray-600 flex items-center gap-2">
-                  <span className="inline-flex h-2 w-2 rounded-full bg-amber-500" />
-                  {t.templateEditor.dragHint}
-                </div>
-              <p className="text-xs text-gray-500">{t.templateEditor.actions.saveTemplateHelper}</p>
-              {saveMessage && (
-                <span className="inline-flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-                  {saveMessage}
-                </span>
-              )}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleSaveTemplate('createNew')}
-                  className="inline-flex items-center gap-2 border border-amber-200 bg-white text-amber-700 px-4 py-2 rounded-xl font-semibold shadow-sm hover:shadow transition-colors"
-                  type="button"
-                >
-                  <Save className="w-4 h-4" />
-                  {t.templateEditor.actions.saveAsNew}
-                </button>
-                <button
-                  onClick={() => handleSaveTemplate('update')}
-                  className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-500 text-white px-4 py-2 rounded-xl font-semibold shadow hover:shadow-lg transition-colors"
-                  type="button"
-                >
-                  <Save className="w-4 h-4" />
-                  {t.templateEditor.actions.saveTemplate}
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-100">
-            <div
-              className="relative w-full transition-all duration-300"
-              style={{
-                aspectRatio: `${templateWidth}/${templateHeight}`,
-                minHeight: '70vh'
-              }}
-            >
-              {renderBackgroundMedia(selectedBackground, 0.95)}
-              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-xl" />
-              <div
-                ref={previewRef}
-                className="absolute inset-0"
-                onPointerMove={handleCanvasPointerMove}
-                onPointerUp={handleCanvasPointerUp}
-                onPointerLeave={handleCanvasPointerUp}
-              >
-                {textLines.map((line) => {
-                  const isSelected = selectedTextId === line.id
+            <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                {(Object.keys(panelConfig) as PanelKey[]).map((panel) => {
+                  const Icon = panelConfig[panel].icon
+                  const isActive = activePanel === panel
                   return (
-                    <div
-                      key={line.id}
-                      className={`absolute cursor-move ${isSelected ? 'ring-2 ring-amber-500 rounded-lg' : ''}`}
-                      style={{
-                        left: `${line.position.x}%`,
-                        top: `${line.position.y}%`,
-                        width: `${line.position.width}%`,
-                        transform: 'translate(-50%, -50%)',
-                        textAlign: line.position.align as 'left' | 'center' | 'right'
-                      }}
-                      onPointerDown={(e) => startDraggingText(e, line.id)}
-                      tabIndex={0}
-                      onFocus={() => setSelectedTextId(line.id)}
-                      onClick={() => setSelectedTextId(line.id)}
-                      aria-label={t.templateEditor.layout.selectForArrows}
+                    <button
+                      key={panel}
+                      onClick={() => setActivePanel(panel)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
+                        isActive
+                          ? 'bg-amber-100 text-amber-800 border-amber-200 shadow-sm'
+                          : 'bg-white text-gray-700 border-gray-200 hover:border-amber-200'
+                      }`}
+                      type="button"
                     >
-                      <p
-                        style={{ fontFamily: line.font, fontSize: line.fontSize }}
-                        className="text-gray-800"
-                      >
-                        {line.text}
-                      </p>
-                    </div>
+                      <Icon className="w-4 h-4" />
+                      {panelConfig[panel].label}
+                    </button>
                   )
                 })}
               </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="fixed right-4 bottom-6 md:right-10 md:bottom-10 z-30">
-          <div className="bg-white/95 backdrop-blur-md shadow-2xl border border-amber-100 rounded-full p-3 flex md:flex-col gap-3">
-            {(Object.keys(panelConfig) as PanelKey[]).map((panel) => {
-              const Icon = panelConfig[panel].icon
-              const isActive = activePanel === panel
-              return (
-                <button
-                  key={panel}
-                  onClick={() => setActivePanel(isActive ? null : panel)}
-                  className={`w-12 h-12 rounded-full border flex items-center justify-center transition-all ${
-                    isActive
-                      ? 'bg-amber-500 border-amber-600 text-white shadow-lg shadow-amber-200'
-                      : 'bg-white border-gray-200 text-gray-700 hover:bg-amber-50'
-                  }`}
-                  title={panelConfig[panel].label}
-                  aria-label={panelConfig[panel].label}
-                >
-                  <Icon className="w-5 h-5" />
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {activePanelConfig && (
-          <div className="fixed left-4 right-4 bottom-24 md:bottom-auto md:top-24 md:right-[6.5rem] md:left-auto md:w-96 z-30">
-            <div className="bg-white shadow-2xl border border-amber-100 rounded-2xl p-6 max-h-[70vh] overflow-y-auto">
-              <div className="flex items-start justify-between gap-3 mb-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    {(() => {
-                      const Icon = activePanelConfig.icon
-                      return <Icon className="w-5 h-5 text-amber-500" />
-                    })()}
-                    <h3 className="text-xl font-bold text-gray-800">{activePanelConfig.label}</h3>
-                  </div>
-                  {activePanelConfig.helper && (
-                    <p className="text-sm text-gray-500 mt-1">{activePanelConfig.helper}</p>
-                  )}
-                </div>
-                <button
-                  onClick={() => setActivePanel(null)}
-                  className="text-gray-500 hover:text-gray-800 transition-colors"
-                  aria-label={language === 'he' ? 'סגור הגדרות' : 'Close settings'}
-                >
-                  <X className="w-5 h-5" />
-                </button>
+              {activePanelConfig.helper && (
+                <p className="text-sm text-gray-500 mb-3">{activePanelConfig.helper}</p>
+              )}
+              <div className="border border-gray-100 rounded-xl bg-gray-50/50 p-3 max-h-[60vh] overflow-y-auto">
+                {renderPanelContent()}
               </div>
-              {renderPanelContent()}
             </div>
           </div>
-        )}
+
+          <div className="rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-6 shadow-inner">
+            <div className="rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
+              <div
+                className="relative w-full transition-all duration-300"
+                style={{
+                  aspectRatio: `${templateWidth}/${templateHeight}`,
+                  minHeight: '70vh'
+                }}
+              >
+                {renderBackgroundMedia(selectedBackground, 0.95)}
+                <div className="absolute inset-0 bg-white/75 backdrop-blur-sm rounded-xl" />
+                <div
+                  ref={previewRef}
+                  className="absolute inset-0"
+                  onPointerMove={handleCanvasPointerMove}
+                  onPointerUp={handleCanvasPointerUp}
+                  onPointerLeave={handleCanvasPointerUp}
+                >
+                  {textLines.map((line) => {
+                    const isSelected = selectedTextId === line.id
+                    return (
+                      <div
+                        key={line.id}
+                        className={`absolute cursor-move ${isSelected ? 'ring-2 ring-amber-500 rounded-lg' : ''}`}
+                        style={{
+                          left: `${line.position.x}%`,
+                          top: `${line.position.y}%`,
+                          width: `${line.position.width}%`,
+                          transform: 'translate(-50%, -50%)',
+                          textAlign: line.position.align as 'left' | 'center' | 'right'
+                        }}
+                        onPointerDown={(e) => startDraggingText(e, line.id)}
+                        tabIndex={0}
+                        onFocus={() => setSelectedTextId(line.id)}
+                        onClick={() => setSelectedTextId(line.id)}
+                        aria-label={t.templateEditor.layout.selectForArrows}
+                      >
+                        <p
+                          style={{ fontFamily: line.font, fontSize: line.fontSize }}
+                          className="text-gray-800"
+                        >
+                          {line.text}
+                        </p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   )
