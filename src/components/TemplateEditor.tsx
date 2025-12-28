@@ -203,8 +203,8 @@ export default function TemplateEditor({
         return null
       }
 
-      const result = await response.json() as { url?: string }
-      return result.url ?? null
+      const body = await response.json() as { url?: string }
+      return body.url ?? null
     } catch (error) {
       console.error('[TemplateEditor] Upload error', error)
       return null
