@@ -312,6 +312,9 @@ export interface Translations {
       alignCenter: string
       alignRight: string
       overlapHint: string
+      arrowKeysHint: string
+      selectForArrows: string
+      activeWithArrows: string
     }
   }
 }
@@ -645,13 +648,16 @@ export const translations: Record<Language, Translations> = {
         positionY: 'מיקום Y (%)',
         width: 'רוחב (%)',
         alignment: 'יישור',
-        alignLeft: 'שמאל',
-        alignCenter: 'מרכז',
-        alignRight: 'ימין',
-        overlapHint: 'אפשר למקם ללא שוליים ולדרוס אלמנטים אחרים'
-      }
+      alignLeft: 'שמאל',
+      alignCenter: 'מרכז',
+      alignRight: 'ימין',
+      overlapHint: 'אפשר למקם ללא שוליים ולדרוס אלמנטים אחרים',
+      arrowKeysHint: 'בחרו שורת טקסט ואז הזיזו אותה עם החיצים במקלדת (Shift לתנועה מהירה).',
+      selectForArrows: 'בחירה להזזה עם חיצים',
+      activeWithArrows: 'נבחר להזזה עם חיצים'
     }
-  },
+  }
+},
   en: {
     header: {
       title: 'Designed Invitations',
@@ -980,13 +986,16 @@ export const translations: Record<Language, Translations> = {
         positionY: 'Position Y (%)',
         width: 'Width (%)',
         alignment: 'Alignment',
-        alignLeft: 'Align left',
-        alignCenter: 'Align center',
-        alignRight: 'Align right',
-        overlapHint: 'You can position items edge-to-edge and even stack them'
-      }
+      alignLeft: 'Align left',
+      alignCenter: 'Align center',
+      alignRight: 'Align right',
+      overlapHint: 'You can position items edge-to-edge and even stack them',
+      arrowKeysHint: 'Select a text line to move it with the keyboard arrows (hold Shift to move faster).',
+      selectForArrows: 'Select for arrow control',
+      activeWithArrows: 'Arrow control active'
     }
   }
+}
 }
 
 export function getTranslation(lang: Language): Translations {
