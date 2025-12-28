@@ -481,7 +481,7 @@ export default function Designer({
     setAnimationKey(prev => prev + 1)
   }
 
-  const renderBackgroundLayer = (background?: BackgroundOption, baseOpacity = 0.3) => {
+  const renderBackgroundLayer = (background?: BackgroundOption, baseOpacity = 1) => {
     if (!background) return null
 
     if (background.type === 'video' && background.videoUrl) {
@@ -505,7 +505,7 @@ export default function Designer({
         className="absolute inset-0 bg-cover bg-center"
         style={{
           backgroundImage: `url(${image})`,
-          opacity: Math.max(baseOpacity - (index * 0.05), 0.1),
+          opacity: baseOpacity,
         }}
       />
     ))
@@ -969,7 +969,7 @@ export default function Designer({
               <div className="bg-gradient-to-br from-gray-100 to-amber-50 rounded-2xl p-8">
               <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">תצוגה מקדימה</h3>
               <div className="relative min-h-[500px] flex items-center justify-center rounded-xl overflow-hidden">
-                {renderBackgroundLayer(selectedBackgroundOption, 0.2)}
+                {renderBackgroundLayer(selectedBackgroundOption)}
                 <div className="bg-white rounded-2xl p-8 shadow-2xl text-center relative z-10 max-w-md">
                   {renderInvitationContent()}
                 </div>
@@ -1294,8 +1294,7 @@ export default function Designer({
           <div className="bg-gradient-to-br from-gray-100 to-amber-50 rounded-2xl p-8">
             <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">תצוגה מקדימה סופית</h3>
             <div className="relative min-h-[600px] w-full flex items-center justify-center rounded-xl overflow-hidden">
-              {renderBackgroundLayer(activeBackgroundOption, 0.28)}
-              {templateMode && <div className="absolute inset-0 bg-white/70" />}
+              {renderBackgroundLayer(activeBackgroundOption)}
               <div
                 key={animationKey}
                 className={`bg-white/90 backdrop-blur-sm rounded-2xl p-10 md:p-12 shadow-2xl text-center relative z-10 w-full max-w-5xl ${animations.find(a => a.id === selectedAnimation)?.class}`}
@@ -1304,8 +1303,7 @@ export default function Designer({
                   <div className="relative w-full" style={{ minHeight: '540px' }}>
                     {selectedTemplateBackground && (
                       <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                        {renderBackgroundLayer(selectedTemplateBackground, 0.24)}
-                        <div className="absolute inset-0 bg-white/65" />
+                        {renderBackgroundLayer(selectedTemplateBackground)}
                       </div>
                     )}
                     <div className="relative w-full h-full min-h-[500px]">
