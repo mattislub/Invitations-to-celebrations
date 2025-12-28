@@ -311,6 +311,11 @@ export interface Translations {
       selectForArrows: string
       activeWithArrows: string
     }
+    actions: {
+      saveTemplate: string
+      saveTemplateSuccess: string
+      saveTemplateHelper: string
+    }
   }
 }
 
@@ -645,6 +650,11 @@ export const translations: Record<Language, Translations> = {
       arrowKeysHint: 'בחרו שורת טקסט ואז הזיזו אותה עם החיצים במקלדת (Shift לתנועה מהירה).',
       selectForArrows: 'בחירה להזזה עם חיצים',
       activeWithArrows: 'נבחר להזזה עם חיצים'
+    },
+    actions: {
+      saveTemplate: 'שמירת תבנית',
+      saveTemplateSuccess: 'התבנית נשמרה. לחצו "שמירה" בלוח הניהול כדי לסנכרן לשרת.',
+      saveTemplateHelper: 'שמרו את פריסת השדות, הטקסטים והרקע לפני סנכרון לשרת'
     }
   }
 },
@@ -978,6 +988,11 @@ export const translations: Record<Language, Translations> = {
       arrowKeysHint: 'Select a text line to move it with the keyboard arrows (hold Shift to move faster).',
       selectForArrows: 'Select for arrow control',
       activeWithArrows: 'Arrow control active'
+    },
+    actions: {
+      saveTemplate: 'Save Template',
+      saveTemplateSuccess: 'Template saved. Click "Save" in the admin panel to sync to the server.',
+      saveTemplateHelper: 'Store the fields, text layout, and background before syncing to the server'
     }
   }
 }

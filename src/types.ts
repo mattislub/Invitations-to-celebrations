@@ -69,3 +69,39 @@ export interface InvitationFieldLayout {
   fields: PositionedField[]
   notes?: string
 }
+
+export interface TemplateField {
+  id: string
+  label: string
+  type: InvitationFieldType
+  required: boolean
+  position: {
+    x: number
+    y: number
+    width: number
+    align: 'left' | 'center' | 'right'
+  }
+}
+
+export interface TemplateTextLine {
+  id: string
+  text: string
+  font: string
+  fontSize: number
+  position: {
+    x: number
+    y: number
+    width: number
+    align: 'left' | 'center' | 'right'
+  }
+}
+
+export interface InvitationTemplate {
+  fields: TemplateField[]
+  textLines: TemplateTextLine[]
+  backgroundId?: string
+  dimensions: {
+    width: number
+    height: number
+  }
+}
