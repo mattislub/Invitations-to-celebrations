@@ -264,7 +264,19 @@ export interface Translations {
     previewFieldHint: string
     font: string
     fontSize: string
-    backgroundUrl: string
+    backgrounds: {
+      library: string
+      libraryHelper: string
+      uploadTitle: string
+      uploadHelper: string
+      uploadImage: string
+      uploadVideo: string
+      uploadImageHint: string
+      uploadVideoHint: string
+      imageBadge: string
+      videoBadge: string
+      defaultLabel: string
+    }
     preview: string
     dimensions: {
       title: string
@@ -573,7 +585,19 @@ export const translations: Record<Language, Translations> = {
       previewFieldHint: 'גררו שדה כדי למקם אותו מחדש בתצוגה',
       font: 'פונט',
       fontSize: 'גודל פונט',
-      backgroundUrl: 'קישור לרקע',
+      backgrounds: {
+        library: 'בחרו רקע קיים',
+        libraryHelper: 'בחרו מספריית הרקעים במערכת או מהרקעים שהעליתם',
+        uploadTitle: 'העלאת רקע חדש',
+        uploadHelper: 'הוסיפו תמונת רקע או סרטון רקע לשימוש מיידי בתבנית',
+        uploadImage: 'העלאת תמונת רקע',
+        uploadVideo: 'העלאת רקע וידאו',
+        uploadImageHint: 'תמונות באיכות גבוהה בפורמט JPG/PNG',
+        uploadVideoHint: 'סרטוני MP4/WebM קצרים בלולאה',
+        imageBadge: 'תמונה',
+        videoBadge: 'וידאו',
+        defaultLabel: 'רקע ברירת מחדל'
+      },
       preview: 'תצוגה מקדימה',
       dimensions: {
         title: 'מידות התבנית',
@@ -880,7 +904,19 @@ export const translations: Record<Language, Translations> = {
       previewFieldHint: 'Drag fields to reposition them as text in the preview',
       font: 'Font',
       fontSize: 'Font Size',
-      backgroundUrl: 'Background URL',
+      backgrounds: {
+        library: 'Choose an existing background',
+        libraryHelper: 'Use backgrounds from the system or ones you uploaded',
+        uploadTitle: 'Upload a new background',
+        uploadHelper: 'Add an image or video background to use instantly',
+        uploadImage: 'Upload image background',
+        uploadVideo: 'Upload video background',
+        uploadImageHint: 'Prefer high-quality JPG/PNG files',
+        uploadVideoHint: 'Use short looping MP4/WebM clips',
+        imageBadge: 'Image',
+        videoBadge: 'Video',
+        defaultLabel: 'Default background'
+      },
       preview: 'Preview',
       dimensions: {
         title: 'Template Size',

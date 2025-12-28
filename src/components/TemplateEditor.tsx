@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
-import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, Image as ImageIcon, X } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, Image as ImageIcon, X, Upload, Film } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
+import { AdminBackground, VideoBackground } from '../types'
 
 type FieldType = 'text' | 'date' | 'number'
 
@@ -26,9 +27,28 @@ interface FontOption {
 
 interface TemplateEditorProps {
   language: Language
+  backgrounds: AdminBackground[]
+  onBackgroundsChange: (backgrounds: AdminBackground[]) => void
+  videoBackgrounds: VideoBackground[]
+  onVideoBackgroundsChange: (backgrounds: VideoBackground[]) => void
 }
 
-export default function TemplateEditor({ language }: TemplateEditorProps) {
+type BackgroundOption = {
+  id: string
+  name: string
+  type: 'image' | 'video'
+  preview?: string
+  videoUrl?: string
+  isDefault?: boolean
+}
+
+export default function TemplateEditor({
+  language,
+  backgrounds,
+  onBackgroundsChange,
+  videoBackgrounds,
+  onVideoBackgroundsChange
+}: TemplateEditorProps) {
   const t = getTranslation(language)
   type PanelKey = 'background' | 'fields' | 'text'
 
@@ -45,12 +65,116 @@ export default function TemplateEditor({ language }: TemplateEditorProps) {
   const [newTextLine, setNewTextLine] = useState('')
   const [selectedFont, setSelectedFont] = useState<string>('Assistant, sans-serif')
   const [selectedFontSize, setSelectedFontSize] = useState<number>(18)
-  const [backgroundUrl, setBackgroundUrl] = useState<string>('https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg?auto=compress&cs=tinysrgb&w=800')
   const [templateWidth, setTemplateWidth] = useState<number>(1080)
   const [templateHeight, setTemplateHeight] = useState<number>(1920)
   const [draggingFieldId, setDraggingFieldId] = useState<string | null>(null)
   const [draggingTextId, setDraggingTextId] = useState<string | null>(null)
   const [activePanel, setActivePanel] = useState<PanelKey | null>('background')
+  const [selectedBackgroundId, setSelectedBackgroundId] = useState<string>('')
+
+  const defaultBackground: AdminBackground = useMemo(
+    () => ({
+      id: 'default-background',
+      name: language === 'he' ? 'רקע ברירת מחדל' : 'Default Background',
+      preview:
+        'https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg?auto=compress&cs=tinysrgb&w=800'
+    }),
+    [language]
+  )
+
+  const backgroundOptions: BackgroundOption[] = useMemo(() => {
+    const uploadedBackgrounds = backgrounds.map<BackgroundOption>((bg) => ({
+      id: `image-${bg.id}`,
+      name: bg.name,
+      type: 'image',
+      preview: bg.preview
+    }))
+
+    const uploadedVideos = videoBackgrounds.map<BackgroundOption>((bg) => ({
+      id: `video-${bg.id}`,
+      name: bg.name,
+      type: 'video',
+      preview: bg.previewImage,
+      videoUrl: bg.url
+    }))
+
+    return [
+      { id: `image-${defaultBackground.id}`, name: defaultBackground.name, type: 'image', preview: defaultBackground.preview, isDefault: true },
+      ...uploadedBackgrounds,
+      ...uploadedVideos
+    ]
+  }, [backgrounds, defaultBackground, videoBackgrounds])
+
+  useEffect(() => {
+    if (backgroundOptions.length === 0) return
+    setSelectedBackgroundId((current) => {
+      const exists = backgroundOptions.some((option) => option.id === current)
+      return exists ? current : backgroundOptions[0].id
+    })
+  }, [backgroundOptions])
+
+  const selectedBackground = useMemo(
+    () => backgroundOptions.find((option) => option.id === selectedBackgroundId),
+    [backgroundOptions, selectedBackgroundId]
+  )
+
+  const renderBackgroundMedia = (option?: BackgroundOption, baseOpacity = 1) => {
+    if (!option) return null
+
+    if (option.type === 'video' && option.videoUrl) {
+      return (
+        <video
+          key={option.id}
+          className="absolute inset-0 w-full h-full object-cover"
+          src={option.videoUrl}
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={{ opacity: baseOpacity }}
+        />
+      )
+    }
+
+    if (option.preview) {
+      return (
+        <div
+          className="absolute inset-0 bg-center bg-cover"
+          style={{ backgroundImage: `url(${option.preview})`, opacity: baseOpacity }}
+        />
+      )
+    }
+
+    return <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-orange-100" style={{ opacity: baseOpacity }} />
+  }
+
+  const handleImageBackgroundUpload = async (file: File | null) => {
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const preview = reader.result as string
+      const newBackground: AdminBackground = {
+        id: crypto.randomUUID(),
+        name: file.name,
+        preview
+      }
+      onBackgroundsChange([...backgrounds, newBackground])
+      setSelectedBackgroundId(`image-${newBackground.id}`)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleVideoBackgroundUpload = async (file: File | null) => {
+    if (!file) return
+    const videoUrl = URL.createObjectURL(file)
+    const newVideo: VideoBackground = {
+      id: crypto.randomUUID(),
+      name: file.name,
+      url: videoUrl
+    }
+    onVideoBackgroundsChange([...videoBackgrounds, newVideo])
+    setSelectedBackgroundId(`video-${newVideo.id}`)
+  }
 
   const fontOptions: FontOption[] = useMemo(
     () => [
@@ -140,13 +264,82 @@ export default function TemplateEditor({ language }: TemplateEditorProps) {
       case 'background':
         return (
           <div className="space-y-6">
-            <input
-              type="text"
-              value={backgroundUrl}
-              onChange={(e) => setBackgroundUrl(e.target.value)}
-              placeholder={t.templateEditor.backgroundUrl}
-              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-right"
-            />
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-lg font-semibold text-gray-800">{t.templateEditor.backgrounds.library}</h4>
+                <p className="text-sm text-gray-500">{t.templateEditor.backgrounds.libraryHelper}</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {backgroundOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => setSelectedBackgroundId(option.id)}
+                    className={`text-right rounded-xl border overflow-hidden transition-all ${
+                      selectedBackgroundId === option.id
+                        ? 'border-amber-400 shadow-lg shadow-amber-100'
+                        : 'border-gray-200 hover:border-amber-200 hover:shadow'
+                    }`}
+                  >
+                    <div className="relative h-24">
+                      {renderBackgroundMedia(option)}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                      <div className="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-semibold bg-white/80 text-gray-700">
+                        {option.type === 'video'
+                          ? t.templateEditor.backgrounds.videoBadge
+                          : t.templateEditor.backgrounds.imageBadge}
+                      </div>
+                      {selectedBackgroundId === option.id && (
+                        <div className="absolute inset-0 border-2 border-amber-400 rounded-xl pointer-events-none" />
+                      )}
+                    </div>
+                    <div className="px-3 py-2">
+                      <p className="font-semibold text-gray-800 line-clamp-1">{option.name}</p>
+                      {option.isDefault && (
+                        <p className="text-xs text-gray-500">{t.templateEditor.backgrounds.defaultLabel}</p>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-lg font-semibold text-gray-800">{t.templateEditor.backgrounds.uploadTitle}</h4>
+              <p className="text-sm text-gray-500">{t.templateEditor.backgrounds.uploadHelper}</p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <label className="flex items-center gap-3 border border-dashed border-gray-300 rounded-xl p-4 cursor-pointer hover:border-amber-300 transition">
+                  <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <Upload className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800">{t.templateEditor.backgrounds.uploadImage}</p>
+                    <p className="text-xs text-gray-500">{t.templateEditor.backgrounds.uploadImageHint}</p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageBackgroundUpload(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+                <label className="flex items-center gap-3 border border-dashed border-gray-300 rounded-xl p-4 cursor-pointer hover:border-amber-300 transition">
+                  <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <Film className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-800">{t.templateEditor.backgrounds.uploadVideo}</p>
+                    <p className="text-xs text-gray-500">{t.templateEditor.backgrounds.uploadVideoHint}</p>
+                  </div>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(e) => handleVideoBackgroundUpload(e.target.files?.[0] ?? null)}
+                  />
+                </label>
+              </div>
+            </div>
+
             <div>
               <h4 className="text-lg font-semibold text-gray-800 mb-3">{t.templateEditor.dimensions.title}</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -189,10 +382,20 @@ export default function TemplateEditor({ language }: TemplateEditorProps) {
               </div>
             </div>
             <div className="rounded-xl overflow-hidden border border-gray-200">
-              <div
-                className="h-48 bg-center bg-cover"
-                style={{ backgroundImage: `url(${backgroundUrl || ''})` }}
-              />
+              <div className="relative h-48 bg-gray-100">
+                {renderBackgroundMedia(selectedBackground)}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                <div className="relative z-10 p-4 flex items-end h-full">
+                  <div>
+                    <p className="text-white font-semibold">{selectedBackground?.name}</p>
+                    <p className="text-sm text-white/80">
+                      {selectedBackground?.type === 'video'
+                        ? t.templateEditor.backgrounds.videoBadge
+                        : t.templateEditor.backgrounds.imageBadge}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )
@@ -387,14 +590,14 @@ export default function TemplateEditor({ language }: TemplateEditorProps) {
           </div>
           <div className="rounded-2xl overflow-hidden border border-gray-200 bg-gray-100">
             <div
-              className="w-full bg-center bg-cover transition-all duration-300"
+              className="relative w-full transition-all duration-300"
               style={{
-                backgroundImage: `url(${backgroundUrl || ''})`,
                 aspectRatio: `${templateWidth}/${templateHeight}`,
                 minHeight: '70vh'
               }}
             >
-              <div className="h-full bg-white/85 backdrop-blur-sm rounded-xl p-6 sm:p-10 space-y-4 overflow-auto">
+              {renderBackgroundMedia(selectedBackground, 0.95)}
+              <div className="absolute inset-0 bg-white/85 backdrop-blur-sm rounded-xl p-6 sm:p-10 space-y-4 overflow-auto">
                 {textLines.map((line) => (
                   <p
                     key={line.id}
