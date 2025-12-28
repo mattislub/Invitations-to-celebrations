@@ -81,6 +81,19 @@ interface SyncPayload {
 
 type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'disabled'
 
+const mergeBackgrounds = (existing: AdminBackground[], uploads: AdminBackground[]) => {
+  const seen = new Set(existing.map((bg) => bg.file || bg.preview || bg.id))
+
+  const uniqueUploads = uploads.filter((bg) => {
+    const key = bg.file || bg.preview || bg.id
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+
+  return [...existing, ...uniqueUploads]
+}
+
 export default function Admin({
   language,
   customTypes,
@@ -327,14 +340,30 @@ export default function Admin({
       setSyncStatus('syncing')
       try {
         console.info('[Admin] Fetching admin state from server...')
-        const response = await fetch(`${apiBaseUrl}/admin/state`)
-        if (!response.ok) {
+        const [stateResponse, backgroundsResponse] = await Promise.all([
+          fetch(`${apiBaseUrl}/admin/state`),
+          fetch(`${apiBaseUrl}/admin/backgrounds`)
+        ])
+
+        if (!stateResponse.ok) {
           throw new Error('Failed to fetch admin state')
         }
 
-        const payload = await response.json() as Partial<SyncPayload>
+        const payload = await stateResponse.json() as Partial<SyncPayload>
+
+        let uploadedBackgrounds: AdminBackground[] = []
+        if (backgroundsResponse.ok) {
+          const uploadsPayload = await backgroundsResponse.json() as { backgrounds?: AdminBackground[] }
+          uploadedBackgrounds = uploadsPayload.backgrounds ?? []
+        }
+
         if (payload.fonts) setFonts(payload.fonts)
-        if (payload.backgrounds) onBackgroundsChange(payload.backgrounds)
+        if (payload.backgrounds) {
+          const mergedBackgrounds = mergeBackgrounds(payload.backgrounds, uploadedBackgrounds)
+          onBackgroundsChange(mergedBackgrounds)
+        } else if (uploadedBackgrounds.length > 0) {
+          onBackgroundsChange(mergeBackgrounds([], uploadedBackgrounds))
+        }
         if (payload.customTypes) onCustomTypesChange(payload.customTypes)
         if (payload.invitations) onInvitationsChange(payload.invitations)
         if (payload.videoBackgrounds) onVideoBackgroundsChange(payload.videoBackgrounds)

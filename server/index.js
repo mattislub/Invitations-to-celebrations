@@ -1,5 +1,5 @@
 import { createServer } from 'http'
-import { readFile, writeFile, mkdir, stat } from 'fs/promises'
+import { readFile, writeFile, mkdir, stat, readdir } from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -94,6 +94,35 @@ const saveUpload = async (name, type, dataUrl, hostInfo) => {
   return `${protocol}://${host}/api/uploads/${type}/${filename}`
 }
 
+const listBackgroundUploads = async (hostInfo) => {
+  const protocol = hostInfo.protocol ?? 'http'
+  const host = hostInfo.host ?? 'localhost'
+
+  const folder = path.join(UPLOADS_DIR, 'background')
+  await mkdir(folder, { recursive: true })
+
+  try {
+    const entries = await readdir(folder, { withFileTypes: true })
+    return entries
+      .filter((entry) => entry.isFile())
+      .map((entry) => {
+        const baseName = entry.name.replace(/\.[^.]+$/, '')
+        const displayName = baseName.replace(/^\d+-/, '') || baseName
+        const url = `${protocol}://${host}/api/uploads/background/${entry.name}`
+
+        return {
+          id: `upload-${entry.name}`,
+          name: displayName,
+          preview: url,
+          file: entry.name
+        }
+      })
+  } catch (error) {
+    console.error('[Server] Failed to list background uploads', error)
+    return []
+  }
+}
+
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', 'http://localhost')
   const { pathname } = url
@@ -140,6 +169,19 @@ const server = createServer(async (req, res) => {
       console.error('[Server] Failed to save admin state', error)
       sendJson(res, 400, { error: error.message })
     }
+    return
+  }
+
+  if (pathname === '/api/admin/backgrounds' && req.method === 'GET') {
+    const forwardedProto = req.headers['x-forwarded-proto']
+    const protocol = Array.isArray(forwardedProto) ? forwardedProto[0] : forwardedProto || 'http'
+
+    const backgrounds = await listBackgroundUploads({
+      protocol,
+      host: req.headers.host
+    })
+
+    sendJson(res, 200, { backgrounds })
     return
   }
 
