@@ -305,6 +305,15 @@ export interface Translations {
       centimeters: string
       inches: string
       unitHelper: string
+      presetsTitle: string
+      presetsHelper: string
+      presets: {
+        mobile: string
+        square: string
+        a5: string
+        a4: string
+        letter: string
+      }
     }
     placeholders: {
       fieldLabel: string
@@ -666,7 +675,16 @@ export const translations: Record<Language, Translations> = {
         pixels: 'פיקסלים',
         centimeters: 'סנטימטרים',
         inches: 'אינץ׳',
-        unitHelper: 'המרה אוטומטית בין פיקסלים, ס״מ ואינץ׳'
+        unitHelper: 'המרה אוטומטית בין פיקסלים, ס״מ ואינץ׳',
+        presetsTitle: 'גדלים קבועים',
+        presetsHelper: 'בחרו גודל סטנדרטי (לא באחוזים) כמו A4, A5, מסך או ריבוע',
+        presets: {
+          mobile: 'מסך סלולר',
+          square: 'מרובע',
+          a5: 'A5 (אנכי)',
+          a4: 'A4 (אנכי)',
+          letter: 'US Letter'
+        }
       },
       placeholders: {
         fieldLabel: 'כותרת שדה (למשל: שם מלא)',
@@ -1026,7 +1044,16 @@ export const translations: Record<Language, Translations> = {
         pixels: 'Pixels',
         centimeters: 'Centimeters',
         inches: 'Inches',
-        unitHelper: 'Auto-converts between px, cm, and in'
+        unitHelper: 'Auto-converts between px, cm, and in',
+        presetsTitle: 'Fixed Sizes',
+        presetsHelper: 'Pick a standard size (not percentage-based) like A4, A5, phone, or square',
+        presets: {
+          mobile: 'Mobile Screen',
+          square: 'Square',
+          a5: 'A5 (Portrait)',
+          a4: 'A4 (Portrait)',
+          letter: 'US Letter'
+        }
       },
       placeholders: {
         fieldLabel: 'Field label (e.g. Full Name)',
