@@ -235,6 +235,12 @@ export interface Translations {
     fontSize: string
     backgroundUrl: string
     preview: string
+    dimensions: {
+      title: string
+      width: string
+      height: string
+      unit: string
+    }
     placeholders: {
       fieldLabel: string
       textLine: string
@@ -507,6 +513,12 @@ export const translations: Record<Language, Translations> = {
       fontSize: 'גודל פונט',
       backgroundUrl: 'קישור לרקע',
       preview: 'תצוגה מקדימה',
+      dimensions: {
+        title: 'מידות התבנית',
+        width: 'רוחב',
+        height: 'גובה',
+        unit: 'פיקסלים'
+      },
       placeholders: {
         fieldLabel: 'כותרת שדה (למשל: שם מלא)',
         textLine: 'הקלידו שורת טקסט'
@@ -777,6 +789,12 @@ export const translations: Record<Language, Translations> = {
       fontSize: 'Font Size',
       backgroundUrl: 'Background URL',
       preview: 'Preview',
+      dimensions: {
+        title: 'Template Size',
+        width: 'Width',
+        height: 'Height',
+        unit: 'pixels'
+      },
       placeholders: {
         fieldLabel: 'Field label (e.g. Full Name)',
         textLine: 'Enter a text line'
