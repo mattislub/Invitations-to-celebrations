@@ -1054,7 +1054,7 @@ export default function TemplateEditor({
                 value={newTextLine}
                 onChange={(e) => setNewTextLine(e.target.value)}
                 placeholder={t.templateEditor.placeholders.textLine}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-right"
+                className="w-full rounded-lg px-4 py-3 text-right bg-white shadow-inner focus:outline-none focus:ring-2 focus:ring-amber-400"
               />
               <div className="flex flex-wrap gap-3 items-center">
                 <select
