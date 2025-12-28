@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, X, Upload, Film } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { Plus, Type as TypeIcon, List, GripVertical, AlignLeft, AlignCenter, AlignRight, Image as ImageIcon, X, Upload, Film, Move } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 import { AdminBackground, VideoBackground } from '../types'
 
@@ -108,6 +108,7 @@ export default function TemplateEditor({
   const [draggingElement, setDraggingElement] = useState<{ type: 'field' | 'text'; id: string } | null>(null)
   const [activePanel, setActivePanel] = useState<PanelKey | null>('background')
   const [selectedBackgroundId, setSelectedBackgroundId] = useState<string>('')
+  const [selectedTextId, setSelectedTextId] = useState<string | null>(null)
   const previewRef = useRef<HTMLDivElement | null>(null)
 
   const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim()
@@ -142,6 +143,13 @@ export default function TemplateEditor({
       return exists ? current : backgroundOptions[0].id
     })
   }, [backgroundOptions])
+
+  useEffect(() => {
+    if (!selectedTextId) return
+    setSelectedTextId((current) =>
+      textLines.some((line) => line.id === current) ? current : null
+    )
+  }, [selectedTextId, textLines])
 
   const selectedBackground = useMemo(
     () => backgroundOptions.find((option) => option.id === selectedBackgroundId),
@@ -404,9 +412,72 @@ export default function TemplateEditor({
     }
   }
 
+  const moveSelectedTextBy = useCallback(
+    (deltaX: number, deltaY: number) => {
+      if (!selectedTextId) return
+      setTextLines((prev) =>
+        prev.map((line) =>
+          line.id === selectedTextId
+            ? {
+                ...line,
+                position: {
+                  ...line.position,
+                  x: clampPercentage(line.position.x + deltaX),
+                  y: clampPercentage(line.position.y + deltaY)
+                }
+              }
+            : line
+        )
+      )
+    },
+    [selectedTextId]
+  )
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!selectedTextId) return
+      const target = event.target as HTMLElement | null
+      if (
+        target &&
+        (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) ||
+          target.getAttribute('contenteditable') === 'true')
+      ) {
+        return
+      }
+
+      const step = event.shiftKey ? 2 : 1
+      switch (event.key) {
+        case 'ArrowUp':
+          event.preventDefault()
+          moveSelectedTextBy(0, -step)
+          break
+        case 'ArrowDown':
+          event.preventDefault()
+          moveSelectedTextBy(0, step)
+          break
+        case 'ArrowLeft':
+          event.preventDefault()
+          moveSelectedTextBy(-step, 0)
+          break
+        case 'ArrowRight':
+          event.preventDefault()
+          moveSelectedTextBy(step, 0)
+          break
+        default:
+          break
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [moveSelectedTextBy, selectedTextId])
+
   const startDraggingElement = (event: ReactPointerEvent, type: 'field' | 'text', id: string) => {
     event.preventDefault()
     setDraggingElement({ type, id })
+    if (type === 'text') {
+      setSelectedTextId(id)
+    }
     if (!previewRef.current) return
     const rect = previewRef.current.getBoundingClientRect()
     const x = ((event.clientX - rect.left) / rect.width) * 100
@@ -722,117 +793,132 @@ export default function TemplateEditor({
       case 'text':
         return (
           <div className="space-y-3">
-            {textLines.map((line) => (
-              <div
-                key={line.id}
-                className="flex items-center gap-3 bg-gray-50 rounded-xl p-4 border border-gray-200"
-                draggable
-                onDragStart={() => setDraggingTextId(line.id)}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => handleTextDrop(line.id)}
-              >
-                <GripVertical className="w-5 h-5 text-gray-400 cursor-grab" />
-                <div className="flex-1">
-                  <input
-                    value={line.text}
-                    onChange={(e) => updateTextLine(line.id, 'text', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2 text-right"
-                  />
-                <div className="flex flex-wrap gap-3 items-center">
-                  <select
-                    value={line.font}
-                    onChange={(e) => updateTextLine(line.id, 'font', e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                    >
-                      {fontOptions.map((font) => (
-                        <option key={font.id} value={font.css}>
-                          {font.label}
-                        </option>
-                      ))}
-                    </select>
+            {textLines.map((line) => {
+              const isSelected = selectedTextId === line.id
+              return (
+                <div
+                  key={line.id}
+                  className="flex items-center gap-3 bg-gray-50 rounded-xl p-4 border border-gray-200"
+                  draggable
+                  onDragStart={() => setDraggingTextId(line.id)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => handleTextDrop(line.id)}
+                >
+                  <GripVertical className="w-5 h-5 text-gray-400 cursor-grab" />
+                  <div className="flex-1">
                     <input
-                      type="number"
-                      min={12}
-                      max={64}
-                      value={line.fontSize}
-                      onChange={(e) => updateTextLine(line.id, 'fontSize', Number(e.target.value))}
-                      className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      value={line.text}
+                      onChange={(e) => updateTextLine(line.id, 'text', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 mb-2 text-right"
                     />
-                    <button
-                      onClick={() => removeTextLine(line.id)}
-                      className="text-red-500 text-sm hover:underline"
-                    >
-                      {t.admin.buttons.delete}
-                    </button>
-                  </div>
-                  <div className="grid sm:grid-cols-3 gap-3 mt-3">
-                    <label className="text-xs text-gray-600 flex flex-col gap-1">
-                      <span>{t.templateEditor.layout.positionX}</span>
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={line.position.x}
-                        onChange={(e) => updateTextPosition(line.id, 'x', Number(e.target.value))}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                      />
-                    </label>
-                    <label className="text-xs text-gray-600 flex flex-col gap-1">
-                      <span>{t.templateEditor.layout.positionY}</span>
-                      <input
-                        type="number"
-                        min={0}
-                        max={100}
-                        value={line.position.y}
-                        onChange={(e) => updateTextPosition(line.id, 'y', Number(e.target.value))}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                      />
-                    </label>
-                    <label className="text-xs text-gray-600 flex flex-col gap-1">
-                      <span>{t.templateEditor.layout.width}</span>
-                      <input
-                        type="number"
-                        min={10}
-                        max={100}
-                        value={line.position.width}
-                        onChange={(e) => updateTextPosition(line.id, 'width', Number(e.target.value))}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                      />
-                    </label>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <span className="text-xs font-semibold text-gray-700">{t.templateEditor.layout.alignment}</span>
-                    <div className="flex rounded-lg overflow-hidden border border-gray-300">
-                      <button
-                        onClick={() => updateTextAlignment(line.id, 'left')}
-                        className={`px-3 py-2 ${line.position.align === 'left' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
-                        title={t.templateEditor.layout.alignLeft}
-                        type="button"
+                    <div className="flex flex-wrap gap-3 items-center">
+                      <select
+                        value={line.font}
+                        onChange={(e) => updateTextLine(line.id, 'font', e.target.value)}
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
                       >
-                        <AlignLeft className="w-4 h-4" />
+                        {fontOptions.map((font) => (
+                          <option key={font.id} value={font.css}>
+                            {font.label}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        min={12}
+                        max={64}
+                        value={line.fontSize}
+                        onChange={(e) => updateTextLine(line.id, 'fontSize', Number(e.target.value))}
+                        className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                      />
+                      <button
+                        onClick={() => setSelectedTextId(line.id)}
+                        className={`inline-flex items-center gap-2 text-sm px-3 py-2 rounded-lg border transition ${isSelected ? 'bg-amber-100 border-amber-300 text-amber-800' : 'border-gray-200 text-gray-700 hover:border-amber-300'}`}
+                        type="button"
+                        aria-pressed={isSelected}
+                      >
+                        <Move className="w-4 h-4" />
+                        {isSelected ? t.templateEditor.layout.activeWithArrows : t.templateEditor.layout.selectForArrows}
                       </button>
                       <button
-                        onClick={() => updateTextAlignment(line.id, 'center')}
-                        className={`px-3 py-2 ${line.position.align === 'center' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
-                        title={t.templateEditor.layout.alignCenter}
-                        type="button"
+                        onClick={() => removeTextLine(line.id)}
+                        className="text-red-500 text-sm hover:underline"
                       >
-                        <AlignCenter className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => updateTextAlignment(line.id, 'right')}
-                        className={`px-3 py-2 ${line.position.align === 'right' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
-                        title={t.templateEditor.layout.alignRight}
-                        type="button"
-                      >
-                        <AlignRight className="w-4 h-4" />
+                        {t.admin.buttons.delete}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500">{t.templateEditor.layout.overlapHint}</p>
+                    <div className="grid sm:grid-cols-3 gap-3 mt-3">
+                      <label className="text-xs text-gray-600 flex flex-col gap-1">
+                        <span>{t.templateEditor.layout.positionX}</span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={line.position.x}
+                          onChange={(e) => updateTextPosition(line.id, 'x', Number(e.target.value))}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </label>
+                      <label className="text-xs text-gray-600 flex flex-col gap-1">
+                        <span>{t.templateEditor.layout.positionY}</span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          value={line.position.y}
+                          onChange={(e) => updateTextPosition(line.id, 'y', Number(e.target.value))}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </label>
+                      <label className="text-xs text-gray-600 flex flex-col gap-1">
+                        <span>{t.templateEditor.layout.width}</span>
+                        <input
+                          type="number"
+                          min={10}
+                          max={100}
+                          value={line.position.width}
+                          onChange={(e) => updateTextPosition(line.id, 'width', Number(e.target.value))}
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </label>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <span className="text-xs font-semibold text-gray-700">{t.templateEditor.layout.alignment}</span>
+                      <div className="flex rounded-lg overflow-hidden border border-gray-300">
+                        <button
+                          onClick={() => updateTextAlignment(line.id, 'left')}
+                          className={`px-3 py-2 ${line.position.align === 'left' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
+                          title={t.templateEditor.layout.alignLeft}
+                          type="button"
+                        >
+                          <AlignLeft className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => updateTextAlignment(line.id, 'center')}
+                          className={`px-3 py-2 ${line.position.align === 'center' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
+                          title={t.templateEditor.layout.alignCenter}
+                          type="button"
+                        >
+                          <AlignCenter className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => updateTextAlignment(line.id, 'right')}
+                          className={`px-3 py-2 ${line.position.align === 'right' ? 'bg-amber-500 text-white' : 'bg-white text-gray-700'}`}
+                          title={t.templateEditor.layout.alignRight}
+                          type="button"
+                        >
+                          <AlignRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500">{t.templateEditor.layout.overlapHint}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <p className="text-xs text-gray-600">{t.templateEditor.layout.arrowKeysHint}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
 
             <div className="pt-3 space-y-3">
               <textarea
@@ -917,27 +1003,34 @@ export default function TemplateEditor({
                 onPointerUp={handleCanvasPointerUp}
                 onPointerLeave={handleCanvasPointerUp}
               >
-                {textLines.map((line) => (
-                  <div
-                    key={line.id}
-                    className="absolute cursor-move"
-                    style={{
-                      left: `${line.position.x}%`,
-                      top: `${line.position.y}%`,
-                      width: `${line.position.width}%`,
-                      transform: 'translate(-50%, -50%)',
-                      textAlign: line.position.align as 'left' | 'center' | 'right'
-                    }}
-                    onPointerDown={(e) => startDraggingElement(e, 'text', line.id)}
-                  >
-                    <p
-                      style={{ fontFamily: line.font, fontSize: line.fontSize }}
-                      className="text-gray-800"
+                {textLines.map((line) => {
+                  const isSelected = selectedTextId === line.id
+                  return (
+                    <div
+                      key={line.id}
+                      className={`absolute cursor-move ${isSelected ? 'ring-2 ring-amber-500 rounded-lg' : ''}`}
+                      style={{
+                        left: `${line.position.x}%`,
+                        top: `${line.position.y}%`,
+                        width: `${line.position.width}%`,
+                        transform: 'translate(-50%, -50%)',
+                        textAlign: line.position.align as 'left' | 'center' | 'right'
+                      }}
+                      onPointerDown={(e) => startDraggingElement(e, 'text', line.id)}
+                      tabIndex={0}
+                      onFocus={() => setSelectedTextId(line.id)}
+                      onClick={() => setSelectedTextId(line.id)}
+                      aria-label={t.templateEditor.layout.selectForArrows}
                     >
-                      {line.text}
-                    </p>
-                  </div>
-                ))}
+                      <p
+                        style={{ fontFamily: line.font, fontSize: line.fontSize }}
+                        className="text-gray-800"
+                      >
+                        {line.text}
+                      </p>
+                    </div>
+                  )
+                })}
                 {fields.map((field) => (
                   <div
                     key={field.id}
