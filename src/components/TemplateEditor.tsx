@@ -3,6 +3,7 @@ import { Plus, List, GripVertical, AlignLeft, AlignCenter, AlignRight, Image as 
 import { Language, getTranslation } from '../translations'
 import { AdminBackground, InvitationTemplate, TemplateTextLine, VideoBackground, SavedInvitationTemplate } from '../types'
 import { fetchWithApiFallback, getApiBaseUrlCandidates } from '../utils/api'
+import { normalizeCategoryKey } from '../utils/categories'
 
 
 
@@ -518,8 +519,9 @@ export default function TemplateEditor({
     ? 'שייכו את התבנית לקטגוריה ולתת קטגוריה כדי להציג ולסנן בקלות.'
     : 'Assign a category and optional subcategory so it can be displayed and filtered easily.'
   const normalizeCategoryLabel = (value?: string) => {
-    if (!value) return language === 'he' ? 'ללא קטגוריה' : 'Uncategorized'
-    const cleaned = value.trim()
+    const normalized = normalizeCategoryKey(value)
+    if (!normalized) return language === 'he' ? 'ללא קטגוריה' : 'Uncategorized'
+    const cleaned = normalized.trim()
     const knownLabels = t.gallery.categories as Record<string, string>
     return knownLabels[cleaned] ?? cleaned.replace(/[-_]/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
   }
@@ -536,13 +538,15 @@ export default function TemplateEditor({
     }
 
     const snapshot: InvitationTemplate = buildTemplateSnapshot()
+    const normalizedCategory = normalizeCategoryKey(templateCategory) ?? ''
+    const normalizedSubCategory = normalizeCategoryKey(templateSubCategory) ?? ''
     const now = new Date().toISOString()
     const targetId = mode === 'createNew' || !selectedSavedId ? crypto.randomUUID() : selectedSavedId
     const nextTemplate: SavedInvitationTemplate = {
       id: targetId,
       name: templateName.trim(),
-      category: templateCategory.trim() || undefined,
-      subCategory: templateSubCategory.trim() || undefined,
+      category: normalizedCategory || undefined,
+      subCategory: normalizedSubCategory || undefined,
       template: snapshot,
       updatedAt: now
     }
@@ -571,8 +575,8 @@ export default function TemplateEditor({
     setTemplateHeight(saved.dimensions?.height ?? DEFAULT_TEMPLATE_HEIGHT)
     setSelectedBackgroundId(saved.backgroundId ?? '')
     setTemplateName(existing.name)
-    setTemplateCategory(existing.category ?? '')
-    setTemplateSubCategory(existing.subCategory ?? '')
+    setTemplateCategory(normalizeCategoryKey(existing.category) ?? '')
+    setTemplateSubCategory(normalizeCategoryKey(existing.subCategory) ?? '')
     setSelectedSavedId(templateId)
   }
 

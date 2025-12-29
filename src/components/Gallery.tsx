@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { Layers, Sparkles } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 import { AdminBackground, Invitation, SavedInvitationTemplate, VideoBackground } from '../types'
+import { normalizeCategoryKey } from '../utils/categories'
 
 interface GalleryProps {
   language: Language
@@ -25,8 +26,9 @@ export default function Gallery({
   const [hoveredTemplate, setHoveredTemplate] = useState<string | null>(null)
 
   const formatCategoryLabel = useCallback((value?: string) => {
-    if (!value) return language === 'he' ? 'ללא קטגוריה' : 'Uncategorized'
-    const cleaned = value.trim()
+    const normalized = normalizeCategoryKey(value)
+    if (!normalized) return language === 'he' ? 'ללא קטגוריה' : 'Uncategorized'
+    const cleaned = normalized.trim()
     const knownLabels = t.gallery.categories as Record<string, string>
     if (knownLabels[cleaned]) return knownLabels[cleaned]
     return cleaned
@@ -43,22 +45,24 @@ export default function Gallery({
     const map = new Map<string, { key: string; label: string; category: string; subCategory?: string }>()
 
     const addEntry = (category?: string, subCategory?: string) => {
-      if (!category) return
-      if (!map.has(category)) {
-        map.set(category, {
-          key: category,
-          label: formatCategoryLabel(category),
-          category
+      const normalizedCategory = normalizeCategoryKey(category)
+      const normalizedSubCategory = normalizeCategoryKey(subCategory)
+      if (!normalizedCategory) return
+      if (!map.has(normalizedCategory)) {
+        map.set(normalizedCategory, {
+          key: normalizedCategory,
+          label: formatCategoryLabel(normalizedCategory),
+          category: normalizedCategory
         })
       }
-      if (subCategory) {
-        const key = `${category}::${subCategory}`
+      if (normalizedSubCategory) {
+        const key = `${normalizedCategory}::${normalizedSubCategory}`
         if (!map.has(key)) {
           map.set(key, {
             key,
-            label: `${formatCategoryLabel(category)} • ${formatCategoryLabel(subCategory)}`,
-            category,
-            subCategory
+            label: `${formatCategoryLabel(normalizedCategory)} • ${formatCategoryLabel(normalizedSubCategory)}`,
+            category: normalizedCategory,
+            subCategory: normalizedSubCategory
           })
         }
       }
@@ -80,12 +84,14 @@ export default function Gallery({
 
   const categoryMatchesSelection = useCallback((category?: string, subCategory?: string) => {
     if (selectedCategory === 'all') return true
-    if (!category) return false
+    const normalizedCategory = normalizeCategoryKey(category)
+    const normalizedSubCategory = normalizeCategoryKey(subCategory) ?? ''
+    if (!normalizedCategory) return false
     const [selectedCategoryKey, selectedSubCategory] = selectedCategory.split('::')
     if (selectedSubCategory) {
-      return category === selectedCategoryKey && (subCategory ?? '') === selectedSubCategory
+      return normalizedCategory === selectedCategoryKey && normalizedSubCategory === selectedSubCategory
     }
-    return category === selectedCategoryKey
+    return normalizedCategory === selectedCategoryKey
   }, [selectedCategory])
 
   const filteredInvitations = invitations.filter((invitation) =>
