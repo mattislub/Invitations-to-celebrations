@@ -35,7 +35,8 @@ export interface Invitation {
   id: string
   titleHe: string
   titleEn: string
-  category: 'wedding' | 'barMitzvah' | 'batMitzvah' | 'birthday' | 'engagement' | 'thankYou'
+  category: string
+  subCategory?: string
   imageUrl: string
   hosts?: string
   eventDate?: string
@@ -109,6 +110,8 @@ export interface InvitationTemplate {
 export interface SavedInvitationTemplate {
   id: string
   name: string
+  category?: string
+  subCategory?: string
   template: InvitationTemplate
   updatedAt?: string
 }

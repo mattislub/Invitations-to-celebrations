@@ -81,6 +81,8 @@ export default function TemplateEditor({
   const [selectedTextId, setSelectedTextId] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState('')
   const [templateName, setTemplateName] = useState('')
+  const [templateCategory, setTemplateCategory] = useState('')
+  const [templateSubCategory, setTemplateSubCategory] = useState('')
   const [selectedSavedId, setSelectedSavedId] = useState<string | null>(null)
   const previewRef = useRef<HTMLDivElement | null>(null)
   const PX_PER_INCH = 96
@@ -126,6 +128,8 @@ export default function TemplateEditor({
     setTemplateHeight(template.dimensions?.height ?? DEFAULT_TEMPLATE_HEIGHT)
     setSelectedBackgroundId(template.backgroundId ?? '')
     setTemplateName((current) => current || (language === 'he' ? 'תבנית חדשה' : 'New Template'))
+    setTemplateCategory((current) => current || '')
+    setTemplateSubCategory((current) => current || '')
   }, [language, template])
 
   useEffect(() => {
@@ -156,6 +160,8 @@ export default function TemplateEditor({
     setTemplateHeight(DEFAULT_TEMPLATE_HEIGHT)
     setSelectedBackgroundId('')
     setTemplateName('')
+    setTemplateCategory('')
+    setTemplateSubCategory('')
     setSelectedSavedId(null)
     setSaveMessage('')
     setActivePanel('background')
@@ -506,6 +512,21 @@ export default function TemplateEditor({
     text: { icon: List, label: t.templateEditor.textLines, helper: t.templateEditor.dragHint }
   }
   const activePanelConfig = panelConfig[activePanel]
+  const categoryLabel = language === 'he' ? 'קטגוריה' : 'Category'
+  const subCategoryLabel = language === 'he' ? 'תת קטגוריה' : 'Subcategory'
+  const categoryHelperText = language === 'he'
+    ? 'שייכו את התבנית לקטגוריה ולתת קטגוריה כדי להציג ולסנן בקלות.'
+    : 'Assign a category and optional subcategory so it can be displayed and filtered easily.'
+  const normalizeCategoryLabel = (value?: string) => {
+    if (!value) return language === 'he' ? 'ללא קטגוריה' : 'Uncategorized'
+    const cleaned = value.trim()
+    const knownLabels = t.gallery.categories as Record<string, string>
+    return knownLabels[cleaned] ?? cleaned.replace(/[-_]/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+  }
+  const formatCategoryDisplay = (category?: string, subCategory?: string) => {
+    const base = normalizeCategoryLabel(category)
+    return subCategory ? `${base} • ${normalizeCategoryLabel(subCategory)}` : base
+  }
 
   const handleSaveTemplate = (mode: 'update' | 'createNew' = 'update') => {
     if (!templateName.trim()) {
@@ -520,6 +541,8 @@ export default function TemplateEditor({
     const nextTemplate: SavedInvitationTemplate = {
       id: targetId,
       name: templateName.trim(),
+      category: templateCategory.trim() || undefined,
+      subCategory: templateSubCategory.trim() || undefined,
       template: snapshot,
       updatedAt: now
     }
@@ -548,6 +571,8 @@ export default function TemplateEditor({
     setTemplateHeight(saved.dimensions?.height ?? DEFAULT_TEMPLATE_HEIGHT)
     setSelectedBackgroundId(saved.backgroundId ?? '')
     setTemplateName(existing.name)
+    setTemplateCategory(existing.category ?? '')
+    setTemplateSubCategory(existing.subCategory ?? '')
     setSelectedSavedId(templateId)
   }
 
@@ -556,6 +581,8 @@ export default function TemplateEditor({
     onSavedTemplatesChange?.(filtered)
     if (selectedSavedId === templateId) {
       setSelectedSavedId(null)
+      setTemplateCategory('')
+      setTemplateSubCategory('')
     }
   }
 
@@ -1063,6 +1090,27 @@ export default function TemplateEditor({
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-right bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
               <p className="text-xs text-gray-500 mt-2">{t.templateEditor.savedTemplates.nameHelper}</p>
+              <div className="grid sm:grid-cols-2 gap-3 mt-4">
+                <label className="text-sm font-semibold text-gray-800 flex flex-col gap-1">
+                  <span>{categoryLabel}</span>
+                  <input
+                    value={templateCategory}
+                    onChange={(e) => setTemplateCategory(e.target.value)}
+                    placeholder={language === 'he' ? 'לדוגמה: בר מצווה' : 'e.g. Bar Mitzvah'}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-right bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </label>
+                <label className="text-sm font-semibold text-gray-800 flex flex-col gap-1">
+                  <span>{subCategoryLabel}</span>
+                  <input
+                    value={templateSubCategory}
+                    onChange={(e) => setTemplateSubCategory(e.target.value)}
+                    placeholder={language === 'he' ? 'לדוגמה: יוקרתי' : 'e.g. Elegant'}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2 text-right bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  />
+                </label>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">{categoryHelperText}</p>
             </div>
 
             <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm space-y-3">
@@ -1088,6 +1136,9 @@ export default function TemplateEditor({
                       </button>
                       {saved.updatedAt && (
                         <p className="text-[11px] text-gray-500">{new Date(saved.updatedAt).toLocaleString()}</p>
+                      )}
+                      {(saved.category || saved.subCategory) && (
+                        <p className="text-[11px] text-amber-700 truncate">{formatCategoryDisplay(saved.category, saved.subCategory)}</p>
                       )}
                     </div>
                     <button

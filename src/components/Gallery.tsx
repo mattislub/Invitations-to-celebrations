@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Layers, Sparkles } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 import { AdminBackground, Invitation, SavedInvitationTemplate, VideoBackground } from '../types'
@@ -24,27 +24,77 @@ export default function Gallery({
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [hoveredTemplate, setHoveredTemplate] = useState<string | null>(null)
 
-  const categories = [
-    { key: 'all', label: t.gallery.categories.all },
-    { key: 'wedding', label: t.gallery.categories.wedding },
-    { key: 'barMitzvah', label: t.gallery.categories.barMitzvah },
-    { key: 'birthday', label: t.gallery.categories.birthday },
-  ]
+  const formatCategoryLabel = useCallback((value?: string) => {
+    if (!value) return language === 'he' ? 'ללא קטגוריה' : 'Uncategorized'
+    const cleaned = value.trim()
+    const knownLabels = t.gallery.categories as Record<string, string>
+    if (knownLabels[cleaned]) return knownLabels[cleaned]
+    return cleaned
+      .replace(/[-_]/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase())
+  }, [language, t.gallery.categories])
 
-  const getCategoryLabel = (category: string) => {
-    const categoryMap: Record<string, string> = {
-      wedding: t.gallery.categories.wedding,
-      barMitzvah: t.gallery.categories.barMitzvah,
-      batMitzvah: t.gallery.categories.batMitzvah,
-      birthday: t.gallery.categories.birthday,
-      thankYou: language === 'he' ? 'כרטיסי תודה' : 'Thank You Cards'
+  const formatCategoryDisplay = useCallback((category?: string, subCategory?: string) => {
+    const base = formatCategoryLabel(category)
+    return subCategory ? `${base} • ${formatCategoryLabel(subCategory)}` : base
+  }, [formatCategoryLabel])
+
+  const categoryEntries = useMemo(() => {
+    const map = new Map<string, { key: string; label: string; category: string; subCategory?: string }>()
+
+    const addEntry = (category?: string, subCategory?: string) => {
+      if (!category) return
+      if (!map.has(category)) {
+        map.set(category, {
+          key: category,
+          label: formatCategoryLabel(category),
+          category
+        })
+      }
+      if (subCategory) {
+        const key = `${category}::${subCategory}`
+        if (!map.has(key)) {
+          map.set(key, {
+            key,
+            label: `${formatCategoryLabel(category)} • ${formatCategoryLabel(subCategory)}`,
+            category,
+            subCategory
+          })
+        }
+      }
     }
-    return categoryMap[category] || category
-  }
 
-  const filteredInvitations = selectedCategory === 'all'
-    ? invitations
-    : invitations.filter(t => t.category === selectedCategory)
+    invitations.forEach((invitation) => addEntry(invitation.category, invitation.subCategory))
+    savedTemplates.forEach((template) => addEntry(template.category, template.subCategory))
+
+    return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label, language === 'he' ? 'he' : 'en'))
+  }, [formatCategoryLabel, invitations, language, savedTemplates])
+
+  const categories = useMemo(
+    () => [
+      { key: 'all', label: t.gallery.categories.all },
+      ...categoryEntries
+    ],
+    [categoryEntries, t.gallery.categories.all]
+  )
+
+  const categoryMatchesSelection = useCallback((category?: string, subCategory?: string) => {
+    if (selectedCategory === 'all') return true
+    if (!category) return false
+    const [selectedCategoryKey, selectedSubCategory] = selectedCategory.split('::')
+    if (selectedSubCategory) {
+      return category === selectedCategoryKey && (subCategory ?? '') === selectedSubCategory
+    }
+    return category === selectedCategoryKey
+  }, [selectedCategory])
+
+  const filteredInvitations = invitations.filter((invitation) =>
+    categoryMatchesSelection(invitation.category, invitation.subCategory)
+  )
+
+  const filteredTemplates = savedTemplates.filter((template) =>
+    categoryMatchesSelection(template.category, template.subCategory)
+  )
 
   const resolveTemplatePreview = (template: SavedInvitationTemplate) => {
     const backgroundId = template.template.backgroundId
@@ -91,47 +141,56 @@ export default function Gallery({
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {savedTemplates.map((template) => {
-                const previewUrl = resolveTemplatePreview(template)
+            {filteredTemplates.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">{language === 'he' ? 'אין תבניות תואמות לקטגוריה' : 'No templates match this category'}</p>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredTemplates.map((template) => {
+                  const previewUrl = resolveTemplatePreview(template)
 
-                return (
-                  <div
-                    key={template.id}
-                    className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-amber-50"
-                  >
-                    <div className="relative h-64 bg-gray-100">
-                      {previewUrl ? (
-                        <img
-                          src={previewUrl}
-                          alt={template.name}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-amber-50 to-white flex items-center justify-center text-amber-700 font-semibold">
-                          {t.gallery.templates.missingPreview}
+                  return (
+                    <div
+                      key={template.id}
+                      className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-amber-50"
+                    >
+                      <div className="relative h-64 bg-gray-100">
+                        {previewUrl ? (
+                          <img
+                            src={previewUrl}
+                            alt={template.name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-amber-50 to-white flex items-center justify-center text-amber-700 font-semibold">
+                            {t.gallery.templates.missingPreview}
+                          </div>
+                        )}
+                        <div className="absolute top-3 left-3 bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow">
+                          {t.gallery.templates.badge}
                         </div>
-                      )}
-                      <div className="absolute top-3 left-3 bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow">
-                        {t.gallery.templates.badge}
+                        {(template.category || template.subCategory) && (
+                          <div className="absolute top-3 right-3 bg-white/90 text-gray-800 px-3 py-1 rounded-full text-xs font-semibold shadow">
+                            {formatCategoryDisplay(template.category, template.subCategory)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-6 space-y-3">
+                        <h3 className="text-xl font-bold text-gray-800 truncate" title={template.name}>{template.name}</h3>
+                        <p className="text-sm text-gray-600 line-clamp-2">
+                          {t.gallery.templates.description}
+                        </p>
+                        <button
+                          onClick={() => onCustomizeTemplate?.(template.id)}
+                          className="w-full bg-gradient-to-r from-amber-600 to-amber-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
+                        >
+                          {t.gallery.templates.customizeText}
+                        </button>
                       </div>
                     </div>
-                    <div className="p-6 space-y-3">
-                      <h3 className="text-xl font-bold text-gray-800 truncate" title={template.name}>{template.name}</h3>
-                      <p className="text-sm text-gray-600 line-clamp-2">
-                        {t.gallery.templates.description}
-                      </p>
-                      <button
-                        onClick={() => onCustomizeTemplate?.(template.id)}
-                        className="w-full bg-gradient-to-r from-amber-600 to-amber-500 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
-                      >
-                        {t.gallery.templates.customizeText}
-                      </button>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -196,7 +255,7 @@ export default function Gallery({
                 <div className="flex justify-between items-center mb-3">
                   <h3 className="text-xl font-bold text-gray-800">{language === 'he' ? invitation.titleHe : invitation.titleEn}</h3>
                   <span className="text-sm bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-medium">
-                    {getCategoryLabel(invitation.category)}
+                    {formatCategoryDisplay(invitation.category, invitation.subCategory)}
                   </span>
                 </div>
                 <button className="w-full bg-gradient-to-r from-gray-700 to-amber-500 text-white py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
