@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Heart, Users, Gift, Cake, PartyPopper, User, ChevronRight, Wand2, Layers, Sparkles, BookOpen, Video } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 import { AdminBackground, CustomInvitationType, SavedInvitationTemplate, VideoBackground } from '../types'
+import { normalizeCategoryKey } from '../utils/categories'
 
-type EventType = 'wedding' | 'bar-mitzvah' | 'bat-mitzvah' | 'birthday' | 'engagement' | 'thank-you' | `custom-${string}`
+type EventType = 'wedding' | 'barMitzvah' | 'batMitzvah' | 'birthday' | 'engagement' | 'thankYou' | `custom-${string}`
 type DesignStyle = 'modern' | 'religious'
 
 interface LocalizedName {
@@ -118,7 +119,7 @@ export default function Designer({
       }
     },
     {
-      id: 'bar-mitzvah',
+      id: 'barMitzvah',
       names: {
         he: 'בר מצווה',
         en: 'Bar Mitzvah',
@@ -143,7 +144,7 @@ export default function Designer({
       }
     },
     {
-      id: 'bat-mitzvah',
+      id: 'batMitzvah',
       names: {
         he: 'בת מצווה',
         en: 'Bat Mitzvah',
@@ -214,7 +215,7 @@ export default function Designer({
       }
     },
     {
-      id: 'thank-you',
+      id: 'thankYou',
       names: {
         he: 'כרטיס תודה',
         en: 'Thank You Card',
@@ -342,6 +343,15 @@ export default function Designer({
   }, [selectedSavedTemplate])
 
   useEffect(() => {
+    if (!selectedSavedTemplate) return
+    const normalizedCategory = normalizeCategoryKey(selectedSavedTemplate.category)
+    const matchingTemplate = templatesWithCustom.find((template) => template.id === normalizedCategory)
+    if (matchingTemplate) {
+      setSelectedEventType(matchingTemplate.id)
+    }
+  }, [selectedSavedTemplate, templatesWithCustom])
+
+  useEffect(() => {
     if (selectedSavedTemplateId) return
     setTemplateFieldValues({})
     setTemplateTextValues({})
@@ -383,7 +393,7 @@ export default function Designer({
     const known = t.gallery.categories as Record<string, string>
     const normalize = (value?: string) => {
       if (!value) return language === 'he' ? 'ללא קטגוריה' : 'Uncategorized'
-      const cleaned = value.trim()
+      const cleaned = normalizeCategoryKey(value) ?? ''
       return known[cleaned] ?? cleaned.replace(/[-_]/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
     }
     const base = normalize(category)
@@ -480,10 +490,10 @@ export default function Designer({
   const currentColorScheme = colorSchemes.find(cs => cs.id === selectedColorScheme)
 
   const religiousBlessings: { [key in EventType]?: string } = {
-    'wedding': 'בס"ד - ולירושלים עירך ברחמים תשוב',
-    'bar-mitzvah': 'בס"ד - ויתן לך ה\' חכמה ובינה',
-    'bat-mitzvah': 'בס"ד - אשת חיל מי ימצא',
-    'engagement': 'בס"ד - מזל טוב',
+    wedding: 'בס"ד - ולירושלים עירך ברחמים תשוב',
+    barMitzvah: 'בס"ד - ויתן לך ה\' חכמה ובינה',
+    batMitzvah: 'בס"ד - אשת חיל מי ימצא',
+    engagement: 'בס"ד - מזל טוב',
   }
 
   const handleEventTypeSelect = (type: EventType) => {
@@ -622,7 +632,7 @@ export default function Designer({
           </>
         )
 
-      case 'bar-mitzvah':
+      case 'barMitzvah':
         if (isReligious) {
           return (
             <div style={{ fontFamily: 'serif' }}>
@@ -680,7 +690,7 @@ export default function Designer({
           </>
         )
 
-      case 'bat-mitzvah':
+      case 'batMitzvah':
         if (isReligious) {
           return (
             <div style={{ fontFamily: 'serif' }}>
@@ -810,7 +820,7 @@ export default function Designer({
           </>
         )
 
-      case 'thank-you':
+      case 'thankYou':
         return (
           <>
             <Heart className="w-16 h-16 mx-auto mb-4" style={{ color: currentColorScheme?.secondary }} />
