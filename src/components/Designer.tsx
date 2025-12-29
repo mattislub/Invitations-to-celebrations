@@ -65,6 +65,9 @@ interface Animation {
   class: string
 }
 
+const DEFAULT_TEMPLATE_WIDTH = 1080
+const DEFAULT_TEMPLATE_HEIGHT = 1920
+
 export default function Designer({
   language,
   customTypes,
@@ -488,6 +491,8 @@ export default function Designer({
     ? (selectedTemplateBackground ?? selectedBackgroundOption)
     : selectedBackgroundOption
   const currentColorScheme = colorSchemes.find(cs => cs.id === selectedColorScheme)
+  const templateDimensions = selectedSavedTemplate?.template.dimensions
+  const templateAspectRatio = `${templateDimensions?.width ?? DEFAULT_TEMPLATE_WIDTH}/${templateDimensions?.height ?? DEFAULT_TEMPLATE_HEIGHT}`
 
   const religiousBlessings: { [key in EventType]?: string } = {
     wedding: 'בס"ד - ולירושלים עירך ברחמים תשוב',
@@ -550,6 +555,38 @@ export default function Designer({
         }}
       />
     ))
+  }
+
+  const renderTemplateBackground = (background?: BackgroundOption, baseOpacity = 1) => {
+    if (background?.type === 'video' && background.videoUrl) {
+      return (
+        <video
+          key={background.id}
+          className="absolute inset-0 w-full h-full object-cover"
+          src={background.videoUrl}
+          autoPlay
+          muted
+          loop
+          playsInline
+          style={{ opacity: baseOpacity }}
+        />
+      )
+    }
+
+    if (background?.images?.length) {
+      return background.images.map((image, index) => (
+        <div
+          key={index}
+          className="absolute inset-0 bg-cover bg-center"
+          style={{
+            backgroundImage: `url(${image})`,
+            opacity: baseOpacity
+          }}
+        />
+      ))
+    }
+
+    return <div className="absolute inset-0 bg-gradient-to-br from-amber-50 to-orange-100" style={{ opacity: baseOpacity }} />
   }
 
   const renderInvitationContent = () => {
@@ -885,7 +922,7 @@ export default function Designer({
               style={{
                 fontFamily: line.font,
                 fontSize: line.fontSize,
-                color: currentColorScheme?.primary ?? '#1f2937'
+                color: '#1f2937'
               }}
               className="leading-tight"
             >
@@ -906,8 +943,7 @@ export default function Designer({
             }}
           >
             <p
-              className="text-base font-semibold"
-              style={{ color: currentColorScheme?.text ?? '#1f2937' }}
+              className="text-base font-semibold text-gray-800"
             >
               {templateFieldValues[field.id] || field.label}
               {field.required && <span className="text-red-500"> *</span>}
@@ -1343,17 +1379,21 @@ export default function Designer({
               {renderBackgroundLayer(activeBackgroundOption)}
               <div
                 key={animationKey}
-                className={`bg-white/90 backdrop-blur-sm rounded-2xl p-10 md:p-12 shadow-2xl text-center relative z-10 w-full max-w-5xl ${animations.find(a => a.id === selectedAnimation)?.class}`}
+                className={`relative z-10 w-full ${templateMode ? '' : 'bg-white/90 backdrop-blur-sm rounded-2xl p-10 md:p-12 shadow-2xl text-center max-w-5xl'} ${!templateMode ? animations.find(a => a.id === selectedAnimation)?.class : ''}`}
               >
                 {templateMode ? (
-                  <div className="relative w-full" style={{ minHeight: '540px' }}>
-                    {selectedTemplateBackground && (
-                      <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                        {renderBackgroundLayer(selectedTemplateBackground)}
+                  <div className="flex justify-center">
+                    <div
+                      className="relative w-full max-w-5xl overflow-hidden rounded-2xl bg-gray-50 shadow-md"
+                      style={{
+                        aspectRatio: templateAspectRatio,
+                        maxHeight: '80vh'
+                      }}
+                    >
+                      {renderTemplateBackground(selectedTemplateBackground, 1)}
+                      <div className="absolute inset-0">
+                        {renderSavedTemplateContent()}
                       </div>
-                    )}
-                    <div className="relative w-full h-full min-h-[500px]">
-                      {renderSavedTemplateContent()}
                     </div>
                   </div>
                 ) : (
