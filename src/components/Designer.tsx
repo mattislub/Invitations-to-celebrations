@@ -493,6 +493,7 @@ export default function Designer({
   const currentColorScheme = colorSchemes.find(cs => cs.id === selectedColorScheme)
   const templateDimensions = selectedSavedTemplate?.template.dimensions
   const templateAspectRatio = `${templateDimensions?.width ?? DEFAULT_TEMPLATE_WIDTH}/${templateDimensions?.height ?? DEFAULT_TEMPLATE_HEIGHT}`
+  const selectedAnimationClass = animations.find(a => a.id === selectedAnimation)?.class ?? ''
 
   const religiousBlessings: { [key in EventType]?: string } = {
     wedding: 'בס"ד - ולירושלים עירך ברחמים תשוב',
@@ -1375,32 +1376,32 @@ export default function Designer({
 
           <div className="bg-gradient-to-br from-gray-100 to-amber-50 rounded-2xl p-8">
             <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">תצוגה מקדימה סופית</h3>
-            <div className="relative min-h-[600px] w-full flex items-center justify-center rounded-xl overflow-hidden">
-              {renderBackgroundLayer(activeBackgroundOption)}
-              <div
-                key={animationKey}
-                className={`relative z-10 w-full ${templateMode ? '' : 'bg-white/90 backdrop-blur-sm rounded-2xl p-10 md:p-12 shadow-2xl text-center max-w-5xl'} ${!templateMode ? animations.find(a => a.id === selectedAnimation)?.class : ''}`}
-              >
-                {templateMode ? (
-                  <div className="flex justify-center">
-                    <div
-                      className="relative w-full max-w-5xl overflow-hidden rounded-2xl bg-gray-50 shadow-md"
-                      style={{
-                        aspectRatio: templateAspectRatio,
-                        maxHeight: '80vh'
-                      }}
-                    >
-                      {renderTemplateBackground(selectedTemplateBackground, 1)}
-                      <div className="absolute inset-0">
-                        {renderSavedTemplateContent()}
-                      </div>
-                    </div>
+            {templateMode ? (
+              <div className="flex justify-center">
+                <div
+                  className="relative w-full max-w-5xl overflow-hidden rounded-2xl bg-gray-50 shadow-md"
+                  style={{
+                    aspectRatio: templateAspectRatio,
+                    maxHeight: '80vh'
+                  }}
+                >
+                  {renderTemplateBackground(selectedTemplateBackground, 1)}
+                  <div className="absolute inset-0">
+                    {renderSavedTemplateContent()}
                   </div>
-                ) : (
-                  renderInvitationContent()
-                )}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="relative min-h-[600px] w-full flex items-center justify-center rounded-xl overflow-hidden">
+                {renderBackgroundLayer(activeBackgroundOption)}
+                <div
+                  key={animationKey}
+                  className={`relative z-10 w-full bg-white/90 backdrop-blur-sm rounded-2xl p-10 md:p-12 shadow-2xl text-center max-w-5xl ${selectedAnimationClass}`}
+                >
+                  {renderInvitationContent()}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
