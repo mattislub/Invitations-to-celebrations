@@ -88,7 +88,6 @@ export default function Designer({
   const [selectedSavedTemplateId, setSelectedSavedTemplateId] = useState<string>('')
   const [templateFieldValues, setTemplateFieldValues] = useState<Record<string, string>>({})
   const [templateTextValues, setTemplateTextValues] = useState<Record<string, string>>({})
-  const [previewScale, setPreviewScale] = useState<number>(1)
   const hasAutoSelectedTemplate = useRef(false)
   const hasJumpedToTemplateDesign = useRef(false)
 
@@ -493,21 +492,8 @@ export default function Designer({
     : selectedBackgroundOption
   const currentColorScheme = colorSchemes.find(cs => cs.id === selectedColorScheme)
   const templateDimensions = selectedSavedTemplate?.template.dimensions
-  const templateWidth = templateDimensions?.width ?? DEFAULT_TEMPLATE_WIDTH
-  const templateHeight = templateDimensions?.height ?? DEFAULT_TEMPLATE_HEIGHT
+  const templateAspectRatio = `${templateDimensions?.width ?? DEFAULT_TEMPLATE_WIDTH}/${templateDimensions?.height ?? DEFAULT_TEMPLATE_HEIGHT}`
   const selectedAnimationClass = animations.find(a => a.id === selectedAnimation)?.class ?? ''
-  const updatePreviewScale = useCallback(() => {
-    const viewportWidth = Math.max(320, window.innerWidth - 140)
-    const viewportHeight = Math.max(320, window.innerHeight - 280)
-    const scale = Math.min(1, viewportWidth / templateWidth, viewportHeight / templateHeight)
-    setPreviewScale(Number(scale.toFixed(3)))
-  }, [templateHeight, templateWidth])
-
-  useEffect(() => {
-    updatePreviewScale()
-    window.addEventListener('resize', updatePreviewScale)
-    return () => window.removeEventListener('resize', updatePreviewScale)
-  }, [updatePreviewScale])
 
   const religiousBlessings: { [key in EventType]?: string } = {
     wedding: 'בס"ד - ולירושלים עירך ברחמים תשוב',
@@ -1392,32 +1378,16 @@ export default function Designer({
             <h3 className="text-xl font-bold text-gray-800 mb-6 text-center">תצוגה מקדימה סופית</h3>
             {templateMode ? (
               <div className="flex justify-center">
-                <div className="rounded-2xl bg-gray-50 border border-gray-200 p-4 shadow-md">
-                  <div
-                    className="relative overflow-hidden rounded-xl bg-white"
-                    style={{
-                      width: templateWidth * previewScale,
-                      height: templateHeight * previewScale
-                    }}
-                  >
-                    <div
-                      className="relative"
-                      style={{
-                        width: templateWidth,
-                        height: templateHeight,
-                        transform: `scale(${previewScale})`,
-                        transformOrigin: 'top left'
-                      }}
-                    >
-                      {renderTemplateBackground(selectedTemplateBackground, 1)}
-                      <div className="absolute inset-0">
-                        {renderSavedTemplateContent()}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
-                    <span>{language === 'he' ? 'תצוגה בגודל אמיתי' : 'True-size preview'}</span>
-                    <span>{Math.round(previewScale * 100)}%</span>
+                <div
+                  className="relative w-full max-w-5xl overflow-hidden rounded-2xl bg-gray-50 shadow-md"
+                  style={{
+                    aspectRatio: templateAspectRatio,
+                    maxHeight: '80vh'
+                  }}
+                >
+                  {renderTemplateBackground(selectedTemplateBackground, 1)}
+                  <div className="absolute inset-0">
+                    {renderSavedTemplateContent()}
                   </div>
                 </div>
               </div>
