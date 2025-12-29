@@ -10,6 +10,16 @@ import { getApiBaseUrl } from './utils/api'
 
 type Page = 'home' | 'gallery' | 'designer' | 'admin'
 
+const getPageFromHash = (hash: string): Page => {
+  const normalized = hash.replace('#', '')
+
+  if (normalized === 'gallery' || normalized === 'designer' || normalized === 'admin') {
+    return normalized
+  }
+
+  return 'home'
+}
+
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home')
   const [language, setLanguage] = useState<Language>('he')
@@ -56,12 +66,34 @@ function App() {
     setLanguage(prev => prev === 'he' ? 'en' : 'he')
   }
 
+  const navigateToPage = (page: Page) => {
+    setCurrentPage(page)
+
+    const targetHash = `#${page}`
+    if (window.location.hash !== targetHash) {
+      window.location.hash = page
+    }
+  }
+
   const handleCustomizeTemplate = (templateId: string) => {
     setSelectedSavedTemplateId(templateId)
-    setCurrentPage('designer')
+    navigateToPage('designer')
   }
 
   useEffect(() => {
+    const initialPage = getPageFromHash(window.location.hash)
+    setCurrentPage(initialPage)
+
+    if (!window.location.hash || window.location.hash === '#') {
+      window.history.replaceState(null, '', `#${initialPage}`)
+    }
+
+    const handleHashChange = () => {
+      setCurrentPage(getPageFromHash(window.location.hash))
+    }
+
+    window.addEventListener('hashchange', handleHashChange)
+
     const fetchBackgrounds = async () => {
       try {
         const response = await fetch(`${apiBaseUrl}/admin/state`)
@@ -84,6 +116,10 @@ function App() {
     }
 
     void fetchBackgrounds()
+
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange)
+    }
   }, [apiBaseUrl])
 
   return (
@@ -92,7 +128,7 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <button
-              onClick={() => setCurrentPage('home')}
+              onClick={() => navigateToPage('home')}
               className="flex items-center space-x-2 rtl:space-x-reverse hover:opacity-80 transition-opacity"
             >
               <Sparkles className="w-8 h-8 text-amber-500" />
@@ -102,7 +138,7 @@ function App() {
             </button>
             <nav className="hidden md:flex space-x-8 rtl:space-x-reverse items-center">
               <button
-                onClick={() => setCurrentPage('home')}
+                onClick={() => navigateToPage('home')}
                 className={`transition-colors font-medium ${
                   currentPage === 'home' ? 'text-amber-600' : 'text-gray-700 hover:text-amber-600'
                 }`}
@@ -110,7 +146,7 @@ function App() {
                 {t.header.home}
               </button>
               <button
-                onClick={() => setCurrentPage('gallery')}
+                onClick={() => navigateToPage('gallery')}
                 className={`transition-colors font-medium ${
                   currentPage === 'gallery' ? 'text-amber-600' : 'text-gray-700 hover:text-amber-600'
                 }`}
@@ -118,7 +154,7 @@ function App() {
                 {t.header.gallery}
               </button>
               <button
-                onClick={() => setCurrentPage('admin')}
+                onClick={() => navigateToPage('admin')}
                 className={`transition-colors font-medium flex items-center space-x-1 rtl:space-x-reverse ${
                   currentPage === 'admin' ? 'text-amber-600' : 'text-gray-700 hover:text-amber-600'
                 }`}
@@ -147,7 +183,7 @@ function App() {
                 <span className="text-sm font-medium">{language === 'he' ? 'EN' : 'עב'}</span>
               </button>
               <button
-                onClick={() => setCurrentPage('designer')}
+                onClick={() => navigateToPage('designer')}
                 className="bg-gradient-to-r from-gray-700 to-amber-500 text-white px-6 py-2 rounded-full hover:shadow-lg transition-all duration-300 font-medium"
               >
                 {t.header.startNow}
@@ -158,7 +194,7 @@ function App() {
       </header>
 
       <main>
-        {currentPage === 'home' && <Home onStartDesigning={() => setCurrentPage('designer')} language={language} />}
+        {currentPage === 'home' && <Home onStartDesigning={() => navigateToPage('designer')} language={language} />}
         {currentPage === 'gallery' && (
           <Gallery
             language={language}
