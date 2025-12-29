@@ -1189,17 +1189,16 @@ export default function TemplateEditor({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-6 shadow-inner">
-            <div className="rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
+          <div className="rounded-3xl border border-gray-200 bg-white shadow-lg p-6 lg:p-8">
+            <div className="flex justify-center">
               <div
-                className="relative w-full transition-all duration-300"
+                className="relative w-full max-w-5xl overflow-hidden rounded-2xl bg-gray-50 shadow-md transition-all duration-300"
                 style={{
                   aspectRatio: `${templateWidth}/${templateHeight}`,
-                  minHeight: '70vh'
+                  maxHeight: '80vh'
                 }}
               >
-                {renderBackgroundMedia(selectedBackground, 0.95)}
-                <div className="absolute inset-0 bg-white/75 backdrop-blur-sm rounded-xl" />
+                {renderBackgroundMedia(selectedBackground)}
                 <div
                   ref={previewRef}
                   className="absolute inset-0"
