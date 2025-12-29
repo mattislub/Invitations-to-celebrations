@@ -379,6 +379,17 @@ export default function Designer({
     return date.toLocaleDateString(language === 'he' ? 'he-IL' : 'en-US')
   }
 
+  const formatTemplateCategory = useCallback((category?: string, subCategory?: string) => {
+    const known = t.gallery.categories as Record<string, string>
+    const normalize = (value?: string) => {
+      if (!value) return language === 'he' ? 'ללא קטגוריה' : 'Uncategorized'
+      const cleaned = value.trim()
+      return known[cleaned] ?? cleaned.replace(/[-_]/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
+    }
+    const base = normalize(category)
+    return subCategory ? `${base} • ${normalize(subCategory)}` : base
+  }, [language, t.gallery.categories])
+
   const colorSchemes: ColorScheme[] = [
     {
       id: 'amber',
@@ -1099,6 +1110,11 @@ export default function Designer({
                         <p className="font-bold text-gray-800 line-clamp-1">{saved.name}</p>
                         {saved.updatedAt && (
                           <p className="text-xs text-gray-500 mt-1">{formatTemplateDate(saved.updatedAt)}</p>
+                        )}
+                        {(saved.category || saved.subCategory) && (
+                          <p className={`text-xs ${isActive ? 'text-amber-700' : 'text-gray-500'}`}>
+                            {formatTemplateCategory(saved.category, saved.subCategory)}
+                          </p>
                         )}
                         <p className={`text-xs mt-2 ${isActive ? 'text-amber-700' : 'text-gray-500'}`}>
                           {t.designer.savedTemplates.useHint}
