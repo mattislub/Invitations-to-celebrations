@@ -361,7 +361,7 @@ export interface Translations {
 export const translations: Record<Language, Translations> = {
   he: {
     header: {
-      title: 'הזמנות מעוצבות',
+      title: 'BestRegards',
       home: 'דף הבית',
       gallery: 'גלריה',
       pricing: 'תמחור',
@@ -373,7 +373,7 @@ export const translations: Record<Language, Translations> = {
       subtitle: 'יוצרים הזמנות ייחודיות שמספרות את הסיפור שלכם',
       quickLinks: 'קישורים מהירים',
       contactUs: 'צור קשר',
-      rights: 'כל הזכויות שמורות © 2025 הזמנות מעוצבות'
+      rights: 'כל הזכויות שמורות © 2025 BestRegards'
     },
     home: {
       hero: {
@@ -735,10 +735,10 @@ export const translations: Record<Language, Translations> = {
       startNewTemplate: 'תבנית חדשה'
     }
   }
-},
+  },
   en: {
     header: {
-      title: 'Designed Invitations',
+      title: 'BestRegards',
       home: 'Home',
       gallery: 'Gallery',
       pricing: 'Pricing',
@@ -750,7 +750,7 @@ export const translations: Record<Language, Translations> = {
       subtitle: 'Creating unique invitations that tell your story',
       quickLinks: 'Quick Links',
       contactUs: 'Contact Us',
-      rights: 'All rights reserved © 2025 Designed Invitations'
+      rights: 'All rights reserved © 2025 BestRegards'
     },
     home: {
       hero: {

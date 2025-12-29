@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Sparkles, Languages, Shield } from 'lucide-react'
+import logo from './assets/logo.svg'
 import Home from './components/Home'
 import Gallery from './components/Gallery'
 import Designer from './components/Designer'
@@ -129,12 +130,15 @@ function App() {
           <div className="flex justify-between items-center">
             <button
               onClick={() => navigateToPage('home')}
-              className="flex items-center space-x-2 rtl:space-x-reverse hover:opacity-80 transition-opacity"
+              className="flex items-center space-x-3 rtl:space-x-reverse hover:opacity-80 transition-opacity"
             >
-              <Sparkles className="w-8 h-8 text-amber-500" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-700 to-amber-600 bg-clip-text text-transparent">
-                {t.header.title}
-              </h1>
+              <img src={logo} alt="BestRegards logo" className="h-10 w-auto drop-shadow-sm" />
+              <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                <Sparkles className="w-6 h-6 text-amber-500" />
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-700 to-amber-600 bg-clip-text text-transparent">
+                  {t.header.title}
+                </h1>
+              </div>
             </button>
             <nav className="hidden md:flex space-x-8 rtl:space-x-reverse items-center">
               <button
@@ -238,8 +242,8 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`grid md:grid-cols-3 gap-8 text-center ${isRTL ? 'md:text-right' : 'md:text-left'}`}>
             <div>
-              <div className={`flex items-center justify-center ${isRTL ? 'md:justify-start' : 'md:justify-start'} space-x-2 rtl:space-x-reverse mb-4`}>
-                <Sparkles className="w-6 h-6 text-amber-400" />
+              <div className={`flex items-center justify-center ${isRTL ? 'md:justify-start' : 'md:justify-start'} space-x-3 rtl:space-x-reverse mb-4`}>
+                <img src={logo} alt="BestRegards logo" className="h-9 w-auto drop-shadow-sm" />
                 <h4 className="text-xl font-bold">{t.header.title}</h4>
               </div>
               <p className="text-gray-400">
