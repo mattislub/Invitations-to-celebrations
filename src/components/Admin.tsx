@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ShieldCheck, Type as TypeIcon, Image as ImageIcon, Plus, RefreshCcw, Upload, Trash, Video as VideoIcon, Server, CloudOff, LayoutGrid, Layers, Edit3 } from 'lucide-react'
+import { ShieldCheck, Type as TypeIcon, Image as ImageIcon, Plus, RefreshCcw, Upload, Trash, Video as VideoIcon, Server, CloudOff, LayoutGrid, Layers, Edit3, X, Check } from 'lucide-react'
 import { Language, getTranslation } from '../translations'
 import { CustomInvitationType, Invitation, VideoBackground, AdminFont, AdminBackground, InvitationTemplate, SavedInvitationTemplate } from '../types'
 import { fetchWithApiFallback, getApiBaseUrl, getApiBaseUrlCandidates } from '../utils/api'
@@ -126,6 +126,8 @@ export default function Admin({
   const [newVideoFile, setNewVideoFile] = useState<File | null>(null)
   const [newVideoPreviewFile, setNewVideoPreviewFile] = useState<File | null>(null)
   const [newInvitationType, setNewInvitationType] = useState({ nameHe: '', nameYi: '', nameEn: '' })
+  const [editingInvitationTypeId, setEditingInvitationTypeId] = useState<string | null>(null)
+  const [editingInvitationType, setEditingInvitationType] = useState({ nameHe: '', nameYi: '', nameEn: '' })
   const [statusMessage, setStatusMessage] = useState('')
   const [, setUploading] = useState(false)
   const [activeTab, setActiveTab] = useState<'overview' | 'types' | 'backgrounds' | 'videos' | 'fonts' | 'templates'>('overview')
@@ -218,6 +220,37 @@ export default function Admin({
 
   const handleRemoveInvitationType = (id: string) => {
     onCustomTypesChange(customTypes.filter(type => type.id !== id))
+    if (editingInvitationTypeId === id) {
+      handleCancelEditInvitationType()
+    }
+  }
+
+  const handleStartEditInvitationType = (type: CustomInvitationType) => {
+    setEditingInvitationTypeId(type.id)
+    setEditingInvitationType({
+      nameHe: type.nameHe,
+      nameYi: type.nameYi,
+      nameEn: type.nameEn
+    })
+  }
+
+  const handleCancelEditInvitationType = () => {
+    setEditingInvitationTypeId(null)
+    setEditingInvitationType({ nameHe: '', nameYi: '', nameEn: '' })
+  }
+
+  const handleSaveInvitationType = () => {
+    if (!editingInvitationTypeId) return
+    if (!editingInvitationType.nameHe.trim() || !editingInvitationType.nameEn.trim()) return
+
+    const updatedTypes = customTypes.map(type =>
+      type.id === editingInvitationTypeId
+        ? { ...type, ...editingInvitationType }
+        : type
+    )
+
+    onCustomTypesChange(updatedTypes)
+    handleCancelEditInvitationType()
   }
 
   const handleRemoveVideoBackground = (id: string) => {
@@ -608,19 +641,74 @@ export default function Admin({
                   <p className="text-gray-500 text-sm text-center py-6">{t.admin.messages.empty}</p>
                 )}
                 {customTypes.map((type) => (
-                  <div key={type.id} className="p-4 rounded-xl border border-gray-200 bg-gray-50 flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-semibold text-gray-800">{type.nameHe}</p>
-                      <p className="text-sm text-gray-600">{t.admin.fields.yiddishName}: {type.nameYi || '-'}</p>
-                      <p className="text-sm text-gray-600">{t.admin.fields.englishName}: {type.nameEn}</p>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveInvitationType(type.id)}
-                      className="text-gray-500 hover:text-red-600 transition-colors"
-                      title={t.admin.buttons.delete}
-                    >
-                      <Trash className="w-4 h-4" />
-                    </button>
+                  <div key={type.id} className="p-4 rounded-xl border border-gray-200 bg-gray-50 flex flex-col gap-4">
+                    {editingInvitationTypeId === type.id ? (
+                      <>
+                        <div className="grid md:grid-cols-3 gap-3">
+                          <input
+                            type="text"
+                            value={editingInvitationType.nameHe}
+                            onChange={(e) => setEditingInvitationType(prev => ({ ...prev, nameHe: e.target.value }))}
+                            placeholder={t.admin.fields.name}
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700"
+                          />
+                          <input
+                            type="text"
+                            value={editingInvitationType.nameYi}
+                            onChange={(e) => setEditingInvitationType(prev => ({ ...prev, nameYi: e.target.value }))}
+                            placeholder={t.admin.fields.yiddishName}
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700"
+                          />
+                          <input
+                            type="text"
+                            value={editingInvitationType.nameEn}
+                            onChange={(e) => setEditingInvitationType(prev => ({ ...prev, nameEn: e.target.value }))}
+                            placeholder={t.admin.fields.englishName}
+                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-700"
+                          />
+                        </div>
+                        <div className="flex flex-wrap gap-2 justify-end">
+                          <button
+                            onClick={handleSaveInvitationType}
+                            className="inline-flex items-center gap-2 bg-emerald-600 text-white px-3 py-2 rounded-lg font-semibold shadow hover:shadow-md"
+                          >
+                            <Check className="w-4 h-4" />
+                            {t.admin.buttons.save}
+                          </button>
+                          <button
+                            onClick={handleCancelEditInvitationType}
+                            className="inline-flex items-center gap-2 border border-gray-200 text-gray-700 px-3 py-2 rounded-lg font-semibold hover:border-gray-300"
+                          >
+                            <X className="w-4 h-4" />
+                            {t.admin.buttons.cancel}
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                          <p className="font-semibold text-gray-800">{type.nameHe}</p>
+                          <p className="text-sm text-gray-600">{t.admin.fields.yiddishName}: {type.nameYi || '-'}</p>
+                          <p className="text-sm text-gray-600">{t.admin.fields.englishName}: {type.nameEn}</p>
+                        </div>
+                        <div className="flex items-center gap-2 justify-end">
+                          <button
+                            onClick={() => handleStartEditInvitationType(type)}
+                            className="text-gray-600 hover:text-amber-600 transition-colors inline-flex items-center gap-1"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                            <span className="text-sm font-semibold">{t.admin.buttons.edit}</span>
+                          </button>
+                          <button
+                            onClick={() => handleRemoveInvitationType(type.id)}
+                            className="text-gray-500 hover:text-red-600 transition-colors"
+                            title={t.admin.buttons.delete}
+                          >
+                            <Trash className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

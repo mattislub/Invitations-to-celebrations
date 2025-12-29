@@ -246,6 +246,8 @@ export interface Translations {
       add: string
       save: string
       reset: string
+      edit: string
+      cancel: string
       delete: string
     }
     messages: {
@@ -625,6 +627,8 @@ export const translations: Record<Language, Translations> = {
         add: 'הוספה',
         save: 'שמירה',
         reset: 'איפוס',
+        edit: 'עריכה',
+        cancel: 'ביטול',
         delete: 'מחיקה'
       },
       messages: {
@@ -1002,6 +1006,8 @@ export const translations: Record<Language, Translations> = {
         add: 'Add',
         save: 'Save',
         reset: 'Reset',
+        edit: 'Edit',
+        cancel: 'Cancel',
         delete: 'Delete'
       },
       messages: {
